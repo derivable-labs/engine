@@ -28,3 +28,19 @@ export type PoolType = {
   basePrice: string
   cPrice: number
 }
+
+export type SwapLog = {
+  address: string,
+  args: any[],
+  name: string
+  // ...
+}
+
+export type PoolsType = {[key: string]: PoolType}
+export type TokenType = {
+  address:string
+  decimal:number
+  name: string
+  symbol: string
+  totalSupply: BigNumber
+}

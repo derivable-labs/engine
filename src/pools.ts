@@ -14,30 +14,118 @@ import {getPairsInfo} from "./utils/pairInfo";
 import {Multicall} from "ethereum-multicall";
 import {ADDRESSES} from "./utils/addresses";
 import TokensInfoAbi from "./abi/TokensInfo.json";
-import {ParseLogType, PoolType} from "./types";
+import {ParseLogType, PoolsType, PoolType, SwapLog, TokenType} from "./types";
 
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
 const TOPIC_APP = ethers.utils.formatBytes32String('DDL')
 
-export class DdlResource {
-  pools: any
+type ConfigType = {
   chainId: number
   scanApi: string
   rpcUrl: string
   account: string
+  storage: {
+    setItem: (itemName: string, value: string) => void
+    getItem: (itemName: string) => string
+  }
+}
 
-  constructor(configs: any) {
+type ResourceData = {
+  pools: PoolsType
+  tokens: TokenType[]
+  swapLogs: SwapLog[]
+}
+
+export class DdlResource {
+  pools: PoolsType
+  tokens: TokenType[]
+  swapLogs: SwapLog[]
+  chainId: number
+  scanApi: string
+  rpcUrl: string
+  account: string
+  storage: {
+    setItem: (itemName: string, value: string) => void
+    getItem: (itemName: string) => string
+  }
+
+  constructor(configs: ConfigType) {
     this.chainId = configs.chainId
     this.scanApi = configs.scanApi
     this.rpcUrl = configs.rpcUrl
     this.account = configs.account
+    this.storage = configs.storage
   }
 
-  async intListPool() {
+  async fetchResourceData() {
     let result: any = {}
     if (!this.chainId || !this.scanApi) return result;
+    const [resultCached, newResource] = await Promise.all([
+      this.getResourceCached(this.account),
+      this.getNewResource()
+    ])
+    this.pools = { ...resultCached.pools, ...newResource.pools }
+    this.tokens = [...resultCached.tokens, ...newResource.tokens]
+    this.swapLogs = [...resultCached.swapLogs, ...newResource.swapLogs]
+  }
 
+  getLastBlockCached(account: string) {
+    const lastDDlBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) || ddlGenesisBlock[this.chainId]
+    const lastWalletBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account)) || ddlGenesisBlock[this.chainId]
+    return Math.min(lastDDlBlock, lastWalletBlock)
+  }
+
+  cacheDdlLog({
+                swapLogs,
+                ddlLogs,
+                headBlock,
+                account
+              }: {
+    swapLogs: any,
+    ddlLogs: any,
+    headBlock: number,
+    account: string
+  }) {
+    const cachedDdlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) || '[]')
+    const newCachedDdlLogs = [...ddlLogs, ...cachedDdlLogs].filter((log, index, self) => {
+      return index === self.findIndex((t) => (
+        t.logIndex === log.logIndex
+      ))
+    })
+    this.storage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS, headBlock.toString())
+    this.storage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS, JSON.stringify(newCachedDdlLogs))
+    if (account) {
+      const cachedSwapLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account) || '[]')
+      const newCacheSwapLogs = [...swapLogs, ...cachedSwapLogs].filter((log, index, self) => {
+        return index === self.findIndex((t) => (
+          t.logIndex === log.logIndex
+        ))
+      })
+
+      this.storage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account, headBlock.toString())
+      this.storage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account, JSON.stringify(newCacheSwapLogs))
+    }
+  }
+
+  async getResourceCached(account: string): Promise<ResourceData> {
+    const results: ResourceData = { pools: {}, tokens: [], swapLogs: [] }
+    const ddlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) || '[]')
+    const swapLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account) || '[]')
+    const [ddlLogsParsed, swapLogsParsed] = [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs)]
+
+    if (ddlLogsParsed && ddlLogsParsed.length > 0) {
+      const { tokens, pools } = await this.generatePoolData(ddlLogsParsed)
+      results.tokens = tokens
+      results.pools = pools
+    }
+    if (swapLogsParsed && swapLogsParsed.length > 0) {
+      results.swapLogs = swapLogsParsed
+    }
+    return results
+  }
+
+  async getNewResource(): Promise<ResourceData> {
     const etherProvider = new ethers.providers.StaticJsonRpcProvider(this.rpcUrl)
     const etherscanConfig = this.scanApi ? {
       url: this.scanApi,
@@ -52,13 +140,11 @@ export class DdlResource {
       etherProvider,
       etherscanConfig
     )
-
-    // const lastHeadBlockCached = this.getLastBlockCached(this.account)
-    // result = this.initListPoolCached(this.account)
-
+    const lastHeadBlockCached = this.getLastBlockCached(this.account)
     const accTopic = this.account ? '0x' + '0'.repeat(24) + this.account.slice(2) : null
+
     return await provider.getLogs({
-      fromBlock: ddlGenesisBlock[this.chainId],
+      fromBlock: lastHeadBlockCached,
       toBlock: MAX_BLOCK,
       topics: [
         null,
@@ -78,22 +164,18 @@ export class DdlResource {
       const swapLogs = logs.filter((log: any) => {
         return log.address && log.topics[0] === topics.MultiSwap
       })
-      // this.cacheDdlLog({
-      //   ddlLogs,
-      //   swapLogs,
-      //   headBlock,
-      //   account: this.account
-      // })
+      this.cacheDdlLog({
+        ddlLogs,
+        swapLogs,
+        headBlock,
+        account: this.account
+      })
 
       return [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs)]
     }).then(async ([ddlLogs, swapLogs]: any) => {
-      console.log('provider.getLogs result', { ddlLogs, swapLogs })
+      const result: ResourceData =  { pools: {}, tokens: [], swapLogs: [] }
       if (swapLogs && swapLogs.length > 0) {
-        // addMultiSwapData(swapLogs, this.account)
-        result.swapLog = {
-          ...result.swapLog,
-          ...swapLogs
-        }
+        result.swapLogs = swapLogs
       }
       if (ddlLogs && ddlLogs.length > 0) {
         const { tokens, pools } = await this.generatePoolData(ddlLogs)
@@ -103,65 +185,8 @@ export class DdlResource {
       return result
     }).catch((e: any) => {
       console.error(e)
-      return {}
+      return { pools: {}, tokens: [], swapLogs: [] }
     })
-  }
-
-  getPool() {
-  }
-
-  getLastBlockCached(account: string) {
-    const lastDDlBlock = Number(localStorage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) || ddlGenesisBlock[this.chainId]
-    const lastWalletBlock = Number(localStorage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account)) || ddlGenesisBlock[this.chainId]
-    return Math.min(lastDDlBlock, lastWalletBlock)
-  }
-
-  cacheDdlLog({
-                swapLogs,
-                ddlLogs,
-                headBlock,
-                account
-              }: {
-    swapLogs: any,
-    ddlLogs: any,
-    headBlock: number,
-    account: string
-  }) {
-    const cachedDdlLogs = JSON.parse(localStorage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) || '[]')
-    const newCachedDdlLogs = [...ddlLogs, ...cachedDdlLogs].filter((log, index, self) => {
-      return index === self.findIndex((t) => (
-        t.logIndex === log.logIndex
-      ))
-    })
-    localStorage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS, headBlock.toString())
-    localStorage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS, JSON.stringify(newCachedDdlLogs))
-    if (account) {
-      const cachedSwapLogs = JSON.parse(localStorage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account) || '[]')
-      const newCacheSwapLogs = [...swapLogs, ...cachedSwapLogs].filter((log, index, self) => {
-        return index === self.findIndex((t) => (
-          t.logIndex === log.logIndex
-        ))
-      })
-
-      localStorage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account, headBlock.toString())
-      localStorage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account, JSON.stringify(newCacheSwapLogs))
-    }
-  }
-
-  async initListPoolCached(account: string) {
-    const results: any = {}
-    const ddlLogs = JSON.parse(localStorage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) || '[]')
-    const swapLogs = JSON.parse(localStorage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account) || '[]')
-    const [ddlLogsParsed, swapLogsParsed] = [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs)]
-
-    if (ddlLogsParsed && ddlLogsParsed.length > 0) {
-      const { tokens, pools } = await this.generatePoolData(ddlLogsParsed)
-      results.tokens = tokens
-      results.pools = pools
-    }
-    if (swapLogsParsed && swapLogsParsed.length > 0) {
-      results.swapLogs = swapLogsParsed
-    }
   }
 
   /**
@@ -169,7 +194,6 @@ export class DdlResource {
    * @param logs
    */
   generatePoolData(logs: ParseLogType[]) {
-    console.log('logs', logs)
     const allTokens: string[] = []
     const allUniPools: string[] = []
     const poolData = {}
@@ -210,7 +234,6 @@ export class DdlResource {
         allTokens.push(...data.dTokens, data.cToken, data.baseToken)
       }
     })
-    console.log('generatePoolData result', { allTokens, poolData, allUniPools })
 
     return this.loadStatesData(allTokens, poolData, allUniPools)
   }
@@ -230,7 +253,6 @@ export class DdlResource {
 
     // @ts-ignore
     const context: ContractCallContext[] = this.getMultiCallRequest(normalTokens, listPools)
-    console.log('context', context)
     const [{ results }, pairsInfo] = await Promise.all([
       multicall.call(context),
       getPairsInfo(this.chainId, uniPools)
@@ -349,7 +371,6 @@ export class DdlResource {
       const data = formatMultiCallBignumber(poolStateData[i].returnValues)
       const encodeData = abiInterface.encodeFunctionResult('getStates', [data])
       const formatedData = abiInterface.decodeFunctionResult('getStates', encodeData)
-      console.log('formatedData', formatedData)
 
       pools[poolStateData[i].reference] = {
         twapBase: formatedData.states.twap.base._x,
