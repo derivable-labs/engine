@@ -1,0 +1,50 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Users\Pham Duy Khanh\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js
+
+PATH: 
+  D:\outsource\deviable\derivable-tools\node_modules\.bin;C:\Program Files\Common Files\Oracle\Java\javapath;C:\Python39\Scripts\;C:\Python39\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\ProgramData\chocolatey\bin;C:\xampp\php;C:\composer;C:\Users\Pham Duy Khanh\AppData\Roaming\nvm;C:\Program Files\nodejs;C:\Program Files\PuTTY\;C:\Program Files\MongoDB\Tools\100\bin;C:\Program Files\MongoDB\Server\5.0\bin;C:\Program Files\Java\jdk-17.0.5\bin;C:\Users\Pham Duy Khanh\AppData\Local\Microsoft\WindowsApps;C:\Users\Pham Duy Khanh\AppData\Roaming\npm;C:\Program Files\JetBrains\PhpStorm 2021.2.2\bin;;C:\Program Files\JetBrains\WebStorm 2021.2.2\bin;;C:\Users\Pham Duy Khanh\AppData\Roaming\Composer\vendor\bin;C:\Users\Pham Duy Khanh\AppData\Roaming\nvm;C:\Program Files\nodejs;C:\Users\Pham Duy Khanh\AppData\Local\Programs\mongosh\;E:\dowload\platform-tools;
+
+Yarn version: 
+  1.22.11
+
+Node version: 
+  16.14.0
+
+Platform: 
+  win32 x64
+
+Trace: 
+  SyntaxError: D:\outsource\deviable\derivable-tools\package.json: Unexpected token } in JSON at position 135
+      at JSON.parse (<anonymous>)
+      at C:\Users\Pham Duy Khanh\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:1625:59
+      at Generator.next (<anonymous>)
+      at step (C:\Users\Pham Duy Khanh\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:310:30)
+      at C:\Users\Pham Duy Khanh\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:321:13
+
+npm manifest: 
+  {
+    "name": "swap-tools-2",
+    "version": "1.0.0",
+    "description": "",
+    "main": "dist/index.js",
+    "scripts": {
+      "build": "tsc",
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "ethers": "^5.5.4",
+      "lodash": "^4.17.21",
+      "node-fetch": "^2.6.7"
+    },
+    "devDependencies": {
+      "@types/lodash": "^4.14.179",
+      "@types/node-fetch": "^2.6.1"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
