@@ -56,27 +56,23 @@ export class DdlResource {
     this.storage = configs.storage
   }
 
-  fetchResourceData(account: string) {
+  async fetchResourceData(account: string) {
     let result: any = {}
     if (!this.chainId || !this.scanApi) return result;
 
-    const _that = this
-    this.getResourceCached(account).then((data) => {
-      _that.pools = { ..._that.pools, ...data.pools }
-      _that.tokens = [..._that.tokens, ...data.tokens]
-      _that.swapLogs = [..._that.swapLogs, ...data.swapLogs]
-    })
-    this.getNewResource(account).then((data) => {
-      _that.pools = { ..._that.pools, ...data.pools }
-      _that.tokens = [..._that.tokens, ...data.tokens]
-      _that.swapLogs = [..._that.swapLogs, ...data.swapLogs]
-    })
+    const [resultCached, newResource] = await Promise.all([
+      this.getResourceCached(account),
+      this.getNewResource(account)
+    ])
+    this.pools = { ...resultCached.pools, ...newResource.pools }
+    this.tokens = [...resultCached.tokens, ...newResource.tokens]
+    this.swapLogs = [...resultCached.swapLogs, ...newResource.swapLogs]
   }
 
   getLastBlockCached(account: string) {
-    const lastDDlBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) || ddlGenesisBlock[this.chainId]
-    const lastWalletBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account)) || ddlGenesisBlock[this.chainId]
-    return Math.min(lastDDlBlock, lastWalletBlock)
+    const lastDDlBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) || ddlGenesisBlock[this.chainId] - 1
+    const lastWalletBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account)) || ddlGenesisBlock[this.chainId] -1
+    return Math.min(lastDDlBlock + 1, lastWalletBlock + 1)
   }
 
   cacheDdlLog({
