@@ -38,9 +38,9 @@ type ResourceData = {
 }
 
 export class DdlResource {
-  pools: PoolsType
-  tokens: TokenType[]
-  swapLogs: SwapLog[]
+  pools: PoolsType = {}
+  tokens: TokenType[] = []
+  swapLogs: SwapLog[] = []
   chainId: number
   scanApi: string
   rpcUrl: string
@@ -60,15 +60,16 @@ export class DdlResource {
     let result: any = {}
     if (!this.chainId || !this.scanApi) return result;
 
+    const _that = this
     this.getResourceCached(account).then((data) => {
-      this.pools = { ...this.pools, ...data.pools }
-      this.tokens = [...this.tokens, ...data.tokens]
-      this.swapLogs = [...this.swapLogs, ...data.swapLogs]
+      _that.pools = { ..._that.pools, ...data.pools }
+      _that.tokens = [..._that.tokens, ...data.tokens]
+      _that.swapLogs = [..._that.swapLogs, ...data.swapLogs]
     })
     this.getNewResource(account).then((data) => {
-      this.pools = { ...this.pools, ...data.pools }
-      this.tokens = [...this.tokens, ...data.tokens]
-      this.swapLogs = [...this.swapLogs, ...data.swapLogs]
+      _that.pools = { ..._that.pools, ...data.pools }
+      _that.tokens = [..._that.tokens, ...data.tokens]
+      _that.swapLogs = [..._that.swapLogs, ...data.swapLogs]
     })
   }
 
