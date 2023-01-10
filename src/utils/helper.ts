@@ -63,6 +63,30 @@ export const getLogicAbi = (chainId: number) => {
   return LogicAbi[chainId]
 }
 
+export const getErc1155Token = (addresses: string[]) => {
+  const erc1155Addresses = addresses.filter(isErc1155Address)
+  const result = {}
+  for (let i = 0; i < erc1155Addresses.length; i++) {
+    const address = erc1155Addresses[i].split('-')[0]
+    const id = erc1155Addresses[i].split('-')[1]
+    if (!result[address]) {
+      result[address] = [bn(id)]
+    } else {
+      result[address].push(bn(id))
+    }
+  }
+  return result
+}
+
+/**
+ * format of erc1155 = 0xabc...abc-id
+ * @param address
+ */
+export const isErc1155Address = (address: string) => {
+  return /^0x[0-9,a-f,A-Z]{40}-[0-9]{1,}$/g.test(address)
+}
+
+
 export const getNormalAddress = (addresses: string[]) => {
   return addresses.filter((adr: string) => /^0x[0-9,a-f,A-Z]{40}$/g.test(adr))
 }

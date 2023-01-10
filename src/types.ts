@@ -44,3 +44,6 @@ export type TokenType = {
   symbol: string
   totalSupply: BigNumber
 }
+
+export type BalancesType = {[key: string]: BigNumber}
+export type AllowancesType = {[key: string]: BigNumber}

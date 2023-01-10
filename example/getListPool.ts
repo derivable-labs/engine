@@ -12,14 +12,12 @@ const test = async () => {
       setItem: (itemName, value) => storageData[itemName] = value
     }
   })
-  await pool.fetchResourceData('0xC06F7cF8C9e8a8D39b0dF5A105d66127912Bc980')
-  setTimeout(() => {
+  const res = await pool.fetchResourceData('0xC06F7cF8C9e8a8D39b0dF5A105d66127912Bc980')
     console.log({
       pools: pool.pools,
       tokens: pool.tokens,
       swapLogs: pool.swapLogs
     })
-  }, 10000)
 
 }
 

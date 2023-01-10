@@ -7,7 +7,6 @@ import {
   getLogicAbi,
   getNormalAddress,
   numberToWei,
-  provider,
   weiToNumber
 } from "./utils/helper";
 import {getPairsInfo} from "./utils/pairInfo";
@@ -243,6 +242,7 @@ export class DdlResource {
    * @param listPools
    */
   async loadStatesData(listTokens: string[], listPools: { [key: string]: PoolType }, uniPools: string[]) {
+    const provider = new ethers.providers.StaticJsonRpcProvider(this.rpcUrl)
     const multicall = new Multicall({
       multicallCustomContractAddress: ADDRESSES[this.chainId].multiCall,
       ethersProvider: provider,

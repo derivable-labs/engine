@@ -4,5 +4,6 @@ export const ADDRESSES = {
     pairsInfo: '0xf7Eb29dFfcDb11BC82D094e3bffA3E5764117A22',
     bnA: '0xA0c0Da3e41c401A601c7c93C4036773B5Ac47be2',
     tokensInfo: '0x6B451b1bdaa7088467961FC0370d4049DF1C2E4d',
+    router: '0x2B1a5571C00B032d3bF0ca3271CdAa73b1cc6e5c'
   }
 }
