@@ -44,7 +44,6 @@ export class DdlResource {
   chainId: number
   scanApi: string
   rpcUrl: string
-  account: string
   storage: {
     setItem: (itemName: string, value: string) => void
     getItem: (itemName: string) => string
@@ -54,20 +53,23 @@ export class DdlResource {
     this.chainId = configs.chainId
     this.scanApi = configs.scanApi
     this.rpcUrl = configs.rpcUrl
-    this.account = configs.account
     this.storage = configs.storage
   }
 
-  async fetchResourceData() {
+  fetchResourceData(account: string) {
     let result: any = {}
     if (!this.chainId || !this.scanApi) return result;
-    const [resultCached, newResource] = await Promise.all([
-      this.getResourceCached(this.account),
-      this.getNewResource()
-    ])
-    this.pools = { ...resultCached.pools, ...newResource.pools }
-    this.tokens = [...resultCached.tokens, ...newResource.tokens]
-    this.swapLogs = [...resultCached.swapLogs, ...newResource.swapLogs]
+
+    this.getResourceCached(account).then((data) => {
+      this.pools = { ...this.pools, ...data.pools }
+      this.tokens = [...this.tokens, ...data.tokens]
+      this.swapLogs = [...this.swapLogs, ...data.swapLogs]
+    })
+    this.getNewResource(account).then((data) => {
+      this.pools = { ...this.pools, ...data.pools }
+      this.tokens = [...this.tokens, ...data.tokens]
+      this.swapLogs = [...this.swapLogs, ...data.swapLogs]
+    })
   }
 
   getLastBlockCached(account: string) {
@@ -125,7 +127,7 @@ export class DdlResource {
     return results
   }
 
-  async getNewResource(): Promise<ResourceData> {
+  async getNewResource(account: string): Promise<ResourceData> {
     const etherProvider = new ethers.providers.StaticJsonRpcProvider(this.rpcUrl)
     const etherscanConfig = this.scanApi ? {
       url: this.scanApi,
@@ -140,8 +142,8 @@ export class DdlResource {
       etherProvider,
       etherscanConfig
     )
-    const lastHeadBlockCached = this.getLastBlockCached(this.account)
-    const accTopic = this.account ? '0x' + '0'.repeat(24) + this.account.slice(2) : null
+    const lastHeadBlockCached = this.getLastBlockCached(account)
+    const accTopic = account ? '0x' + '0'.repeat(24) + account.slice(2) : null
 
     return await provider.getLogs({
       fromBlock: lastHeadBlockCached,
@@ -168,7 +170,7 @@ export class DdlResource {
         ddlLogs,
         swapLogs,
         headBlock,
-        account: this.account
+        account
       })
 
       return [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs)]
