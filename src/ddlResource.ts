@@ -9,7 +9,7 @@ import {
   numberToWei,
   weiToNumber
 } from "./utils/helper";
-import {getPairsInfo} from "./utils/pairInfo";
+import {getPairsInfo} from "./uniV2Pair";
 import {Multicall} from "ethereum-multicall";
 import {ADDRESSES} from "./utils/addresses";
 import TokensInfoAbi from "./abi/TokensInfo.json";
@@ -254,7 +254,11 @@ export class DdlResource {
     const context: ContractCallContext[] = this.getMultiCallRequest(normalTokens, listPools)
     const [{ results }, pairsInfo] = await Promise.all([
       multicall.call(context),
-      getPairsInfo(this.chainId, uniPools)
+      getPairsInfo({
+        chainId: this.chainId,
+        rpcUrl: this.rpcUrl,
+        pairAddresses: uniPools
+      })
     ])
 
     const { tokens: tokensArr, poolsState } = this.parseMultiCallResponse(results)
