@@ -1,6 +1,7 @@
 import {numberToWei, weiToNumber} from "./utils/helper";
 import {TokenType}                from "./types";
 import {CHART_API_ENDPOINT}       from "./utils/constant";
+import fetch from 'node-fetch'
 
 const history = {}
 
@@ -66,6 +67,7 @@ export default {
     limit: number
     to: number
   }): Promise<CandleType[]> {
+    console.log(route)
     const q = route.split('/').join(',')
     const url = `${CHART_API_ENDPOINT}candleline4?q=${q}&r=${convertResolution(resolution)}&l=${limit}&t=${to}`
 
@@ -94,7 +96,7 @@ export default {
         } else {
           return []
         }
-      }).catch((e) => {
+      }).catch((e: any) => {
         console.error(e)
         return []
       })

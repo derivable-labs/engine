@@ -34,7 +34,7 @@ export const get24hChangeByLog = async (
     chainId: number
   }): Promise<any> => {
   try {
-    const provider = new ethers.providers.StaticJsonRpcProvider(CONFIGS[chainId].rpcUrl)
+    const provider = new ethers.providers.StaticJsonRpcProvider(CONFIGS[chainId].rpcToGetLogs)
     if (!headBlock) {
       headBlock = await provider.getBlockNumber()
     }
@@ -97,14 +97,24 @@ export const get24hChangeByLog = async (
   }
 }
 
-const get24hChange = async (baseToken: TokenType, cToken: string, quoteToken: TokenType, currentPrice: string) => {
+export const get24hChange = async ({
+  baseToken,
+  cToken,
+  quoteToken,
+  currentPrice
+}: {
+  baseToken: TokenType,
+  cToken: string,
+  quoteToken: TokenType,
+  currentPrice: string
+}) => {
   try {
     const toTime = Math.floor((new Date().getTime() - MINI_SECOND_PER_DAY) / 1000)
     const result = await historyProvider.getBars({
       to: toTime,
       limit: 1,
       resolution: '1',
-      route: `${baseToken}/${cToken}/${quoteToken}`,
+      route: `${baseToken.address}/${cToken}/${quoteToken.address}`,
       outputToken: quoteToken,
       inputToken: baseToken,
     })
@@ -155,7 +165,13 @@ export const fetchCpPrice = async ({
   poolAddress,
   cTokenPrice,
   chainId
-}: any) => {
+}: {
+  states: any
+  cToken: string
+  poolAddress: string
+  cTokenPrice: number
+  chainId: number
+}) => {
   try {
     if (!poolAddress || !cToken || !cTokenPrice || !states) {
       return '0'

@@ -7,16 +7,17 @@
     "build": "tsc",
     "example:getListPool": "npx ts-node --files ./example/getListPool.ts",
     "example:getBnA": "npx ts-node --files ./example/getBalanceAndAllowance.ts",
-    "example:getPairDetail": "npx ts-node --files ./example/getPairDetail.ts"
+    "example:getPairDetail": "npx ts-node --files ./example/getPairDetail.ts",
+    "example:price": "npx ts-node --files ./example/priceExample.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "assisted-json-rpc-provider": "git+ssh://git@github.com:launchzone/AssistedJsonRpcProvider.git#1662bda1343be76618331a2d671bfa56f0d0e305",
+    "ethereum-multicall": "^2.15.0",
     "ethers": "^5.5.4",
     "lodash": "^4.17.21",
-    "node-fetch": "^2.6.7",
-    "assisted-json-rpc-provider": "git+ssh://git@github.com:launchzone/AssistedJsonRpcProvider.git#1662bda1343be76618331a2d671bfa56f0d0e305",
-    "ethereum-multicall": "^2.15.0"
+    "node-fetch": "^2.6.7"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.179",

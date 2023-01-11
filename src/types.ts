@@ -42,7 +42,6 @@ export type TokenType = {
   decimal:number
   name: string
   symbol: string
-  totalSupply: BigNumber
 }
 
 export type BalancesType = {[key: string]: BigNumber}

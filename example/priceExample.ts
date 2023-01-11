@@ -1,21 +1,66 @@
-import {getPairInfo, getPairsInfo} from "../src/uniV2Pair";
+import {
+  fetchCpPrice,
+  get24hChange,
+  get24hChangeByLog,
+  getNativePrice
+}                                from "../src/price";
+import {LP_PRICE_UNIT, POOL_IDS} from "../src/utils/constant";
+import {ethers}                  from "ethers";
+import {bn, getLogicAbi}         from "../src/utils/helper";
+
+const token0 = {
+  address: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+  decimal: 18,
+  name: 'wbnb',
+  symbol: 'wbnb',
+}
+
+const token1 = {
+  address: '0xe9e7cea3dedca5984780bafc599bd69add087d56',
+  decimal: 18,
+  name: 'BUSD',
+  symbol: 'BUSD',
+}
+
+const logicAddress = '0xdD4A0c754a802c69f488645faD474081D2f117d7';
+const cTokenAddress = '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16';
 
 const test = async () => {
-  const pairInfo = await getPairInfo({
-    rpcUrl: 'https://bsc-dataseed.binance.org/',
+  const res24hChangeByLog = await get24hChangeByLog({
     chainId: 56,
-    pairAddress: '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16'
+    baseToken: token0,
+    quoteToken: token1,
+    cToken: '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16',
+    currentPrice: '200',
+    baseId: POOL_IDS.token0
   })
+  console.log('res24hChangeByLog', res24hChangeByLog)
 
-  const pairsInfo = await getPairsInfo({
-    rpcUrl: 'https://bsc-dataseed.binance.org/',
+  const res24hChange = await get24hChange({
+    baseToken: token0,
+    quoteToken: token1,
+    cToken: '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16',
+    currentPrice: '200'
+  })
+  console.log('res24hChange', res24hChange)
+
+  const nativePrice = await getNativePrice({
+    chainId: 56
+  })
+  console.log('nativePrice', nativePrice)
+
+  const provider = new ethers.providers.JsonRpcProvider('https://bscrpc.com/')
+  const logicContract = new ethers.Contract(logicAddress, getLogicAbi(56), provider)
+  const states = await logicContract.getStates()
+  const cTokenPrice = bn(states.twap.LP._x).mul(LP_PRICE_UNIT).shr(112).toNumber() / LP_PRICE_UNIT
+  const cpPrice = await fetchCpPrice({
+    states,
+    cToken: cTokenAddress,
     chainId: 56,
-    pairAddresses: ['0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16', '0x7EFaEf62fDdCCa950418312c6C91Aef321375A00']
+    poolAddress: '0x7Eb8e543A960b4bCA5392a2960E355d2374EDB42',
+    cTokenPrice
   })
-  console.log({
-    pairInfo,
-    pairsInfo
-  })
-}
+  console.log('cpPrice', cpPrice)
+  }
 
 test()
