@@ -1,6 +1,6 @@
 import {ethers} from "ethers";
 import PairDetailAbi from "./abi/PairDetail.json";
-import {ADDRESSES} from "./utils/addresses";
+import {CONFIGS} from "./utils/configs";
 
 const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111'
 
@@ -17,7 +17,7 @@ export const getPairInfo = async ({
 }) => {
   try {
     const provider = new ethers.providers.StaticJsonRpcProvider(rpcUrl)
-    const pairDetailContract = new ethers.Contract(ADDRESSES[chainId].pairsInfo, PairDetailAbi, provider)
+    const pairDetailContract = new ethers.Contract(CONFIGS[chainId].pairsInfo, PairDetailAbi, provider)
 
     const res = await pairDetailContract.functions.query([pairAddress], flag)
     return res.details[0]
@@ -42,7 +42,7 @@ export const getPairsInfo = async (
   }) => {
   try {
     const provider = new ethers.providers.StaticJsonRpcProvider(rpcUrl)
-    const pairDetailContract = new ethers.Contract(ADDRESSES[chainId].pairsInfo, PairDetailAbi, provider)
+    const pairDetailContract = new ethers.Contract(CONFIGS[chainId].pairsInfo, PairDetailAbi, provider)
 
     const { details } = await pairDetailContract.functions.query(
       pairAddresses,

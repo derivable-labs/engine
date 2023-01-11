@@ -1,6 +1,11 @@
-import {ethers} from "ethers";
+import {ethers}                                                     from "ethers";
 import {ddlGenesisBlock, LOCALSTORAGE_KEY, LP_PRICE_UNIT, POOL_IDS} from "./utils/constant";
-import EventsAbi from './abi/Events.json'
+import EventsAbi                                                    from './abi/Events.json'
+import {getPairsInfo}                                               from "./uniV2Pair";
+import {Multicall}                                                  from "ethereum-multicall";
+import {CONFIGS}                                                    from "./utils/configs";
+import TokensInfoAbi                                                from "./abi/TokensInfo.json";
+import {ParseLogType, PoolsType, PoolType, SwapLog, TokenType}      from "./types";
 import {
   bn, decodePowers,
   formatMultiCallBignumber,
@@ -8,12 +13,7 @@ import {
   getNormalAddress,
   numberToWei,
   weiToNumber
-} from "./utils/helper";
-import {getPairsInfo} from "./uniV2Pair";
-import {Multicall} from "ethereum-multicall";
-import {ADDRESSES} from "./utils/addresses";
-import TokensInfoAbi from "./abi/TokensInfo.json";
-import {ParseLogType, PoolsType, PoolType, SwapLog, TokenType} from "./types";
+}                                                                   from "./utils/helper";
 
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
@@ -70,16 +70,16 @@ export class DdlResource {
 
   getLastBlockCached(account: string) {
     const lastDDlBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) || ddlGenesisBlock[this.chainId] - 1
-    const lastWalletBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account)) || ddlGenesisBlock[this.chainId] -1
+    const lastWalletBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account)) || ddlGenesisBlock[this.chainId] - 1
     return Math.min(lastDDlBlock + 1, lastWalletBlock + 1)
   }
 
   cacheDdlLog({
-                swapLogs,
-                ddlLogs,
-                headBlock,
-                account
-              }: {
+    swapLogs,
+    ddlLogs,
+    headBlock,
+    account
+  }: {
     swapLogs: any,
     ddlLogs: any,
     headBlock: number,
@@ -171,7 +171,7 @@ export class DdlResource {
 
       return [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs)]
     }).then(async ([ddlLogs, swapLogs]: any) => {
-      const result: ResourceData =  { pools: {}, tokens: [], swapLogs: [] }
+      const result: ResourceData = { pools: {}, tokens: [], swapLogs: [] }
       if (swapLogs && swapLogs.length > 0) {
         result.swapLogs = swapLogs
       }
@@ -244,7 +244,7 @@ export class DdlResource {
   async loadStatesData(listTokens: string[], listPools: { [key: string]: PoolType }, uniPools: string[]) {
     const provider = new ethers.providers.StaticJsonRpcProvider(this.rpcUrl)
     const multicall = new Multicall({
-      multicallCustomContractAddress: ADDRESSES[this.chainId].multiCall,
+      multicallCustomContractAddress: CONFIGS[this.chainId].multiCall,
       ethersProvider: provider,
       tryAggregate: true
     })
@@ -343,7 +343,7 @@ export class DdlResource {
     const request = [
       {
         reference: 'tokens',
-        contractAddress: ADDRESSES[this.chainId].tokensInfo,
+        contractAddress: CONFIGS[this.chainId].tokensInfo,
         abi: TokensInfoAbi,
         calls: [{ reference: 'tokenInfos', methodName: 'getTokenInfo', methodParameters: [normalTokens] }]
       }

@@ -1,4 +1,4 @@
-import {DdlResource} from "../src/pools";
+import {DdlResource} from "../src/ddlResource";
 
 const test = async () => {
   let storageData = {}
@@ -9,7 +9,7 @@ const test = async () => {
     account: '0xC06F7cF8C9e8a8D39b0dF5A105d66127912Bc980',
     storage: {
       getItem: (itemName: string) => storageData[itemName],
-      setItem: (itemName, value) => storageData[itemName] = value
+      setItem: (itemName: string | number, value: any) => storageData[itemName] = value
     }
   })
   const res = await pool.fetchResourceData('0xC06F7cF8C9e8a8D39b0dF5A105d66127912Bc980')

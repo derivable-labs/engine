@@ -1,11 +1,11 @@
 import {bn, getErc1155Token, getNormalAddress, provider} from "./utils/helper";
-import {ethers} from "ethers";
-import {Multicall} from "ethereum-multicall";
-import {ADDRESSES} from "./utils/addresses";
-import {LARGE_VALUE} from "./utils/constant";
-import BnAAbi from './abi/BnA.json'
-import PoolAbi from './abi/Pool.json'
-import {AllowancesType, BalancesType} from "./types";
+import {ethers}                                          from "ethers";
+import {Multicall}                                       from "ethereum-multicall";
+import {CONFIGS}                                         from "./utils/configs";
+import {LARGE_VALUE}                                     from "./utils/constant";
+import BnAAbi                                            from './abi/BnA.json'
+import PoolAbi                                           from './abi/Pool.json'
+import {AllowancesType, BalancesType}                    from "./types";
 
 type ConfigType = {
   account: string
@@ -16,11 +16,13 @@ type ConfigType = {
 
 type BnAReturnType = { balances: BalancesType, allowances: AllowancesType }
 
-export const getBalanceAndAllowance = async ({ account, tokens, chainId, rpcUrl }: ConfigType): Promise<BnAReturnType> => {
+export const getBalanceAndAllowance = async ({
+  account, tokens, chainId, rpcUrl
+}: ConfigType): Promise<BnAReturnType> => {
   if (account) {
     const provider = new ethers.providers.JsonRpcProvider(rpcUrl)
     const multicall = new Multicall({
-      multicallCustomContractAddress: ADDRESSES[chainId].multiCall,
+      multicallCustomContractAddress: CONFIGS[chainId].multiCall,
       ethersProvider: provider,
       tryAggregate: true
     })
@@ -91,9 +93,11 @@ const getBnAMulticallRequest = (
   const request: any = [
     {
       reference: 'erc20',
-      contractAddress: ADDRESSES[chainId].bnA,
+      contractAddress: CONFIGS[chainId].bnA,
       abi: BnAAbi,
-      calls: [{ reference: 'bna', methodName: 'getBnA', methodParameters: [erc20Tokens, [account], [ADDRESSES[chainId].router]] }]
+      calls: [{
+        reference: 'bna', methodName: 'getBnA', methodParameters: [erc20Tokens, [account], [CONFIGS[chainId].router]]
+      }]
     }
   ]
 
@@ -107,8 +111,14 @@ const getBnAMulticallRequest = (
         contractAddress: erc1155Address,
         abi: PoolAbi,
         calls: [
-          { reference: erc1155Address, methodName: 'isApprovedForAll', methodParameters: [account, ADDRESSES[chainId].router] },
-          { reference: erc1155Address, methodName: 'balanceOfBatch', methodParameters: [accounts, erc1155Tokens[erc1155Address]] }
+          {
+            reference: erc1155Address, methodName: 'isApprovedForAll',
+            methodParameters: [account, CONFIGS[chainId].router]
+          },
+          {
+            reference: erc1155Address, methodName: 'balanceOfBatch',
+            methodParameters: [accounts, erc1155Tokens[erc1155Address]]
+          }
         ]
       }
     )
