@@ -1,11 +1,10 @@
-import {ethers}                                                     from "ethers";
-import {ddlGenesisBlock, LOCALSTORAGE_KEY, LP_PRICE_UNIT, POOL_IDS} from "./utils/constant";
-import EventsAbi                                                    from './abi/Events.json'
-import {getPairsInfo}                                               from "./uniV2Pair";
-import {Multicall}                                                  from "ethereum-multicall";
-import {CONFIGS}                                                    from "./utils/configs";
-import TokensInfoAbi                                                from "./abi/TokensInfo.json";
-import {ParseLogType, PoolsType, PoolType, SwapLog, TokenType}      from "./types";
+import {ethers}                                                         from "ethers";
+import {ddlGenesisBlock, LOCALSTORAGE_KEY, LP_PRICE_UNIT, POOL_IDS}     from "../utils/constant";
+import EventsAbi                                                        from '../abi/Events.json'
+import {Multicall}                                                      from "ethereum-multicall";
+import {CONFIGS}                                                        from "../utils/configs";
+import TokensInfoAbi                                                    from "../abi/TokensInfo.json";
+import {ParseLogType, PoolsType, PoolType, Storage, SwapLog, TokenType} from "../types";
 import {
   bn, decodePowers,
   formatMultiCallBignumber,
@@ -13,7 +12,8 @@ import {
   getNormalAddress,
   numberToWei,
   weiToNumber
-}                                                                   from "./utils/helper";
+}                                                                       from "../utils/helper";
+import {UniV2Pair}                                                      from "./uniV2Pair";
 
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
@@ -22,12 +22,11 @@ const TOPIC_APP = ethers.utils.formatBytes32String('DDL')
 type ConfigType = {
   chainId: number
   scanApi: string
-  rpcUrl: string
-  account: string
-  storage: {
-    setItem: (itemName: string, value: string) => void
-    getItem: (itemName: string) => string
-  }
+  account?: string
+  storage?: Storage
+  provider: ethers.providers.Provider
+  providerToGetLog: ethers.providers.Provider
+  UNIV2PAIR: UniV2Pair
 }
 
 type ResourceData = {
@@ -36,23 +35,27 @@ type ResourceData = {
   swapLogs: SwapLog[]
 }
 
-export class DdlResource {
+export class Resource {
   pools: PoolsType = {}
   tokens: TokenType[] = []
   swapLogs: SwapLog[] = []
   chainId: number
   scanApi: string
-  rpcUrl: string
-  storage: {
-    setItem: (itemName: string, value: string) => void
-    getItem: (itemName: string) => string
-  }
+  account?: string
+  storage?: Storage
+  provider: ethers.providers.Provider
+  providerToGetLog: ethers.providers.Provider
+  UNIV2PAIR: UniV2Pair
 
   constructor(configs: ConfigType) {
     this.chainId = configs.chainId
     this.scanApi = configs.scanApi
-    this.rpcUrl = configs.rpcUrl
+    this.account = configs.account
     this.storage = configs.storage
+    this.account = configs.account
+    this.providerToGetLog = configs.providerToGetLog
+    this.provider = configs.provider
+    this.UNIV2PAIR = configs.UNIV2PAIR
   }
 
   async fetchResourceData(account: string) {
@@ -69,6 +72,7 @@ export class DdlResource {
   }
 
   getLastBlockCached(account: string) {
+    if (!this.storage) return ddlGenesisBlock[this.chainId]
     const lastDDlBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) || ddlGenesisBlock[this.chainId] - 1
     const lastWalletBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account)) || ddlGenesisBlock[this.chainId] - 1
     return Math.min(lastDDlBlock + 1, lastWalletBlock + 1)
@@ -85,6 +89,7 @@ export class DdlResource {
     headBlock: number,
     account: string
   }) {
+    if (!this.storage) return
     const cachedDdlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) || '[]')
     const newCachedDdlLogs = [...ddlLogs, ...cachedDdlLogs].filter((log, index, self) => {
       return index === self.findIndex((t) => (
@@ -108,6 +113,7 @@ export class DdlResource {
 
   async getResourceCached(account: string): Promise<ResourceData> {
     const results: ResourceData = { pools: {}, tokens: [], swapLogs: [] }
+    if (!this.storage) return results
     const ddlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) || '[]')
     const swapLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account) || '[]')
     const [ddlLogsParsed, swapLogsParsed] = [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs)]
@@ -124,7 +130,6 @@ export class DdlResource {
   }
 
   async getNewResource(account: string): Promise<ResourceData> {
-    const etherProvider = new ethers.providers.StaticJsonRpcProvider(this.rpcUrl)
     const etherscanConfig = this.scanApi ? {
       url: this.scanApi,
       maxResults: 1000,
@@ -135,7 +140,7 @@ export class DdlResource {
     } : undefined
 
     const provider = new AssistedJsonRpcProvider(
-      etherProvider,
+      this.providerToGetLog,
       etherscanConfig
     )
     const lastHeadBlockCached = this.getLastBlockCached(account)
@@ -240,12 +245,12 @@ export class DdlResource {
    * load Token detail, poolstate data and then dispatch to Store
    * @param listTokens
    * @param listPools
+   * @param uniPools
    */
   async loadStatesData(listTokens: string[], listPools: { [key: string]: PoolType }, uniPools: string[]) {
-    const provider = new ethers.providers.StaticJsonRpcProvider(this.rpcUrl)
     const multicall = new Multicall({
       multicallCustomContractAddress: CONFIGS[this.chainId].multiCall,
-      ethersProvider: provider,
+      ethersProvider: this.provider,
       tryAggregate: true
     })
     const normalTokens = getNormalAddress(listTokens)
@@ -254,9 +259,7 @@ export class DdlResource {
     const context: ContractCallContext[] = this.getMultiCallRequest(normalTokens, listPools)
     const [{ results }, pairsInfo] = await Promise.all([
       multicall.call(context),
-      getPairsInfo({
-        chainId: this.chainId,
-        rpcUrl: this.rpcUrl,
+      this.UNIV2PAIR.getPairsInfo({
         pairAddresses: uniPools
       })
     ])

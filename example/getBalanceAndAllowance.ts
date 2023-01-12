@@ -1,11 +1,17 @@
-import {DdlResource} from "../src/pools";
-import {getBalanceAndAllowance} from "../src/balanceAndAllowance";
+import {Engine}                 from "../src/engine";
+import {ethers}                 from "ethers";
 
 const test = async () => {
-  const res = await getBalanceAndAllowance({
-    account: '0xC06F7cF8C9e8a8D39b0dF5A105d66127912Bc980',
-    rpcUrl: 'https://bsc-dataseed.binance.org/',
+  const engine = new Engine({
     chainId: 56,
+    provider: new ethers.providers.JsonRpcProvider('https://bscrpc.com/'),
+    providerToGetLog: new ethers.providers.JsonRpcProvider('https://bscrpc.com/'),
+    scanApi: 'https://api.bscscan.com/api',
+    rpcUrl: 'https://bsc-dataseed.binance.org/',
+    account: '0xC06F7cF8C9e8a8D39b0dF5A105d66127912Bc980'
+  })
+
+  const res = await engine.BNA.getBalanceAndAllowance({
     tokens: [
       "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
       "0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16",
@@ -22,6 +28,7 @@ const test = async () => {
       "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56"
     ]
   })
+
   console.log(res)
 }
 

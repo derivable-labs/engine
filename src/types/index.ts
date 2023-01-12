@@ -1,5 +1,10 @@
 import {BigNumber} from "ethers";
 
+export type Storage = {
+  setItem: (itemName: string, value: string) => void
+  getItem: (itemName: string) => string
+}
+
 export type ParseLogType = {
   address: string
   name: string
