@@ -126,6 +126,7 @@ export class Resource {
     if (swapLogsParsed && swapLogsParsed.length > 0) {
       results.swapLogs = swapLogsParsed
     }
+    this.pools = { ...results.pools, ...this.pools }
     return results
   }
 
@@ -185,6 +186,7 @@ export class Resource {
         result.tokens = tokens
         result.pools = pools
       }
+      this.pools = { ...result.pools, ...this.pools }
       return result
     }).catch((e: any) => {
       console.error(e)

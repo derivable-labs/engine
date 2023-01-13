@@ -51,3 +51,24 @@ export type TokenType = {
 
 export type BalancesType = {[key: string]: BigNumber}
 export type AllowancesType = {[key: string]: BigNumber}
+
+export type PoolErc1155StepType = {
+  idIn: BigNumber | string,
+  idOut: BigNumber | string,
+  amountIn: BigNumber
+  amountOutMin: BigNumber | string | number
+}
+
+export type StepType = {
+  tokenIn: string,
+  tokenOut: string,
+  amountIn: BigNumber
+}
+
+
+export type SwapStepType = {
+  tokenIn: string,
+  tokenOut: string,
+  amountIn: BigNumber
+  amountOutMin: BigNumber | string | number
+}

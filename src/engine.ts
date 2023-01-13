@@ -4,6 +4,9 @@ import {Price}                                  from "./services/price";
 import {Resource}                               from "./services/resource";
 import {BnA}                                    from "./services/balanceAndAllowance";
 import {UniV2Pair}                              from "./services/uniV2Pair";
+import {History}                                from "./services/history";
+import {Swap}                                   from "./services/swap";
+import {CurrentPool}                            from "./services/currentPool";
 
 type ConfigType = {
   chainId: number
@@ -27,6 +30,10 @@ export class Engine {
   RESOURCE: Resource
   BNA: BnA
   UNIV2PAIR: UniV2Pair
+  HISTORY: History
+  SWAP: Swap
+  CURRENT_POOL: CurrentPool
+  currentPoolAddress: string
 
   constructor(configs: ConfigType) {
     this.chainId = configs.chainId
@@ -67,5 +74,25 @@ export class Engine {
       providerToGetLog: this.providerToGetLog,
       UNIV2PAIR: this.UNIV2PAIR
     })
+
+    this.HISTORY = new History()
+
+    this.CURRENT_POOL = new CurrentPool({
+      resource: this.RESOURCE,
+      poolAddress: this.currentPoolAddress
+    })
+
+    // this.SWAP = new Swap({
+    //   chainId: this.chainId,
+    //   provider: this.provider,
+    //   scanApi: this.scanApi,
+    //   resource: this.RESOURCE,
+    //   currentPool: this.currentPool
+    // })
   }
+
+  setCurrentPool(address: string) {
+    this.CURRENT_POOL.setPoolAddress(address)
+  }
+
 }

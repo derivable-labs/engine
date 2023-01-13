@@ -154,9 +154,7 @@ export class Price {
     }
   }
 
-
   /**
-   * @param chainId
    * @return price of native token
    */
   async getNativePrice(): Promise<string> {
