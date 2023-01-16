@@ -5,13 +5,14 @@ import {Resource}                               from "./services/resource";
 import {BnA}                                    from "./services/balanceAndAllowance";
 import {UniV2Pair}                              from "./services/uniV2Pair";
 import {History}                                from "./services/history";
-import {Swap}                                   from "./services/swap";
-import {CurrentPool}                            from "./services/currentPool";
+import {Swap}                  from "./services/swap";
+import {CurrentPool, PoolData} from "./services/currentPool";
 
 type ConfigType = {
   chainId: number
   scanApi: string
   rpcUrl: string
+  signer?: ethers.providers.JsonRpcSigner
   provider: ethers.providers.Provider
   providerToGetLog: ethers.providers.Provider
   account?: string
@@ -23,6 +24,7 @@ export class Engine {
   scanApi: string
   rpcUrl: string
   account?: string
+  signer?: ethers.providers.JsonRpcSigner
   provider: ethers.providers.Provider
   providerToGetLog: ethers.providers.Provider
   storage?: Storage
@@ -42,6 +44,7 @@ export class Engine {
     this.storage = configs.storage
     this.provider = configs.provider
     this.account = configs.account
+    this.signer = configs.signer
     this.providerToGetLog = configs.providerToGetLog
     this.initServices()
   }
@@ -78,21 +81,24 @@ export class Engine {
     this.HISTORY = new History()
 
     this.CURRENT_POOL = new CurrentPool({
+      chainId: this.chainId,
       resource: this.RESOURCE,
       poolAddress: this.currentPoolAddress
     })
 
-    // this.SWAP = new Swap({
-    //   chainId: this.chainId,
-    //   provider: this.provider,
-    //   scanApi: this.scanApi,
-    //   resource: this.RESOURCE,
-    //   currentPool: this.currentPool
-    // })
+    this.SWAP = new Swap({
+      chainId: this.chainId,
+      provider: this.provider,
+      scanApi: this.scanApi,
+      UNIV2PAIR: this.UNIV2PAIR,
+      CURRENT_POOL: this.CURRENT_POOL,
+      signer: this.signer,
+      account: this.account,
+    })
   }
 
-  setCurrentPool(address: string) {
-    this.CURRENT_POOL.setPoolAddress(address)
+  setCurrentPool(poolData: PoolData) {
+    this.CURRENT_POOL.initCurrentPoolData(poolData)
   }
 
 }
