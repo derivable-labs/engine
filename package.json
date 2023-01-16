@@ -14,7 +14,7 @@
   "license": "ISC",
   "dependencies": {
     "assisted-json-rpc-provider": "git+ssh://git@github.com:launchzone/AssistedJsonRpcProvider.git#1662bda1343be76618331a2d671bfa56f0d0e305",
-    "powerLib": "git+ssh://git@github.com:derivable-io/power-lib.git#b74df35877285735d1704a596e6e47647d858f0c",
+    "powerLib": "git+ssh://git@github.com:derivable-io/power-lib.git#502f7724fe3f25676f48e4107a0c7da705e25d7f",
     "ethereum-multicall": "^2.15.0",
     "ethers": "^5.5.4",
     "lodash": "^4.17.21",

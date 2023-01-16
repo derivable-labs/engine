@@ -2,7 +2,7 @@ import {BigNumber, ethers} from "ethers";
 import {UniV2Pair}         from "./uniV2Pair";
 import {bn}                from "../utils/helper";
 import _                   from "lodash";
-import {PowerState}        from 'powerLib/lib/index'
+import {PowerState}        from 'powerLib/dist/powerLib'
 
 type ConfigType = {
   chainId: number
