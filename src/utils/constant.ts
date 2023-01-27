@@ -8,21 +8,35 @@ export const TIME_TO_REFRESH_STATE = 30000
 export const CHART_API_ENDPOINT = 'https://api.lz.finance/56/chart/'
 
 export const LOCALSTORAGE_KEY = {
-  DDL_LOGS: 'ddl-log-v1.0',
-  LAST_BLOCK_DDL_LOGS: 'last-block-ddl-log-v1.0',
-  SWAP_LOGS: 'swap-log-v1.0',
-  SWAP_BLOCK_LOGS: 'last-block-swap-log-v1.0'
+    DDL_LOGS: 'ddl-log-v1.0',
+    LAST_BLOCK_DDL_LOGS: 'last-block-ddl-log-v1.0',
+    SWAP_LOGS: 'swap-log-v1.0',
+    SWAP_BLOCK_LOGS: 'last-block-swap-log-v1.0'
 }
 
 export const ddlGenesisBlock = {
-  56: 23917200,
+    56: 23917200,
+    31337: 0,
 }
 
 export const POOL_IDS = {
-  cToken: 131072,
-  cp: 65536,
-  token0: 262144,
-  token1: 262145,
-  native: '0x000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+    cToken: 131072,
+    cp: 65536,
+    token0: 262144,
+    token1: 262145,
+    native: '0x000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
 }
 
+export const EventDataAbis = {
+    LogicCreated: ['bytes32 baseSymbol',
+        'bytes32 quoteSymbol',
+        'uint224 priceToleranceRatio',
+        'uint224 rentRate',
+        'uint224 deleverageRate',
+        'bytes32 powers'],
+    PoolCreated: [
+        'address feeRecipient',
+        'uint feeNum',
+        'uint feeDenom'
+    ]
+}

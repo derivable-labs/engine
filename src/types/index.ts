@@ -10,6 +10,7 @@ export type ParseLogType = {
   name: string
   topic: string
   args: any
+  topics: string[]
 }
 
 export type PoolType = {

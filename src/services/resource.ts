@@ -1,10 +1,10 @@
-import {ethers}                                                         from "ethers";
-import {ddlGenesisBlock, LOCALSTORAGE_KEY, LP_PRICE_UNIT, POOL_IDS}     from "../utils/constant";
-import EventsAbi                                                        from '../abi/Events.json'
-import {Multicall}                                                      from "ethereum-multicall";
-import {CONFIGS}                                                        from "../utils/configs";
-import TokensInfoAbi                                                    from "../abi/TokensInfo.json";
-import {ParseLogType, PoolsType, PoolType, Storage, SwapLog, TokenType} from "../types";
+import {ethers}                                                                    from "ethers";
+import {ddlGenesisBlock, EventDataAbis, LOCALSTORAGE_KEY, LP_PRICE_UNIT, POOL_IDS} from "../utils/constant";
+import EventsAbi                                                                   from '../abi/Events.json'
+import {Multicall}                                                                 from "ethereum-multicall";
+import {CONFIGS}                                                                   from "../utils/configs";
+import TokensInfoAbi                                                               from "../abi/TokensInfo.json";
+import {ParseLogType, PoolsType, PoolType, Storage, SwapLog, TokenType}            from "../types";
 import {
   bn, decodePowers,
   formatMultiCallBignumber,
@@ -12,8 +12,8 @@ import {
   getNormalAddress,
   numberToWei,
   weiToNumber
-}                                                                       from "../utils/helper";
-import {UniV2Pair}                                                      from "./uniV2Pair";
+}                                                                                  from "../utils/helper";
+import {UniV2Pair}                                                                 from "./uniV2Pair";
 
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
@@ -60,8 +60,7 @@ export class Resource {
 
   async fetchResourceData(account: string) {
     let result: any = {}
-    if (!this.chainId || !this.scanApi) return result;
-
+    if (!this.chainId) return result;
     const [resultCached, newResource] = await Promise.all([
       this.getResourceCached(account),
       this.getNewResource(account)
@@ -146,15 +145,22 @@ export class Resource {
     )
     const lastHeadBlockCached = this.getLastBlockCached(account)
     const accTopic = account ? '0x' + '0'.repeat(24) + account.slice(2) : null
+    const topics = this.getTopics()
 
     return await provider.getLogs({
       fromBlock: lastHeadBlockCached,
       toBlock: MAX_BLOCK,
+      // topics: [
+      //     null,
+      //     [topics.DDL, null, null],
+      //     [null, accTopic, null],
+      //     [null, null, accTopic]
+      // ]
       topics: [
-        null,
-        [null, accTopic, null, null],
+        [topics.DDL, null, null, null],
+        [null, null, null, null],
         [null, null, accTopic, null],
-        [null, null, null, TOPIC_APP]
+        [null, null, null, accTopic],
       ]
     }).then((logs: any) => {
       if (!logs?.length) {
@@ -163,11 +169,12 @@ export class Resource {
       const headBlock = logs[logs.length - 1]?.blockNumber
       const topics = this.getTopics()
       const ddlLogs = logs.filter((log: any) => {
-        return log.address && [topics.LogicCreated, topics.PoolCreated].includes(log.topics[0])
+        return log.address && [topics.LogicCreated, topics.PoolCreated, topics.DDL].includes(log.topics[0])
       })
       const swapLogs = logs.filter((log: any) => {
-        return log.address && log.topics[0] === topics.MultiSwap
+        return log.address && [topics.TransferSingle, topics.TransferBatch].includes(log.topics[0])
       })
+      console.log(swapLogs)
       this.cacheDdlLog({
         ddlLogs,
         swapLogs,
@@ -175,7 +182,7 @@ export class Resource {
         account
       })
 
-      return [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs)]
+      return [[], this.parseDdlLogs(swapLogs)]
     }).then(async ([ddlLogs, swapLogs]: any) => {
       const result: ResourceData = { pools: {}, tokens: [], swapLogs: [] }
       if (swapLogs && swapLogs.length > 0) {
@@ -211,10 +218,10 @@ export class Resource {
           dTokens: powers.map((value, key) => {
             return { power: value, index: key }
           }),
-          baseToken: log.args.baseToken,
+          baseToken: log.topics[2].slice(0, 42),
           baseSymbol: ethers.utils.parseBytes32String(log.args.baseSymbol),
           quoteSymbol: ethers.utils.parseBytes32String(log.args.quoteSymbol),
-          cToken: log.args.cToken,
+          cToken: log.topics[3].slice(0, 42),
           priceToleranceRatio: log.args.priceToleranceRatio,
           rentRate: log.args.rentRate,
           deleverageRate: log.args.deleverageRate,
@@ -225,7 +232,7 @@ export class Resource {
 
     logs.forEach((log) => {
       if (log.name === 'PoolCreated') {
-        const logic = log.args.logic
+        const logic = ethers.utils.getAddress(log.topics[3].slice(0, 42))
         const data = logicData[logic]
 
         data.dTokens = (data.dTokens as { index: number, power: number }[])
@@ -397,6 +404,20 @@ export class Resource {
 
     return ddlLogs.map((log: any) => {
       try {
+        const decodeLog = eventInterface.parseLog(log)
+        let appName = null
+        try {
+          appName = ethers.utils.parseBytes32String(decodeLog.args.topic1)
+        } catch(e) {}
+
+        let data: any = decodeLog
+        if (appName) {
+          data = ethers.utils.defaultAbiCoder.decode(
+            EventDataAbis[appName],
+            decodeLog.args.data
+          )
+        }
+
         return {
           address: log.address,
           timeStamp: Number(log.timeStamp),
@@ -404,9 +425,14 @@ export class Resource {
           blockNumber: log.blockNumber,
           index: log.logIndex,
           logIndex: log.transactionHash + '-' + log.logIndex,
-          ...eventInterface.parseLog(log)
+          name: appName,
+          topics: log.topics,
+          args: {
+            ...data
+          }
         }
       } catch (e) {
+        console.error(e)
         return {}
       }
     })
