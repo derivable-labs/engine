@@ -174,7 +174,6 @@ export class Resource {
       const swapLogs = logs.filter((log: any) => {
         return log.address && [topics.TransferSingle, topics.TransferBatch].includes(log.topics[0])
       })
-      console.log(swapLogs)
       this.cacheDdlLog({
         ddlLogs,
         swapLogs,
@@ -182,7 +181,7 @@ export class Resource {
         account
       })
 
-      return [[], this.parseDdlLogs(swapLogs)]
+      return [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs)]
     }).then(async ([ddlLogs, swapLogs]: any) => {
       const result: ResourceData = { pools: {}, tokens: [], swapLogs: [] }
       if (swapLogs && swapLogs.length > 0) {

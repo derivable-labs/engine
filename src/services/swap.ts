@@ -1,11 +1,13 @@
-import {BigNumber, ethers}                           from "ethers";
-import {UniV2Pair}                                   from "./uniV2Pair";
+import {BigNumber, ethers} from "ethers";
+import {UniV2Pair} from "./uniV2Pair";
 import {PoolErc1155StepType, StepType, SwapStepType} from "../types";
-import {bn}                                          from "../utils/helper";
-import {POOL_IDS}                                    from "../utils/constant";
-import {CONFIGS}                                     from "../utils/configs";
-import {CurrentPool}                                 from "./currentPool";
-import RouterAbi                                     from "../abi/router.json";
+import {bn} from "../utils/helper";
+import {POOL_IDS, ZERO_ADDRESS} from "../utils/constant";
+import {CONFIGS} from "../utils/configs";
+import {CurrentPool} from "./currentPool";
+import RouterAbi from "../abi/router.json";
+import UtrAbi from "../abi/UTR.json";
+import PoolAbi from "../abi/Pool.json";
 
 type ConfigType = {
   account?: string
@@ -99,14 +101,7 @@ export class Swap {
     gasLimit
   }: any) {
     const contract = this.getRouterContract(this.signer)
-    return await contract.callStatic.multiSwap(
-      {
-        pool: this.CURRENT_POOL.poolAddress,
-        to: this.account,
-        deadline: new Date().getTime() + 3600000,
-        fee10000,
-        referrer: ethers.utils.hexZeroPad('0x00', 32)
-      },
+    return await contract.callStatic.exec(
       steps,
       {
         value: value || bn(0),
@@ -135,6 +130,62 @@ export class Swap {
     return { stepsToSwap, value }
   }
 
+  async convertStepToActions(steps: SwapStepType[]): Promise<{ stepsToSwap: PoolErc1155StepType[], value: BigNumber }> {
+    const actionInput: any = {
+      output: 0,
+      code: ZERO_ADDRESS,
+      data: '0x',
+      tokens: []
+    }
+    let value = bn(0)
+    steps.forEach((step) => {
+      actionInput.tokens.push({
+        eip: 20,
+        adr: step.tokenIn,
+        id: 0,
+        offset: 0, // use exact amount specified bellow
+        amount: step.amountIn,
+        recipient: this.CURRENT_POOL.poolAddress,
+      })
+
+      // if (step.tokenIn === CONFIGS[this.chainId].nativeToken) {
+      //   value = value.add(step.amountIn)
+      // }
+    })
+    const stepsToSwap: any = [actionInput]
+
+    // console.log(actionInput)
+
+    const poolContract = this.getPoolContract()
+
+    const datas = await Promise.all(steps.map((step) => {
+      return poolContract.populateTransaction.swap(
+        this.getIdByAddress(step.tokenIn),
+        this.getIdByAddress(step.tokenOut),
+        this.account
+      )
+    }))
+
+    //@ts-ignore
+    steps.forEach((step, key) => {
+      stepsToSwap.push({
+        output: 1,
+        code: this.CURRENT_POOL.poolAddress,
+        data: datas[key].data,
+        tokens: [{
+          eip: 1155,
+          adr: this.CURRENT_POOL.poolAddress,
+          id: this.getIdByAddress(step.tokenOut),
+          amount: 0,
+          offset: 0,
+          recipient: this.account,
+        }]
+      })
+    })
+
+    return { stepsToSwap, value }
+  }
+
   getIdByAddress(address: string) {
     try {
       if (address === this.CURRENT_POOL.baseToken) return bn(this.CURRENT_POOL.baseId)
@@ -149,20 +200,13 @@ export class Swap {
 
   async multiSwap(steps: SwapStepType[], isDeleverage = false) {
     try {
-      const { stepsToSwap, value } = this.convertStepForPoolErc1155([...steps])
+      const { stepsToSwap, value } = await this.convertStepToActions([...steps])
       if (isDeleverage) {
         stepsToSwap.unshift(this.getDeleverageStep())
       }
       await this.callStaticMultiSwap({ steps: stepsToSwap, value })
       const contract = this.getRouterContract(this.signer)
-      const tx = await contract.multiSwap(
-        {
-          pool: this.CURRENT_POOL.poolAddress,
-          to: this.account,
-          deadline: new Date().getTime() + 3600000,
-          fee10000,
-          referrer: ethers.utils.hexZeroPad('0x00', 32)
-        },
+      const tx = await contract.exec(
         stepsToSwap,
         {
           value
@@ -188,6 +232,11 @@ export class Swap {
   }
 
   getRouterContract(provider: any) {
-    return new ethers.Contract(CONFIGS[this.chainId].router, RouterAbi, provider)
+    return new ethers.Contract(CONFIGS[this.chainId].router, UtrAbi, provider)
+    // return new ethers.Contract(CONFIGS[this.chainId].router, RouterAbi, provider)
+  }
+
+  getPoolContract() {
+    return new ethers.Contract(this.CURRENT_POOL.poolAddress, PoolAbi, this.provider)
   }
 }

@@ -1,0 +1,69 @@
+[
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "output",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "code",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "eip",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "adr",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "id",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "offset",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct Token[]",
+            "name": "tokens",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct Action[]",
+        "name": "actions",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "exec",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  }
+]
