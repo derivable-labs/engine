@@ -137,6 +137,7 @@ export class Swap {
 
   getIdByAddress(address: string) {
     try {
+      console.log('CONFIGS', CONFIGS)
       if (address === this.CURRENT_POOL.baseToken) return bn(this.CURRENT_POOL.baseId)
       if (address === this.CURRENT_POOL.quoteToken) return bn(this.CURRENT_POOL.quoteId)
       if (address === CONFIGS[this.chainId].nativeToken) return POOL_IDS.native

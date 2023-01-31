@@ -180,6 +180,7 @@ var Swap = /** @class */ (function () {
     };
     Swap.prototype.getIdByAddress = function (address) {
         try {
+            console.log('CONFIGS', configs_1.CONFIGS);
             if (address === this.CURRENT_POOL.baseToken)
                 return (0, helper_1.bn)(this.CURRENT_POOL.baseId);
             if (address === this.CURRENT_POOL.quoteToken)
