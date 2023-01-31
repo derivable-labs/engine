@@ -22,6 +22,6 @@ exports.POOL_IDS = {
     cp: 65536,
     token0: 262144,
     token1: 262145,
-    native: '0x000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+    native: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
 };
 //# sourceMappingURL=constant.js.map
