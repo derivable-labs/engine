@@ -63,6 +63,7 @@ export type PoolErc1155StepType = {
 export type StepType = {
   tokenIn: string,
   tokenOut: string,
+
   amountIn: BigNumber
 }
 

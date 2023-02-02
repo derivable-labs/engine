@@ -1,7 +1,7 @@
 import {BigNumber, ethers} from "ethers";
 import {UniV2Pair} from "./uniV2Pair";
 import {PoolErc1155StepType, StepType, SwapStepType} from "../types";
-import {bn} from "../utils/helper";
+import {bn, isErc1155Address, numberToWei} from "../utils/helper";
 import {POOL_IDS, ZERO_ADDRESS} from "../utils/constant";
 import {CONFIGS} from "../utils/configs";
 import {CurrentPool} from "./currentPool";
@@ -23,6 +23,10 @@ type ConfigType = {
 const fee10000 = 30
 
 const gasLimit = 30000000
+const ACTION_RECORD_CALL_RESULT = 2;
+const ACTION_INJECT_CALL_RESULT = 4;
+const TRANSFER_FROM_SENDER = 0;
+
 
 export class Swap {
   account?: string
@@ -96,18 +100,17 @@ export class Swap {
   }
 
   async callStaticMultiSwap({
-    steps,
+    params,
+    // @ts-ignore
     value,
+    // @ts-ignore
     gasLimit
   }: any) {
     const contract = this.getRouterContract(this.signer)
-    return await contract.callStatic.exec(
-      steps,
-      {
-        value: value || bn(0),
-        gasLimit: gasLimit || undefined
-      }
-    )
+    return await contract.callStatic.exec(...params, {
+      value: value || bn(0),
+      gasLimit: gasLimit || undefined
+    })
   }
 
   convertStepForPoolErc1155(steps: SwapStepType[]): { stepsToSwap: PoolErc1155StepType[], value: BigNumber } {
@@ -130,33 +133,19 @@ export class Swap {
     return { stepsToSwap, value }
   }
 
-  async convertStepToActions(steps: SwapStepType[]): Promise<{ stepsToSwap: PoolErc1155StepType[], value: BigNumber }> {
-    const actionInput: any = {
-      output: 0,
-      code: ZERO_ADDRESS,
-      data: '0x',
-      tokens: []
-    }
-    let value = bn(0)
-    steps.forEach((step) => {
-      actionInput.tokens.push({
-        eip: 20,
-        adr: step.tokenIn,
-        id: 0,
-        offset: 0, // use exact amount specified bellow
-        amount: step.amountIn,
-        recipient: this.CURRENT_POOL.poolAddress,
-      })
-
-      // if (step.tokenIn === CONFIGS[this.chainId].nativeToken) {
-      //   value = value.add(step.amountIn)
-      // }
-    })
-    const stepsToSwap: any = [actionInput]
-
-    // console.log(actionInput)
-
+  async convertStepToActions(steps: SwapStepType[]): Promise<{ params: any, value: BigNumber }> {
     const poolContract = this.getPoolContract()
+
+    const outputs: { eip: number; token: string; id: string | BigNumber; amountOutMin: string | number | BigNumber; recipient: string | undefined; }[] = []
+    steps.forEach((step) => {
+      outputs.push({
+        eip: isErc1155Address(step.tokenOut) ? 1155 : 20,
+        token: this.CURRENT_POOL.poolAddress,
+        id: this.getIdByAddress(step.tokenOut),
+        amountOutMin: step.amountOutMin,
+        recipient: this.account,
+      })
+    })
 
     const datas = await Promise.all(steps.map((step) => {
       return poolContract.populateTransaction.swap(
@@ -166,24 +155,25 @@ export class Swap {
       )
     }))
 
-    //@ts-ignore
-    steps.forEach((step, key) => {
-      stepsToSwap.push({
-        output: 1,
+    const actions = steps.map((step, key) => {
+      return {
+        flags: 0,
         code: this.CURRENT_POOL.poolAddress,
         data: datas[key].data,
-        tokens: [{
-          eip: 1155,
-          adr: this.CURRENT_POOL.poolAddress,
-          id: this.getIdByAddress(step.tokenOut),
-          amount: 0,
-          offset: 0,
-          recipient: this.account,
+        inputs: [{
+          mode: TRANSFER_FROM_SENDER,
+          recipient: this.CURRENT_POOL.poolAddress,
+          eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
+          id: isErc1155Address(step.tokenIn) ? this.getIdByAddress(step.tokenIn) : 0,
+          token: step.tokenIn,
+          amountInMax: step.amountIn,
+          amountSource: 0,
         }]
-      })
+      }
     })
 
-    return { stepsToSwap, value }
+
+    return { params: [outputs, actions], value: bn(0) }
   }
 
   getIdByAddress(address: string) {
@@ -200,14 +190,15 @@ export class Swap {
 
   async multiSwap(steps: SwapStepType[], isDeleverage = false) {
     try {
-      const { stepsToSwap, value } = await this.convertStepToActions([...steps])
+      const { params, value } = await this.convertStepToActions([...steps])
       if (isDeleverage) {
-        stepsToSwap.unshift(this.getDeleverageStep())
+        params.unshift(this.getDeleverageStep())
       }
-      await this.callStaticMultiSwap({ steps: stepsToSwap, value })
+      await this.callStaticMultiSwap({ params, value })
+      return 1
       const contract = this.getRouterContract(this.signer)
       const tx = await contract.exec(
-        stepsToSwap,
+        params,
         {
           value
         }

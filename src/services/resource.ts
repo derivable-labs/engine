@@ -181,6 +181,7 @@ export class Resource {
         account
       })
 
+      console.log(ddlLogs.length)
       return [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs)]
     }).then(async ([ddlLogs, swapLogs]: any) => {
       const result: ResourceData = { pools: {}, tokens: [], swapLogs: [] }
