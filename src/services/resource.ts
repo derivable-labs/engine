@@ -4,7 +4,7 @@ import EventsAbi                                                                
 import {Multicall}                                                                 from "ethereum-multicall";
 import {CONFIGS}                                                                   from "../utils/configs";
 import TokensInfoAbi                                                               from "../abi/TokensInfo.json";
-import {ParseLogType, PoolsType, PoolType, Storage, SwapLog, TokenType}            from "../types";
+import {LogType, ParseLogType, PoolsType, PoolType, Storage, SwapLog, TokenType} from "../types";
 import {
   bn, decodePowers,
   formatMultiCallBignumber,
@@ -32,13 +32,13 @@ type ConfigType = {
 type ResourceData = {
   pools: PoolsType
   tokens: TokenType[]
-  swapLogs: SwapLog[]
+  swapLogs: LogType[]
 }
 
 export class Resource {
   pools: PoolsType = {}
   tokens: TokenType[] = []
-  swapLogs: SwapLog[] = []
+  swapLogs: LogType[] = []
   chainId: number
   scanApi: string
   account?: string
@@ -158,9 +158,9 @@ export class Resource {
       // ]
       topics: [
         [topics.DDL, null, null, null],
-        [null, null, null, null],
-        [null, null, accTopic, null],
-        [null, null, null, accTopic],
+        [undefined, accTopic, null, null],
+        [undefined, null, accTopic, null],
+        [undefined, undefined, undefined, accTopic],
       ]
     }).then((logs: any) => {
       if (!logs?.length) {
@@ -172,7 +172,7 @@ export class Resource {
         return log.address && [topics.LogicCreated, topics.PoolCreated, topics.DDL].includes(log.topics[0])
       })
       const swapLogs = logs.filter((log: any) => {
-        return log.address && [topics.TransferSingle, topics.TransferBatch].includes(log.topics[0])
+        return log.address && [topics.Transfer, topics.TransferSingle, topics.TransferBatch].includes(log.topics[0])
       })
       this.cacheDdlLog({
         ddlLogs,
@@ -218,10 +218,10 @@ export class Resource {
           dTokens: powers.map((value, key) => {
             return { power: value, index: key }
           }),
-          baseToken: log.topics[2].slice(0, 42),
+          baseToken: ethers.utils.getAddress(log.topics[2].slice(0, 42)),
           baseSymbol: ethers.utils.parseBytes32String(log.args.baseSymbol),
           quoteSymbol: ethers.utils.parseBytes32String(log.args.quoteSymbol),
-          cToken: log.topics[3].slice(0, 42),
+          cToken: ethers.utils.getAddress(log.topics[3].slice(0, 42)),
           priceToleranceRatio: log.args.priceToleranceRatio,
           rentRate: log.args.rentRate,
           deleverageRate: log.args.deleverageRate,
@@ -417,10 +417,11 @@ export class Resource {
             decodeLog.args.data
           )
         }
+        const lastHeadBlockCached = this.getLastBlockCached('')
 
         return {
           address: log.address,
-          timeStamp: Number(log.timeStamp),
+          timeStamp: new Date().getTime() - (lastHeadBlockCached - log.blockNumber) * 3000,
           transactionHash: log.transactionHash,
           blockNumber: log.blockNumber,
           index: log.logIndex,

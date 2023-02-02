@@ -172,7 +172,6 @@ export class Swap {
       }
     })
 
-
     return { params: [outputs, actions], value: bn(0) }
   }
 
@@ -195,10 +194,8 @@ export class Swap {
         params.unshift(this.getDeleverageStep())
       }
       await this.callStaticMultiSwap({ params, value })
-      return 1
       const contract = this.getRouterContract(this.signer)
-      const tx = await contract.exec(
-        params,
+      const tx = await contract.exec(...params,
         {
           value
         }

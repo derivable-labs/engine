@@ -9,7 +9,8 @@
     "example:getBnA": "npx ts-node --files ./example/getBalanceAndAllowance.ts",
     "example:getPairDetail": "npx ts-node --files ./example/getPairDetail.ts",
     "example:price": "npx ts-node --files ./example/priceExample.ts",
-    "example:swap": "npx ts-node --files ./example/swap.ts"
+    "example:swap": "npx ts-node --files ./example/swap.ts",
+    "example:history": "npx ts-node --files ./example/history.ts"
   },
   "author": "",
   "license": "ISC",

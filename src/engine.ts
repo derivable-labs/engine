@@ -78,12 +78,15 @@ export class Engine {
       UNIV2PAIR: this.UNIV2PAIR
     })
 
-    this.HISTORY = new History()
-
     this.CURRENT_POOL = new CurrentPool({
       chainId: this.chainId,
       resource: this.RESOURCE,
       poolAddress: this.currentPoolAddress
+    })
+
+    this.HISTORY = new History({
+      account: this.account,
+      CURRENT_POOL: this.CURRENT_POOL,
     })
 
     this.SWAP = new Swap({

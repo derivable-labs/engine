@@ -1,5 +1,8 @@
 import {Resource} from "./resource";
 import {CONFIGS}  from "../utils/configs";
+import {bn} from "../utils/helper";
+import {POOL_IDS} from "../utils/constant";
+import {BigNumber} from "ethers";
 
 type ConfigType = {
   resource: Resource
@@ -85,5 +88,17 @@ export class CurrentPool {
     }
     const index = this.powers.findIndex((p) => p === Number(power))
     return this.dTokens[index]
+  }
+
+  getIdByAddress(address: string): BigNumber {
+    try {
+      if (address === this.baseToken) return bn(this.baseId)
+      if (address === this.quoteToken) return bn(this.quoteId)
+      if (address === CONFIGS[this.chainId].nativeToken) return bn(POOL_IDS.native)
+      if (address === this.cToken) return bn(POOL_IDS.cToken)
+      return bn(address.split('-')[1])
+    } catch (e) {
+      throw new Error('Token id not found')
+    }
   }
 }

@@ -13,12 +13,71 @@ export type ParseLogType = {
   topics: string[]
 }
 
+export type LogType = {
+  "address": string,
+  "timeStamp": number,
+  "transactionHash": string,
+  "blockNumber": number,
+  "index": number,
+  "logIndex": string,
+  "name": string,
+  "topics": string [],
+  "args": any
+}
+
+export type StatesType = {
+  "twapBase": BigNumber,
+  "twapLP": BigNumber,
+  "spotBase": BigNumber,
+  "spotLP": BigNumber,
+  "Rc": BigNumber,
+  "priceScaleTimestamp": number,
+  "priceScaleLong": BigNumber,
+  "priceScaleShort": BigNumber,
+  "oracleStore": {
+    basePriceCumulative: BigNumber,
+    blockTimestamp: number,
+    baseTWAP: {
+      _x: BigNumber
+    }
+  },
+  "oracleStoreUpdated": {
+    basePriceCumulative: BigNumber,
+    blockTimestamp: number,
+    baseTWAP: {
+      _x: BigNumber
+    }
+  },
+  "twap": {
+    base: {
+      _x: BigNumber
+    },
+    LP: {
+      _x: BigNumber
+    }
+  },
+  "spot": {
+    base: {
+      _x: BigNumber
+    },
+    LP: {
+      _x: BigNumber
+    }
+  },
+  "totalSupplies": BigNumber[],
+  "rDcNeutral": BigNumber,
+  "rDcLong": BigNumber,
+  "rDcShort": BigNumber,
+  "rentRateLong": BigNumber,
+  "rentRateShort": BigNumber
+}
+
 export type PoolType = {
   pool: string
   logic: string
   cTokenPrice: number
   baseSymbol: string
-  states: any
+  states: StatesType
   baseToken: string
   quoteToken: string
   cToken: string

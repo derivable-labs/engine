@@ -32,7 +32,7 @@ const testLocal = async () => {
   const steps = [
     {
       "tokenIn": "C",
-      "tokenOut": currentPool.poolAddress + "-2",
+      "tokenOut": currentPool.poolAddress + "-1",
       "amountIn": bn(numberToWei(1))
     },
     // {
