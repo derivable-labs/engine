@@ -1,13 +1,15 @@
 import {BigNumber, ethers} from "ethers";
 import {UniV2Pair} from "./uniV2Pair";
 import {PoolErc1155StepType, StepType, SwapStepType} from "../types";
-import {bn, isErc1155Address, numberToWei} from "../utils/helper";
+import {bn, isErc1155Address} from "../utils/helper";
 import {POOL_IDS, ZERO_ADDRESS} from "../utils/constant";
 import {CONFIGS} from "../utils/configs";
 import {CurrentPool} from "./currentPool";
-import RouterAbi from "../abi/router.json";
 import UtrAbi from "../abi/UTR.json";
+import LogicsAbi from "../abi/Logic.json";
+import UtrOverride from "../abi/UTROverride.json";
 import PoolAbi from "../abi/Pool.json";
+import {JsonRpcProvider} from "@ethersproject/providers";
 
 type ConfigType = {
   account?: string
@@ -46,37 +48,69 @@ export class Swap {
     this.CURRENT_POOL = configs.CURRENT_POOL
   }
 
-  getDeleverageStep(): PoolErc1155StepType {
+  async getDeleverageStep(): Promise<any> {
     const { priceScaleLong, twapBase } = this.CURRENT_POOL.states
-    const [amountIn, amountOutMin] = twapBase.lt(priceScaleLong) ?
+    const [start, end] = twapBase.lt(priceScaleLong) ?
       [twapBase, priceScaleLong] : [priceScaleLong, twapBase]
+    const logicContract = this.getLogicContract()
+    const data = (await logicContract.populateTransaction.deleverage(start.div(2), end.mul(2))).data
+
     return {
-      idIn: bn(POOL_IDS.cp),
-      idOut: bn(POOL_IDS.cp),
-      amountIn: amountIn.div(2),
-      amountOutMin: amountOutMin.mul(2),
+      flags: 0,
+      code: this.CURRENT_POOL.logicAddress,
+      data: data,
+      inputs: [{
+        mode: 2,
+        recipient: this.CURRENT_POOL.poolAddress,
+        eip: 0,
+        id: 0,
+        token: ZERO_ADDRESS,
+        amountInMax: 0,
+        amountSource: 0,
+      }]
     }
   }
 
-  //
+  //@ts-ignore
   async calculateAmountOuts(steps: StepType[], isDeleverage: boolean = false) {
     if (!this.signer) return [[bn(0)], bn(0)]
-    const { stepsToSwap, value } = this.convertStepForPoolErc1155(this.formatSwapSteps(steps))
-    if (isDeleverage) {
-      stepsToSwap.unshift(this.getDeleverageStep())
-    }
+    try {
+      const stepsToSwap: SwapStepType[] = [...steps].map((step) => {
+        return { ...step, amountOutMin: 0 }
+      })
+      const { params, value } = await this.convertStepToActions(stepsToSwap)
+      if (isDeleverage) {
+        params[1].unshift(await this.getDeleverageStep())
+      }
 
-    const res = await this.callStaticMultiSwap({
-      steps: stepsToSwap,
-      gasLimit,
-      value
-    })
-
-    const result = []
-    for (const i in steps) {
-      result.push({ ...steps[i], amountOut: res[0][i] })
+      const router = CONFIGS[this.chainId].router
+      let overrideRouter = CONFIGS[this.chainId].overrideRouter
+      let provider: any = new ethers.providers.JsonRpcProvider('http://localhost:8545/')
+      if (!overrideRouter) {
+        provider = new JsonRpcProvider('http://localhost:8545/')
+        provider.setStateOverride({
+          ...provider.getStateOverride(),
+          [router]: {
+            code: UtrOverride.deployedBytecode
+          }
+        })
+        overrideRouter = router
+      }
+      const contract = new ethers.Contract(overrideRouter, UtrOverride.abi, provider)
+      const res = await contract.callStatic.exec(...params, {
+        from: this.account,
+        value,
+        gasLimit: gasLimit || undefined
+      })
+      const result = []
+      for (const i in steps) {
+        result.push({ ...steps[i], amountOut: res[0][i] })
+      }
+      return [result, bn(gasLimit).sub(res.gasLeft)]
+    } catch (e) {
+      console.log(e)
+      return [[bn(0)], bn(0)]
     }
-    return [result, bn(gasLimit).sub(res.gasLeft)]
   }
 
   //
@@ -101,9 +135,7 @@ export class Swap {
 
   async callStaticMultiSwap({
     params,
-    // @ts-ignore
     value,
-    // @ts-ignore
     gasLimit
   }: any) {
     const contract = this.getRouterContract(this.signer)
@@ -221,10 +253,13 @@ export class Swap {
 
   getRouterContract(provider: any) {
     return new ethers.Contract(CONFIGS[this.chainId].router, UtrAbi, provider)
-    // return new ethers.Contract(CONFIGS[this.chainId].router, RouterAbi, provider)
   }
 
   getPoolContract() {
     return new ethers.Contract(this.CURRENT_POOL.poolAddress, PoolAbi, this.provider)
+  }
+
+  getLogicContract(provider?: any) {
+    return new ethers.Contract(<string>this.CURRENT_POOL.logicAddress, LogicsAbi, provider || this.provider)
   }
 }

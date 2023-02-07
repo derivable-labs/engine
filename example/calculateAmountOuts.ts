@@ -1,7 +1,6 @@
 import {Engine} from "../src/engine";
 import {ethers, Wallet} from "ethers";
 import {bn, numberToWei, weiToNumber} from "../src/utils/helper";
-import {POOL_IDS} from "../src/utils/constant";
 
 const PRIVATE_KEY = '28d1bfbbafe9d1d4f5a11c3c16ab6bf9084de48d99fbac4058bdfa3c80b2908c'
 
@@ -29,20 +28,6 @@ const testLocal = async () => {
     cTokenPrice: currentPool.cTokenPrice
   })
 
-  // const steps = [
-  //   {
-  //     "tokenIn": currentPool.cToken,
-  //     "tokenOut": currentPool.poolAddress + "-1",
-  //     "amountIn": bn(numberToWei(1))
-  //   },
-  //   {
-  //     "tokenIn": currentPool.cToken,
-  //     "tokenOut": currentPool.poolAddress + "-2",
-  //     "amountIn": bn(numberToWei(1))
-  //   }
-  // ]
-  // await engine.SWAP.updateLeverageAndSize(steps)
-
   const steps = [
     {
       amountIn: bn(numberToWei(1)),
@@ -57,11 +42,8 @@ const testLocal = async () => {
       amountOutMin: 0
     }
   ]
-  await engine.SWAP.multiSwap(steps)
-
-  //
-  // const a = await engine.SWAP.calculateAmountOuts(steps)
-  // console.log(a)
+  const res = await engine.SWAP.calculateAmountOuts(steps)
+  console.log(res)
 }
 
 testLocal()
