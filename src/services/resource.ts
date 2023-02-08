@@ -1,9 +1,9 @@
-import {ethers}                                                                    from "ethers";
+import {ethers} from "ethers";
 import {ddlGenesisBlock, EventDataAbis, LOCALSTORAGE_KEY, LP_PRICE_UNIT, POOL_IDS} from "../utils/constant";
-import EventsAbi                                                                   from '../abi/Events.json'
-import {Multicall}                                                                 from "ethereum-multicall";
-import {CONFIGS}                                                                   from "../utils/configs";
-import TokensInfoAbi                                                               from "../abi/TokensInfo.json";
+import EventsAbi from '../abi/Events.json'
+import {Multicall} from "ethereum-multicall";
+import {CONFIGS} from "../utils/configs";
+import TokensInfoAbi from "../abi/TokensInfo.json";
 import {LogType, ParseLogType, PoolsType, PoolType, Storage, SwapLog, TokenType} from "../types";
 import {
   bn, decodePowers,
@@ -12,8 +12,8 @@ import {
   getNormalAddress,
   numberToWei,
   weiToNumber
-}                                                                                  from "../utils/helper";
-import {UniV2Pair}                                                                 from "./uniV2Pair";
+} from "../utils/helper";
+import {UniV2Pair} from "./uniV2Pair";
 
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
@@ -147,21 +147,20 @@ export class Resource {
     const accTopic = account ? '0x' + '0'.repeat(24) + account.slice(2) : null
     const topics = this.getTopics()
 
+    const filterTopics = [
+      [topics.DDL, null, null, null],
+    ]
+    if (accTopic) {
+      filterTopics.push(
+        [null, accTopic, null, null],
+        [null, null, accTopic, null],
+        [null, null, null, accTopic])
+    }
+
     return await provider.getLogs({
       fromBlock: lastHeadBlockCached,
       toBlock: MAX_BLOCK,
-      // topics: [
-      //     null,
-      //     [topics.DDL, null, null],
-      //     [null, accTopic, null],
-      //     [null, null, accTopic]
-      // ]
-      topics: [
-        [topics.DDL, null, null, null],
-        [undefined, accTopic, null, null],
-        [undefined, null, accTopic, null],
-        [undefined, undefined, undefined, accTopic],
-      ]
+      topics: filterTopics
     }).then((logs: any) => {
       if (!logs?.length) {
         return [[], []]
@@ -408,7 +407,8 @@ export class Resource {
         let appName = null
         try {
           appName = ethers.utils.parseBytes32String(decodeLog.args.topic1)
-        } catch(e) {}
+        } catch (e) {
+        }
 
         let data: any = decodeLog
         if (appName) {
