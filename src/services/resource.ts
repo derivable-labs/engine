@@ -92,7 +92,7 @@ export class Resource {
     const cachedDdlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) || '[]')
     const newCachedDdlLogs = [...ddlLogs, ...cachedDdlLogs].filter((log, index, self) => {
       return index === self.findIndex((t) => (
-        t.logIndex === log.logIndex
+        t.logIndex === log.logIndex && t.transactionHash === log.transactionHash
       ))
     })
     this.storage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS, headBlock.toString())
@@ -104,6 +104,7 @@ export class Resource {
           t.logIndex === log.logIndex
         ))
       })
+      console.log(newCacheSwapLogs)
 
       this.storage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account, headBlock.toString())
       this.storage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account, JSON.stringify(newCacheSwapLogs))

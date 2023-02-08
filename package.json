@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "example:getResource": "npx ts-node --files ./example/getListPool.ts",
+    "example:getResource": "npx ts-node --files ./example/getResource.ts",
     "example:getBnA": "npx ts-node --files ./example/getBalanceAndAllowance.ts",
     "example:getPairDetail": "npx ts-node --files ./example/getPairDetail.ts",
     "example:price": "npx ts-node --files ./example/priceExample.ts",
