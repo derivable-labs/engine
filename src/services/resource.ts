@@ -14,6 +14,9 @@ import {
   weiToNumber
 } from "../utils/helper";
 import {UniV2Pair} from "./uniV2Pair";
+import {JsonRpcProvider} from "@ethersproject/providers";
+import UtrOverride from "../abi/UTROverride.json";
+import PoolOverride from "../abi/PoolOverride.json";
 
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
@@ -159,7 +162,7 @@ export class Resource {
     }
 
     return await provider.getLogs({
-      fromBlock: lastHeadBlockCached,
+      fromBlock: lastHeadBlockCached || 0,
       toBlock: MAX_BLOCK,
       topics: filterTopics
     }).then((logs: any) => {
@@ -233,17 +236,26 @@ export class Resource {
     logs.forEach((log) => {
       if (log.name === 'PoolCreated') {
         const logic = ethers.utils.getAddress(log.topics[3].slice(0, 42))
-        const data = logicData[logic]
+        const factory = ethers.utils.getAddress(log.topics[2].slice(0, 42))
+        const data = log.args
+        const powers = decodePowers(log.args.powers)
+        data.dTokens = powers.map((value, key) => {
+          return { power: value, index: key }
+        })
 
         data.dTokens = (data.dTokens as { index: number, power: number }[])
           .map((data) => `${log.address}-${data.index}`)
 
         poolData[log.address] = {
+          ...data,
           poolAddress: log.address,
-          ...data
+          logic,
+          factory,
+          powers,
+          cToken: data.pairToken
         }
-        allUniPools.push(data.cToken)
-        allTokens.push(...data.dTokens, data.cToken, data.baseToken)
+        allUniPools.push(data.pairToken)
+        allTokens.push(...data.dTokens, data.pairToken, data.baseToken)
       }
     })
 
@@ -259,7 +271,7 @@ export class Resource {
   async loadStatesData(listTokens: string[], listPools: { [key: string]: PoolType }, uniPools: string[]) {
     const multicall = new Multicall({
       multicallCustomContractAddress: CONFIGS[this.chainId].multiCall,
-      ethersProvider: this.provider,
+      ethersProvider: this.getPoolOverridedProvider(Object.keys(listPools)),
       tryAggregate: true
     })
     const normalTokens = getNormalAddress(listTokens)
@@ -338,6 +350,22 @@ export class Resource {
     return { tokens, pools }
   }
 
+  getPoolOverridedProvider(poolAddresses: string[]) {
+    const stateOverride = {}
+    poolAddresses.forEach((address: string) => {
+      stateOverride[address] = {
+        code: PoolOverride.deployedBytecode
+      }
+    })
+
+    const provider = new JsonRpcProvider('http://localhost:8545/')
+    //@ts-ignore
+    provider.setStateOverride({
+      ...stateOverride
+    })
+    return provider
+  }
+
   getBasePrice(pairInfo: any, baseToken: string) {
     const token0 = pairInfo.token0.adr
     const r0 = pairInfo.token0.reserve
@@ -351,6 +379,7 @@ export class Resource {
    * @param normalTokens
    * @param listPools
    */
+  //@ts-ignore
   getMultiCallRequest(normalTokens: string[], listPools: { [key: string]: PoolType }) {
     const request = [
       {
@@ -366,10 +395,15 @@ export class Resource {
         // @ts-ignore
         decoded: true,
         reference: 'pools',
-        contractAddress: listPools[i].logic,
+        contractAddress: listPools[i].poolAddress,
         // @ts-ignore
-        abi: getLogicAbi(this.chainId),
-        calls: [{ reference: i, methodName: 'getStates', methodParameters: [] }]
+        abi: PoolOverride.abi,
+        calls: [{
+          reference: i,
+          methodName: 'getStates',
+          // @ts-ignore
+          methodParameters: [listPools[i].powers.length, listPools[i].cToken]
+        }]
       })
     }
 
@@ -378,7 +412,7 @@ export class Resource {
 
 
   parseMultiCallResponse(data: any) {
-    const abiInterface = new ethers.utils.Interface(getLogicAbi(this.chainId))
+    const abiInterface = new ethers.utils.Interface(PoolOverride.abi)
     const poolStateData = data.pools.callsReturnContext
     const tokens = data.tokens.callsReturnContext[0].returnValues
     const pools = {}

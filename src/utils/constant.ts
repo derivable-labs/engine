@@ -28,15 +28,14 @@ export const POOL_IDS = {
 }
 
 export const EventDataAbis = {
-    LogicCreated: ['bytes32 baseSymbol',
-        'bytes32 quoteSymbol',
-        'uint224 priceToleranceRatio',
-        'uint224 rentRate',
-        'uint224 deleverageRate',
-        'bytes32 powers'],
     PoolCreated: [
-        'address feeRecipient',
-        'uint feeNum',
-        'uint feeDenom'
+      'address pairToken',
+      'address baseToken',
+      'uint224 priceToleranceRatio',
+      'uint224 rentRate',
+      'uint224 deleverageRate',
+      'uint256 powers',
+      'address feeRecipient',
+      'uint    feeDenom',
     ]
 }

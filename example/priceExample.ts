@@ -2,6 +2,7 @@ import {LP_PRICE_UNIT, POOL_IDS} from "../src/utils/constant";
 import {ethers}                  from "ethers";
 import {bn, getLogicAbi}         from "../src/utils/helper";
 import {Engine}                  from "../src/engine";
+import {getTestConfigs} from "./shared/testConfigs";
 
 const token0 = {
   address: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
@@ -21,14 +22,7 @@ const logicAddress = '0xdD4A0c754a802c69f488645faD474081D2f117d7';
 const cTokenAddress = '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16';
 
 const test = async () => {
-  const engine = new Engine({
-    chainId: 56,
-    provider: new ethers.providers.JsonRpcProvider('https://bscrpc.com/'),
-    providerToGetLog: new ethers.providers.JsonRpcProvider('https://bscrpc.com/'),
-    scanApi: 'https://api.bscscan.com/api',
-    rpcUrl: 'https://bsc-dataseed.binance.org/',
-  })
-
+  const engine = new Engine(getTestConfigs(1337))
 
   const res24hChangeByLog = await engine.PRICE.get24hChangeByLog({
     baseToken: token0,

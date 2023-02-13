@@ -25,5 +25,19 @@ export const CONFIGS = {
     overrideRouter: '0xa0BA0AF4Bd4e7bee81e617e39aF11d3E6Bb9fB18',
     wrapToken: '0xB29439A682eBa17df241944D5eFAE0f44fcf431B',
     wrapUsdPair: '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16',
+  },
+  1337: {
+    rpcUrl: 'http://localhost:8545/',
+    rpcToGetLogs: 'http://localhost:8545/',
+    timePerBlock: 3000,
+    nativeToken: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+    multiCall: '0x025ff8c5CB97f5f79dc396DCD501Db775B00F433',
+    pairsInfo: '0xc28A7e46bE1BB74a63aD32784D785A941D1954ab',
+    bnA: '0x95a7d5edfD4701478D3ACA5DCb69D549D83E3c52',
+    tokensInfo: '0xe2b8a85De2ad4076593B81F2435C77a2cb84caAf',
+    router: '0xb60F861100aC9F8BE31D0e74DCae35D14cbcA2E2',
+    overrideRouter: '0xE1550e06C6759b48cD0a6f5851029A30a6Fee735',
+    wrapToken: '0x8F98902cf8255ab9D403Dfa68875b1024cd6C3d4',
+    wrapUsdPair: '0x2B89B4931122EE4Fa474446Fa9B118F2852a8223',
   }
 }
