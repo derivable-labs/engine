@@ -240,7 +240,7 @@ export class Resource {
         const logic = ethers.utils.getAddress(log.topics[3].slice(0, 42))
         const factory = ethers.utils.getAddress(log.topics[2].slice(0, 42))
         const data = log.args
-        const powers = decodePowers(log.args.powers)
+        const powers = decodePowers(ethers.utils.hexZeroPad(log.args.powers.toHexString(), 32))
         data.dTokens = powers.map((value, key) => {
           return { power: value, index: key }
         })

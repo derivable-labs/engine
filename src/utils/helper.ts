@@ -34,7 +34,7 @@ export const numberToWei = (number: any, decimal: number = 18) => {
 
 
 export const decodePowers = (powersBytes: string) => {
-  powersBytes = ethers.utils.hexStripZeros(powersBytes).slice(2)
+  powersBytes = powersBytes.slice(6)
   const raws: any = powersBytes.match(/.{1,4}/g)
   const powers = []
   for (let i = raws.length - 1; i >= 0; --i) {
@@ -42,7 +42,9 @@ export const decodePowers = (powersBytes: string) => {
     if (power > 0x8000) {
       power = 0x8000 - power
     }
-    powers.push(power)
+    if(power !== 0) {
+      powers.push(power)
+    }
   }
   return powers
 }
