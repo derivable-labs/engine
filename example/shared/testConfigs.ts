@@ -39,11 +39,13 @@ export const getTestConfigs = (chainId: number) => {
   let storageData = {}
   return {
     ...TestConfigs[chainId],
-    getItem: (key: string) => {
-      return storageData[key]
-    },
-    setItem: (key: string, value: string) => {
-      storageData[key] = value
+    storage: {
+      getItem: (key: string) => {
+        return storageData[key]
+      },
+      setItem: (key: string, value: string) => {
+        storageData[key] = value
+      }
     }
   }
 }

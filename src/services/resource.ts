@@ -107,7 +107,7 @@ export class Resource {
       const cachedSwapLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account) || '[]')
       const newCacheSwapLogs = [...swapLogs, ...cachedSwapLogs].filter((log, index, self) => {
         return index === self.findIndex((t) => (
-          t.logIndex === log.logIndex
+          t.logIndex === log.logIndex && t.transactionHash === log.transactionHash
         ))
       })
       console.log(newCacheSwapLogs)

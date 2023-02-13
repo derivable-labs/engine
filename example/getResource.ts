@@ -3,7 +3,7 @@ import {getTestConfigs} from "./shared/testConfigs";
 
 const testLocal = async () => {
   const engine = new Engine(getTestConfigs(1337))
-  await engine.RESOURCE.fetchResourceData('0x704cF59B16Fd50Efd575342B46Ce9C5e07076A4a')
+  await engine.RESOURCE.fetchResourceData('0xbC52C688c34A480c6785A38715c693Bb22863DE1')
   console.log({
     pools: engine.RESOURCE.pools,
     tokens: engine.RESOURCE.tokens,
