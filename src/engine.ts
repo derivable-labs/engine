@@ -7,6 +7,7 @@ import {UniV2Pair}                              from "./services/uniV2Pair";
 import {History}                                from "./services/history";
 import {Swap}                  from "./services/swap";
 import {CurrentPool, PoolData} from "./services/currentPool";
+import {JsonRpcProvider} from "@ethersproject/providers";
 
 type ConfigType = {
   chainId: number
@@ -27,6 +28,7 @@ export class Engine {
   signer?: ethers.providers.JsonRpcSigner
   provider: ethers.providers.Provider
   providerToGetLog: ethers.providers.Provider
+  overrideRpc: JsonRpcProvider
   storage?: Storage
   PRICE: Price
   RESOURCE: Resource
@@ -41,6 +43,7 @@ export class Engine {
     this.chainId = configs.chainId
     this.scanApi = configs.scanApi
     this.rpcUrl = configs.rpcUrl
+    this.overrideRpc = new JsonRpcProvider('http://localhost:8545/')
     this.storage = configs.storage
     this.provider = configs.provider
     this.account = configs.account
@@ -67,7 +70,8 @@ export class Engine {
       storage: this.storage,
       provider: this.provider,
       providerToGetLog: this.providerToGetLog,
-      UNIV2PAIR: this.UNIV2PAIR
+      UNIV2PAIR: this.UNIV2PAIR,
+      overrideRpc: this.overrideRpc,
     })
 
     this.PRICE = new Price({
