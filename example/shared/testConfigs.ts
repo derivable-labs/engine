@@ -19,7 +19,7 @@ const TestConfigs = {
     chainId: 1337,
     scanApi: '',
     rpcUrl: 'http://localhost:8545/',
-    account: '0x704cF59B16Fd50Efd575342B46Ce9C5e07076A4a',
+    account: '0xbC52C688c34A480c6785A38715c693Bb22863DE1',
     provider: new ethers.providers.JsonRpcProvider("http://localhost:8545"),
     providerToGetLog: new ethers.providers.JsonRpcProvider('http://localhost:8545/'),
     signer: wallet

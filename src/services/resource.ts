@@ -29,7 +29,7 @@ type ConfigType = {
   storage?: Storage
   provider: ethers.providers.Provider
   providerToGetLog: ethers.providers.Provider
-  overrideRpc: JsonRpcProvider
+  overrideProvider: JsonRpcProvider
   UNIV2PAIR: UniV2Pair
 }
 
@@ -49,7 +49,7 @@ export class Resource {
   storage?: Storage
   provider: ethers.providers.Provider
   providerToGetLog: ethers.providers.Provider
-  overrideRpc: JsonRpcProvider
+  overrideProvider: JsonRpcProvider
   UNIV2PAIR: UniV2Pair
 
   constructor(configs: ConfigType) {
@@ -61,7 +61,7 @@ export class Resource {
     this.providerToGetLog = configs.providerToGetLog
     this.provider = configs.provider
     this.UNIV2PAIR = configs.UNIV2PAIR
-    this.overrideRpc = configs.overrideRpc
+    this.overrideProvider = configs.overrideProvider
   }
 
   async fetchResourceData(account: string) {
@@ -362,10 +362,10 @@ export class Resource {
     })
 
     //@ts-ignore
-    this.overrideRpc.setStateOverride({
+    this.overrideProvider.setStateOverride({
       ...stateOverride
     })
-    return this.overrideRpc
+    return this.overrideProvider
   }
 
   getBasePrice(pairInfo: any, baseToken: string) {

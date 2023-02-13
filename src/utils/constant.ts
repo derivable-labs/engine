@@ -20,8 +20,11 @@ export const ddlGenesisBlock = {
 }
 
 export const POOL_IDS = {
-    cToken: 131072,
-    cp: 65536,
+    cToken: 0x20000,
+    cp: 0x10000,
+    cw: 0x10001,
+    quote: 0x20001,
+    base:0x20002,
     token0: 262144,
     token1: 262145,
     native: '0x000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'

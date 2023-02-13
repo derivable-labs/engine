@@ -2,6 +2,7 @@ import {Engine} from "../src/engine";
 import {ethers, Wallet} from "ethers";
 import {bn, numberToWei, weiToNumber} from "../src/utils/helper";
 import {getTestConfigs} from "./shared/testConfigs";
+import {POOL_IDS} from "../src/utils/constant";
 
 const testLocal = async () => {
   const engine = new Engine(getTestConfigs(1337))
@@ -17,8 +18,8 @@ const testLocal = async () => {
   const steps = [
     {
       amountIn: bn(numberToWei(1)),
-      tokenIn: currentPool.baseToken,
-      tokenOut: currentPool.poolAddress + "-0",
+      tokenIn: currentPool.cToken,
+      tokenOut: currentPool.poolAddress + "-" + POOL_IDS.cp,
       amountOutMin: 0
     }
   ]

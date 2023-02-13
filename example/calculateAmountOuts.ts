@@ -1,6 +1,7 @@
 import {Engine} from "../src/engine";
 import {bn, numberToWei} from "../src/utils/helper";
 import {getTestConfigs} from "./shared/testConfigs";
+import {POOL_IDS} from "../src/utils/constant";
 
 const testLocal = async () => {
   const engine = new Engine(getTestConfigs(1337))
@@ -18,12 +19,6 @@ const testLocal = async () => {
       amountIn: bn(numberToWei(1)),
       tokenIn: currentPool.cToken,
       tokenOut: currentPool.poolAddress + "-0",
-      amountOutMin: 0
-    },
-    {
-      amountIn: bn(numberToWei(1)),
-      tokenIn: currentPool.cToken,
-      tokenOut: currentPool.poolAddress + "-2",
       amountOutMin: 0
     }
   ]

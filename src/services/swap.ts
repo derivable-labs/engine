@@ -1,14 +1,15 @@
 import {BigNumber, ethers} from "ethers";
 import {UniV2Pair} from "./uniV2Pair";
 import {PoolErc1155StepType, StepType, SwapStepType} from "../types";
-import {bn, isErc1155Address} from "../utils/helper";
-import {POOL_IDS, ZERO_ADDRESS} from "../utils/constant";
+import {bn, isErc1155Address, numberToWei} from "../utils/helper";
+import {LARGE_VALUE, POOL_IDS, ZERO_ADDRESS} from "../utils/constant";
 import {CONFIGS} from "../utils/configs";
 import {CurrentPool} from "./currentPool";
 import UtrAbi from "../abi/UTR.json";
 import LogicsAbi from "../abi/Logic.json";
 import UtrOverride from "../abi/UTROverride.json";
 import PoolAbi from "../abi/Pool.json";
+import Erc20Abi from "../abi/ERC20.json";
 import {JsonRpcProvider} from "@ethersproject/providers";
 
 type ConfigType = {
@@ -16,6 +17,7 @@ type ConfigType = {
   chainId: number
   scanApi: string
   provider: ethers.providers.Provider
+  overrideProvider: JsonRpcProvider
   signer?: ethers.providers.JsonRpcSigner
   UNIV2PAIR: UniV2Pair
   CURRENT_POOL: CurrentPool
@@ -35,6 +37,7 @@ export class Swap {
   chainId: number
   scanApi: string
   provider: ethers.providers.Provider
+  overrideProvider: JsonRpcProvider
   signer?: ethers.providers.JsonRpcSigner
   UNIV2PAIR: UniV2Pair
   CURRENT_POOL: CurrentPool
@@ -44,6 +47,7 @@ export class Swap {
     this.chainId = configs.chainId
     this.scanApi = configs.scanApi
     this.provider = configs.provider
+    this.overrideProvider = configs.overrideProvider
     this.signer = configs.signer
     this.CURRENT_POOL = configs.CURRENT_POOL
   }
@@ -84,19 +88,13 @@ export class Swap {
       }
 
       const router = CONFIGS[this.chainId].router
-      let overrideRouter = CONFIGS[this.chainId].overrideRouter
-      let provider: any = new ethers.providers.JsonRpcProvider('http://localhost:8545/')
-      if (!overrideRouter) {
-        provider = new JsonRpcProvider('http://localhost:8545/')
-        provider.setStateOverride({
-          ...provider.getStateOverride(),
-          [router]: {
-            code: UtrOverride.deployedBytecode
-          }
-        })
-        overrideRouter = router
-      }
-      const contract = new ethers.Contract(overrideRouter, UtrOverride.abi, provider)
+      // @ts-ignore
+      this.overrideProvider.setStateOverride({
+        [router]: {
+          code: UtrOverride.deployedBytecode
+        }
+      })
+      const contract = new ethers.Contract(router, UtrOverride.abi, this.overrideProvider)
       const res = await contract.callStatic.exec(...params, {
         from: this.account,
         value,
@@ -227,13 +225,13 @@ export class Swap {
       }
       await this.callStaticMultiSwap({ params, value })
       const contract = this.getRouterContract(this.signer)
-      const tx = await contract.exec(...params,
+      const res = await contract.exec(...params,
         {
           value
         }
       )
+      const tx = await res.wait(1)
       console.log('tx', tx)
-      await tx.wait(1)
       return true
     } catch (e) {
       console.error(e)

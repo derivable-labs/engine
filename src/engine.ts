@@ -28,7 +28,7 @@ export class Engine {
   signer?: ethers.providers.JsonRpcSigner
   provider: ethers.providers.Provider
   providerToGetLog: ethers.providers.Provider
-  overrideRpc: JsonRpcProvider
+  overrideProvider: JsonRpcProvider
   storage?: Storage
   PRICE: Price
   RESOURCE: Resource
@@ -43,7 +43,7 @@ export class Engine {
     this.chainId = configs.chainId
     this.scanApi = configs.scanApi
     this.rpcUrl = configs.rpcUrl
-    this.overrideRpc = new JsonRpcProvider('http://localhost:8545/')
+    this.overrideProvider = new JsonRpcProvider('http://localhost:8545/')
     this.storage = configs.storage
     this.provider = configs.provider
     this.account = configs.account
@@ -71,7 +71,7 @@ export class Engine {
       provider: this.provider,
       providerToGetLog: this.providerToGetLog,
       UNIV2PAIR: this.UNIV2PAIR,
-      overrideRpc: this.overrideRpc,
+      overrideProvider: this.overrideProvider,
     })
 
     this.PRICE = new Price({
@@ -101,6 +101,7 @@ export class Engine {
       CURRENT_POOL: this.CURRENT_POOL,
       signer: this.signer,
       account: this.account,
+      overrideProvider: this.overrideProvider
     })
   }
 

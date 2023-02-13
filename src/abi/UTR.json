@@ -136,52 +136,7 @@
         "type": "uint256"
       }
     ],
-    "name": "transferToken",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "sender",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "recipient",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "eip",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "token",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "id",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "amount",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct Transfer[]",
-        "name": "transfers",
-        "type": "tuple[]"
-      }
-    ],
-    "name": "transferTokens",
+    "name": "pay",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
