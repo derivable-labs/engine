@@ -287,7 +287,7 @@ export class Resource {
       })
     ])
 
-    const { tokens: tokensArr, poolsState } = this.parseMultiCallResponse(results)
+    const { tokens: tokensArr, poolsState } = this.parseMultiCallResponse(results, Object.keys(listPools))
     const tokens = []
     for (let i = 0; i < tokensArr.length; i++) {
       tokens.push({
@@ -395,7 +395,7 @@ export class Resource {
       request.push({
         // @ts-ignore
         decoded: true,
-        reference: 'pools',
+        reference: 'pools-' + listPools[i].poolAddress,
         contractAddress: listPools[i].poolAddress,
         // @ts-ignore
         abi: PoolOverride.abi,
@@ -412,24 +412,24 @@ export class Resource {
   }
 
 
-  parseMultiCallResponse(data: any) {
-    const abiInterface = new ethers.utils.Interface(PoolOverride.abi)
-    const poolStateData = data.pools.callsReturnContext
-    const tokens = data.tokens.callsReturnContext[0].returnValues
+  parseMultiCallResponse(multiCallData: any, poolAddresses: string[]) {
     const pools = {}
-    for (let i = 0; i < poolStateData.length; i++) {
-      const data = formatMultiCallBignumber(poolStateData[i].returnValues)
+    const tokens = multiCallData.tokens.callsReturnContext[0].returnValues
+    poolAddresses.forEach((poolAddress) => {
+      const abiInterface = new ethers.utils.Interface(PoolOverride.abi)
+      const poolStateData = multiCallData['pools-' + poolAddress].callsReturnContext
+      const data = formatMultiCallBignumber(poolStateData[0].returnValues)
       const encodeData = abiInterface.encodeFunctionResult('getStates', [data])
       const formatedData = abiInterface.decodeFunctionResult('getStates', encodeData)
 
-      pools[poolStateData[i].reference] = {
+      pools[poolStateData[0].reference] = {
         twapBase: formatedData.states.twap.base._x,
         twapLP: formatedData.states.twap.LP._x,
         spotBase: formatedData.states.spot.base._x,
         spotLP: formatedData.states.spot.LP._x,
         ...formatedData.states
       }
-    }
+    })
 
     return { tokens, poolsState: pools }
   }
@@ -453,7 +453,7 @@ export class Resource {
             decodeLog.args.data
           )
         }
-        const lastHeadBlockCached = this.getLastBlockCached('')
+        const lastHeadBlockCached = this.getLastBlockCached(this.account || '')
 
         return {
           address: log.address,

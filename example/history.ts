@@ -1,5 +1,5 @@
-import {Engine}   from "../src/engine";
-import {ethers}      from "ethers";
+import {Engine} from "../src/engine";
+import {ethers} from "ethers";
 import {getTestConfigs} from "./shared/testConfigs";
 
 const testLocal = async () => {
@@ -20,7 +20,7 @@ const testLocal = async () => {
   })
 
   const swapTxs = engine?.HISTORY.formatSwapHistory({
-    logs:  engine.RESOURCE.swapLogs,
+    logs: engine.RESOURCE.swapLogs,
     poolAddress: currentPool.poolAddress,
     states: currentPool.states,
     powers: currentPool.powers
