@@ -304,14 +304,11 @@ export class Resource {
       const { baseToken, powers } = pools[i]
       const pairInfo = pairsInfo[pools[i].cToken]
       const quoteToken = pairInfo.token0.adr === baseToken ? pairInfo.token1.adr : pairInfo.token0.adr
-      const [baseId, quoteId] = pairInfo.token0.adr === baseToken
-        ? [POOL_IDS.token0, POOL_IDS.token1]
-        : [POOL_IDS.token1, POOL_IDS.token0]
 
       pools[i].states = poolsState[i]
       pools[i].quoteToken = quoteToken
-      pools[i].baseId = baseId
-      pools[i].quoteId = quoteId
+      pools[i].baseId = POOL_IDS.base
+      pools[i].quoteId = POOL_IDS.quote
       pools[i].basePrice = this.getBasePrice(pairInfo, baseToken)
       pools[i].cPrice = bn(pools[i].states.twapLP).mul(LP_PRICE_UNIT).shr(112).toNumber() / LP_PRICE_UNIT
 

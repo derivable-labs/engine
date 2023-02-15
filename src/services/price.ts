@@ -62,7 +62,6 @@ export class Price {
 
       const blocknumber24hAgo = headBlock - Math.floor(MINI_SECOND_PER_DAY / CONFIGS[this.chainId].timePerBlock)
       const eventInterface = new ethers.utils.Interface(EventsAbi)
-
       const { totalBaseReserve, totalQuoteReserve } = await this.providerToGetLog.getLogs({
         address: cToken,
         fromBlock: blocknumber24hAgo - range,

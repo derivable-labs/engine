@@ -207,8 +207,8 @@ export class Swap {
 
   getIdByAddress(address: string) {
     try {
-      if (address === this.CURRENT_POOL.baseToken) return bn(this.CURRENT_POOL.baseId)
-      if (address === this.CURRENT_POOL.quoteToken) return bn(this.CURRENT_POOL.quoteId)
+      if (address === this.CURRENT_POOL.baseToken) return bn(POOL_IDS.base)
+      if (address === this.CURRENT_POOL.quoteToken) return bn(POOL_IDS.quote)
       if (address === CONFIGS[this.chainId].nativeToken) return POOL_IDS.native
       if (address === this.CURRENT_POOL.cToken) return bn(POOL_IDS.cToken)
       return bn(address.split('-')[1])
