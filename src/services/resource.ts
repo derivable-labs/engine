@@ -79,7 +79,11 @@ export class Resource {
   getLastBlockCached(account: string) {
     if (!this.storage) return ddlGenesisBlock[this.chainId]
     const lastDDlBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) || ddlGenesisBlock[this.chainId] - 1
-    const lastWalletBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account)) || ddlGenesisBlock[this.chainId] - 1
+    let lastWalletBlock = ddlGenesisBlock[this.chainId] - 1
+    const walletBlockCached = this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account)
+    if(account && walletBlockCached) {
+      lastWalletBlock = Number(walletBlockCached)
+    }
     return Math.min(lastDDlBlock + 1, lastWalletBlock + 1)
   }
 
