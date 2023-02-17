@@ -43,7 +43,7 @@ export class History {
                                     .filter((order) => {
                                       return order.find((log) => ['TransferSingle', 'TransferBatch'].includes(log.args.name))
                                     })
-      const orders = logGrouped.slice().sort((a: { timeStamp: number; }[], b: { timeStamp: number; }[]) => a[0].timeStamp - b[0].timeStamp)
+      const orders = logGrouped.slice().sort((a: { blockNumber: number; }[], b: { blockNumber: number; }[]) => a[0].blockNumber - b[0].blockNumber)
       // const swapLogs = logs.slice().sort((a: { timeStamp: number; }, b: { timeStamp: number; }) => a.timeStamp - b.timeStamp)
 
       const p = new PowerState({ powers: [...powers] })
@@ -157,7 +157,7 @@ export class History {
       //   })
       // }
       //@ts-ignore
-      return result.sort((a, b) => (b.timeStamp - a.timeStamp))
+      return result.sort((a, b) => (b.blockNumber - a.blockNumber))
     } catch (e) {
       console.error(e)
       return []
