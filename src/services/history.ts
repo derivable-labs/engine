@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {BigNumber, ethers} from "ethers";
 import {UniV2Pair} from "./uniV2Pair";
 import {bn} from "../utils/helper";
@@ -5,6 +6,8 @@ import _, {transform} from "lodash";
 import {PowerState} from 'powerLib/dist/powerLib'
 import {LogType, StatesType} from "../types";
 import {CurrentPool} from "./currentPool";
+import PoolOverride from "../abi/PoolOverride.json";
+import EventsAbi from "../abi/Events.json";
 
 type ConfigType = {
   account?: string
@@ -59,24 +62,39 @@ export class History {
         //
         for (const tx of txs) {
           if (tx.args.name === 'Transfer') {
+            const encodeData = ethers.utils.defaultAbiCoder.encode(
+              ["address", "address", "uint256"], tx.args.args
+            )
+            const formatedData =  ethers.utils.defaultAbiCoder.decode(
+              ["address from", "address to", "uint256 value"],
+              encodeData
+            )
             const id = this.CURRENT_POOL.getIdByAddress(tx.address)?.toNumber()
             if (!id) continue
-            if (tx.args.args.from === this.account) {
-              balances[id] = balances[id] ? balances[id].sub(tx.args.args.value) : bn(0).sub(tx.args.args.value)
-            } else if (tx.args.args.to === this.account) {
-              balances[id] = balances[id] ? balances[id].add(tx.args.args.value) : bn(0).add(tx.args.args.value)
+            if (formatedData.from === this.account) {
+              balances[id] = balances[id] ? balances[id].sub(formatedData.value) : bn(0).sub(formatedData.value)
+            } else if (formatedData.to === this.account) {
+              balances[id] = balances[id] ? balances[id].add(formatedData.value) : bn(0).add(formatedData.value)
             }
             continue
           }
 
           if (tx.args.name === 'TransferSingle') {
-            const id = tx.args.args.id.toNumber()
+            const encodeData = ethers.utils.defaultAbiCoder.encode(
+              ["address", "address", "address", "uint256", "uint256"], tx.args.args
+            )
+            const formatedData =  ethers.utils.defaultAbiCoder.decode(
+              ["address operator", "address from", "address to", "uint256 id", "uint256 value"],
+              encodeData
+            )
 
-            if (tx.args.args.from === this.account) {
-              balances[id] = balances[id] ? balances[id].sub(tx.args.args.value) : bn(0).sub(tx.args.args.value)
+            const id = formatedData.id.toNumber()
+
+            if (formatedData.from === this.account) {
+              balances[id] = balances[id] ? balances[id].sub(formatedData.value) : bn(0).sub(formatedData.value)
             }
-            if (tx.args.args.to === this.account) {
-              balances[id] = balances[id] ? balances[id].add(tx.args.args.value) : bn(0).add(tx.args.args.value)
+            if (formatedData.to === this.account) {
+              balances[id] = balances[id] ? balances[id].add(formatedData.value) : bn(0).add(formatedData.value)
             }
           }
 
