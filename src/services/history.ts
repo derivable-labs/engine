@@ -115,6 +115,7 @@ export class History {
         result.push({
           transactionHash: txs[0].transactionHash,
           timeStamp: txs[0].timeStamp,
+          blockNumber: txs[0].blockNumber,
           cp,
           oldBalances,
           newBalances: _.cloneDeep(balances),
