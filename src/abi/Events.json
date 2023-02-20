@@ -345,7 +345,7 @@
         "type": "bytes"
       }
     ],
-    "name": "DDL",
+    "name": "Derivable",
     "type": "event"
   },
   {

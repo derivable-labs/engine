@@ -15,8 +15,8 @@ import {
 } from "../utils/helper";
 import {UniV2Pair} from "./uniV2Pair";
 import {JsonRpcProvider} from "@ethersproject/providers";
-import UtrOverride from "../abi/UTROverride.json";
 import PoolOverride from "../abi/PoolOverride.json";
+
 
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
@@ -159,7 +159,7 @@ export class Resource {
     const topics = this.getTopics()
 
     const filterTopics = [
-      [topics.DDL, null, null, null],
+      [topics.Derivable, null, null, null],
     ]
     if (accTopic) {
       filterTopics.push(
@@ -179,7 +179,7 @@ export class Resource {
       const headBlock = logs[logs.length - 1]?.blockNumber
       const topics = this.getTopics()
       const ddlLogs = logs.filter((log: any) => {
-        return log.address && [topics.LogicCreated, topics.PoolCreated, topics.DDL].includes(log.topics[0])
+        return log.address && [topics.LogicCreated, topics.PoolCreated, topics.Derivable].includes(log.topics[0])
       })
       const swapLogs = logs.filter((log: any) => {
         return log.address && [topics.Transfer, topics.TransferSingle, topics.TransferBatch].includes(log.topics[0])
