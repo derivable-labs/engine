@@ -170,8 +170,8 @@ export class Swap {
     steps.forEach((step) => {
       outputs.push({
         eip: isErc1155Address(step.tokenOut) ? 1155 : 20,
-        token: this.CURRENT_POOL.poolAddress,
-        id: this.getIdByAddress(step.tokenOut),
+        token: this.getAddressByErc1155Address(step.tokenOut),
+        id: isErc1155Address(step.tokenOut) ? this.getIdByAddress(step.tokenOut) : bn(0),
         amountOutMin: step.amountOutMin,
         recipient: this.account,
       })
@@ -195,7 +195,7 @@ export class Swap {
           recipient: this.CURRENT_POOL.poolAddress,
           eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
           id: isErc1155Address(step.tokenIn) ? this.getIdByAddress(step.tokenIn) : 0,
-          token: step.tokenIn,
+          token: this.getAddressByErc1155Address(step.tokenIn),
           amountInMax: step.amountIn,
           amountSource: 0,
         }]
@@ -247,6 +247,13 @@ export class Swap {
       console.error(e)
       return e
     }
+  }
+
+  getAddressByErc1155Address(address: string) {
+    if(isErc1155Address(address)) {
+      return address.split('-')[0]
+    }
+    return address
   }
 
   getRouterContract(provider: any) {

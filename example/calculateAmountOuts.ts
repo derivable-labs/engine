@@ -22,6 +22,22 @@ const testLocal = async () => {
       amountOutMin: 0
     }
   ]
+
+  // const steps = [
+  //   {
+  //     "tokenIn": "0xf911f6cD7fe229A91E59B815a4B91a449732FE3f-0",
+  //     "tokenOut": "0xf911f6cD7fe229A91E59B815a4B91a449732FE3f-4",
+  //     "amountIn":bn("0x0865f009565de8bba2"),
+  //     "amountOutMin": 0
+  //   },
+  //   {
+  //     "tokenIn": "0xf911f6cD7fe229A91E59B815a4B91a449732FE3f-6",
+  //     "tokenOut": "0xf911f6cD7fe229A91E59B815a4B91a449732FE3f-4",
+  //     "amountIn": bn("0x065a4da25d3f45efb139"),
+  //     "amountOutMin": 0
+  //   }
+  // ]
+
   const res = await engine.SWAP.calculateAmountOuts(steps)
   console.log(res)
 }
