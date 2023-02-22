@@ -1,10 +1,10 @@
-import {ethers} from "ethers";
+import {BigNumber, ethers} from "ethers";
 import {ddlGenesisBlock, EventDataAbis, LOCALSTORAGE_KEY, LP_PRICE_UNIT, POOL_IDS} from "../utils/constant";
 import EventsAbi from '../abi/Events.json'
 import {Multicall} from "ethereum-multicall";
 import {CONFIGS} from "../utils/configs";
 import TokensInfoAbi from "../abi/TokensInfo.json";
-import {LogType, ParseLogType, PoolsType, PoolType, Storage, SwapLog, TokenType} from "../types";
+import {LogType, ParseLogType, PoolsType, PoolType, StatesType, Storage, SwapLog, TokenType} from "../types";
 import {
   bn, decodePowers,
   formatMultiCallBignumber,
@@ -16,7 +16,7 @@ import {
 import {UniV2Pair} from "./uniV2Pair";
 import {JsonRpcProvider} from "@ethersproject/providers";
 import PoolOverride from "../abi/PoolOverride.json";
-
+import {PowerState} from 'powerLib/dist/powerLib';
 
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
@@ -81,7 +81,7 @@ export class Resource {
     const lastDDlBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) || ddlGenesisBlock[this.chainId] - 1
     let lastWalletBlock = ddlGenesisBlock[this.chainId] - 1
     const walletBlockCached = this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account)
-    if(account && walletBlockCached) {
+    if (account && walletBlockCached) {
       lastWalletBlock = Number(walletBlockCached)
     }
     return Math.min(lastDDlBlock + 1, lastWalletBlock + 1)
@@ -309,12 +309,17 @@ export class Resource {
       const pairInfo = pairsInfo[pools[i].cToken]
       const quoteToken = pairInfo.token0.adr === baseToken ? pairInfo.token1.adr : pairInfo.token0.adr
 
-      pools[i].states = poolsState[i]
+
       pools[i].quoteToken = quoteToken
       pools[i].baseId = POOL_IDS.base
       pools[i].quoteId = POOL_IDS.quote
       pools[i].basePrice = this.getBasePrice(pairInfo, baseToken)
-      pools[i].cPrice = bn(pools[i].states.twapLP).mul(LP_PRICE_UNIT).shr(112).toNumber() / LP_PRICE_UNIT
+      pools[i].cPrice = bn(poolsState[i].twapLP).mul(LP_PRICE_UNIT).shr(112).toNumber() / LP_PRICE_UNIT
+      const rdc = this.getRdc(poolsState[i], pools[i].powers, pools[i].cPrice)
+      pools[i].states = {
+        ...poolsState[i],
+        ...rdc
+      }
 
       powers.forEach((power: number, key: number) => {
         tokens.push({
@@ -433,6 +438,28 @@ export class Resource {
     })
 
     return { tokens, poolsState: pools }
+  }
+
+  getRdc(states: StatesType, powers: number[], cPrice: number): { rDcLong: BigNumber, rDcShort: BigNumber } {
+    let rDcLong: BigNumber = bn(0);
+    let rDcShort: BigNumber = bn(0);
+    const powerState = new PowerState({ powers: [...powers] })
+    //@ts-ignore
+    powerState.loadStates(states)
+    const totalSupply = states.totalSupplies
+    powers.forEach((power, id) => {
+      const dPrice = powerState.getPrice(power)
+      const r = totalSupply[id].mul(numberToWei(dPrice)).div(numberToWei(1))
+      if (power >= 0) {
+        rDcLong = rDcLong.add(r)
+      } else {
+        rDcShort = rDcShort.add(r)
+      }
+    })
+    rDcLong = cPrice ? rDcLong.mul(numberToWei(1)).div(numberToWei(cPrice)) : bn(0)
+    rDcShort = cPrice ? rDcShort.mul(numberToWei(1)).div(numberToWei(cPrice)) : bn(0)
+
+    return { rDcLong: rDcLong, rDcShort: rDcShort }
   }
 
   parseDdlLogs(ddlLogs: any) {
