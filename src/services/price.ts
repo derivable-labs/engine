@@ -1,15 +1,15 @@
-import {ethers}                        from "ethers";
+import {ethers} from "ethers";
 import {MINI_SECOND_PER_DAY, POOL_IDS} from "../utils/constant";
-import {CONFIGS}                       from "../utils/configs";
-import EventsAbi                       from "../abi/Events.json";
+import {CONFIGS} from "../utils/configs";
+import EventsAbi from "../abi/Events.json";
 import {
   bn, div, formatPercent,
   numberToWei, sub, weiToNumber
-}                                      from "../utils/helper";
-import {TokenType}                     from "../types";
-import historyProvider                 from "../historyProvider";
-import PoolAbi                         from '../abi/Pool.json'
-import {UniV2Pair}                     from "./uniV2Pair";
+} from "../utils/helper";
+import {TokenType} from "../types";
+import historyProvider from "../historyProvider";
+import PoolAbi from '../abi/Pool.json'
+import {UniV2Pair} from "./uniV2Pair";
 
 const SYNC_EVENT_TOPIC = '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1'
 
@@ -157,24 +157,18 @@ export class Price {
    * @return price of native token
    */
   async getNativePrice(): Promise<string> {
-    try {
-      if (!CONFIGS[this.chainId].wrapUsdPair
-      ) {
-        return '0'
-      }
-      const res = await this.UNIV2PAIR.getPairInfo({
-        pairAddress: CONFIGS[this.chainId].wrapUsdPair
-      })
-      const [wrapToken, usdToken] = res.token0.adr === CONFIGS[this.chainId].wrapToken ? [res.token0, res.token1] : [res.token1, res.token0]
-      const priceWei = usdToken.reserve
-                               .mul(numberToWei(1))
-                               .div(wrapToken.reserve)
-      return weiToNumber(priceWei, 18 + usdToken.decimals.toNumber() - wrapToken.decimals.toNumber())
-    } catch
-      (e) {
-      console.error(e)
+    if (!CONFIGS[this.chainId].wrapUsdPair
+    ) {
       return '0'
     }
+    const res = await this.UNIV2PAIR.getPairInfo({
+      pairAddress: CONFIGS[this.chainId].wrapUsdPair
+    })
+    const [wrapToken, usdToken] = res.token0.adr === CONFIGS[this.chainId].wrapToken ? [res.token0, res.token1] : [res.token1, res.token0]
+    const priceWei = usdToken.reserve
+                             .mul(numberToWei(1))
+                             .div(wrapToken.reserve)
+    return weiToNumber(priceWei, 18 + usdToken.decimals.toNumber() - wrapToken.decimals.toNumber())
   }
 
   async fetchCpPrice({
@@ -189,19 +183,13 @@ export class Price {
       cTokenPrice: number
     }
   ) {
-    try {
-      if (!poolAddress || !cToken || !cTokenPrice || !states) {
-        return '0'
-      }
-      const contract = new ethers.Contract(poolAddress, PoolAbi, this.provider)
-      const cpTotalSupply = await contract.totalSupply(POOL_IDS.cp)
-      const rBc = states.Rc.sub(states.rDcNeutral).sub(states.rDcLong).sub(states.rDcShort)
-      const p = bn(numberToWei(cTokenPrice)).mul(rBc).div(cpTotalSupply)
-      return weiToNumber(p)
-    } catch
-      (e) {
-      console.error(e)
+    if (!poolAddress || !cToken || !cTokenPrice || !states) {
       return '0'
     }
+    const contract = new ethers.Contract(poolAddress, PoolAbi, this.provider)
+    const cpTotalSupply = await contract.totalSupply(POOL_IDS.cp)
+    const rBc = states.Rc.sub(states.rDcNeutral).sub(states.rDcLong).sub(states.rDcShort)
+    const p = bn(numberToWei(cTokenPrice)).mul(rBc).div(cpTotalSupply)
+    return weiToNumber(p)
   }
 }
