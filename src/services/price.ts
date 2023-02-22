@@ -183,6 +183,18 @@ export class Price {
       cTokenPrice: number
     }
   ) {
+    console.log({
+        states,
+        cToken,
+        poolAddress,
+        cTokenPrice,
+      }
+    )
+    const rc = weiToNumber(states.Rc)
+    const rDcShort = weiToNumber(states.rDcShort)
+
+    console.log({rc, rDcShort})
+
     if (!poolAddress || !cToken || !cTokenPrice || !states) {
       return '0'
     }

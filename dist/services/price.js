@@ -157,11 +157,10 @@ var Price = /** @class */ (function () {
      */
     Price.prototype.getNativePrice = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var res, _a, wrapToken, usdToken, priceWei, e_3;
+            var res, _a, wrapToken, usdToken, priceWei;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        _b.trys.push([0, 2, , 3]);
                         if (!configs_1.CONFIGS[this.chainId].wrapUsdPair) {
                             return [2 /*return*/, '0'];
                         }
@@ -175,11 +174,6 @@ var Price = /** @class */ (function () {
                             .mul((0, helper_1.numberToWei)(1))
                             .div(wrapToken.reserve);
                         return [2 /*return*/, (0, helper_1.weiToNumber)(priceWei, 18 + usdToken.decimals.toNumber() - wrapToken.decimals.toNumber())];
-                    case 2:
-                        e_3 = _b.sent();
-                        console.error(e_3);
-                        return [2 /*return*/, '0'];
-                    case 3: return [2 /*return*/];
                 }
             });
         });
@@ -187,11 +181,10 @@ var Price = /** @class */ (function () {
     Price.prototype.fetchCpPrice = function (_a) {
         var states = _a.states, cToken = _a.cToken, poolAddress = _a.poolAddress, cTokenPrice = _a.cTokenPrice;
         return __awaiter(this, void 0, void 0, function () {
-            var contract, cpTotalSupply, rBc, p, e_4;
+            var contract, cpTotalSupply, rBc, p;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        _b.trys.push([0, 2, , 3]);
                         if (!poolAddress || !cToken || !cTokenPrice || !states) {
                             return [2 /*return*/, '0'];
                         }
@@ -202,11 +195,6 @@ var Price = /** @class */ (function () {
                         rBc = states.Rc.sub(states.rDcNeutral).sub(states.rDcLong).sub(states.rDcShort);
                         p = (0, helper_1.bn)((0, helper_1.numberToWei)(cTokenPrice)).mul(rBc).div(cpTotalSupply);
                         return [2 /*return*/, (0, helper_1.weiToNumber)(p)];
-                    case 2:
-                        e_4 = _b.sent();
-                        console.error(e_4);
-                        return [2 /*return*/, '0'];
-                    case 3: return [2 /*return*/];
                 }
             });
         });
