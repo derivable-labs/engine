@@ -98,7 +98,7 @@ export class CurrentPool {
       if (address === this.cToken) return bn(POOL_IDS.cToken)
       return bn(address.split('-')[1])
     } catch (e) {
-      throw new Error('Token id not found')
+      throw new Error('Token id not found:' + address)
     }
   }
 }

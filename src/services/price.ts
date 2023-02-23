@@ -148,8 +148,7 @@ export class Price {
         )
       )
     } catch (e) {
-      console.error(e)
-      return 0
+      throw e
     }
   }
 

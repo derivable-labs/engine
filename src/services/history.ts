@@ -113,8 +113,7 @@ export class History {
       //@ts-ignore
       return result.sort((a, b) => (b.blockNumber - a.blockNumber))
     } catch (e) {
-      console.error(e)
-      return []
+      throw e
     }
   }
 

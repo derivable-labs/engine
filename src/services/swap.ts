@@ -234,8 +234,7 @@ export class Swap {
       console.log('tx', tx)
       return true
     } catch (e) {
-      console.error(e)
-      return false
+      throw e
     }
   }
 
@@ -244,8 +243,7 @@ export class Swap {
       const steps = this.formatSwapSteps(rawStep)
       return await this.multiSwap(steps, isDeleverage)
     } catch (e) {
-      console.error(e)
-      return e
+      throw e
     }
   }
 

@@ -33,8 +33,7 @@ export class UniV2Pair {
       const res = await pairDetailContract.functions.query([pairAddress], flag)
       return res.details[0]
     } catch (e) {
-      console.error(e)
-      return {}
+      throw e
     }
   }
 
@@ -59,8 +58,7 @@ export class UniV2Pair {
       }
       return result
     } catch (e) {
-      console.error(e)
-      return {}
+      throw e
     }
   }
 }
