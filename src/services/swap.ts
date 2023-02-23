@@ -26,7 +26,7 @@ type ConfigType = {
 // TODO: don't hardcode these
 const fee10000 = 30
 
-const gasLimit = 30000000
+const gasLimit = 6000000
 const ACTION_RECORD_CALL_RESULT = 2;
 const ACTION_INJECT_CALL_RESULT = 4;
 const TRANSFER_FROM_SENDER = 0;
@@ -217,17 +217,18 @@ export class Swap {
     }
   }
 
-  async multiSwap(steps: SwapStepType[], isDeleverage = false) {
+  async multiSwap(steps: SwapStepType[], gasLimit?: BigNumber, isDeleverage = false) {
     try {
       const { params, value } = await this.convertStepToActions([...steps])
       if (isDeleverage) {
         params.unshift(this.getDeleverageStep())
       }
-      await this.callStaticMultiSwap({ params, value })
+      await this.callStaticMultiSwap({ params, value, gasLimit })
       const contract = this.getRouterContract(this.signer)
       const res = await contract.exec(...params,
         {
-          value
+          value,
+          gasLimit: gasLimit || undefined
         }
       )
       const tx = await res.wait(1)
@@ -238,17 +239,17 @@ export class Swap {
     }
   }
 
-  async updateLeverageAndSize(rawStep: StepType[], isDeleverage = false) {
+  async updateLeverageAndSize(rawStep: StepType[], gasLimit?: BigNumber, isDeleverage = false) {
     try {
       const steps = this.formatSwapSteps(rawStep)
-      return await this.multiSwap(steps, isDeleverage)
+      return await this.multiSwap(steps, gasLimit, isDeleverage)
     } catch (e) {
       throw e
     }
   }
 
   getAddressByErc1155Address(address: string) {
-    if(isErc1155Address(address)) {
+    if (isErc1155Address(address)) {
       return address.split('-')[0]
     }
     return address
@@ -258,8 +259,8 @@ export class Swap {
     return new ethers.Contract(CONFIGS[this.chainId].router, UtrAbi, provider)
   }
 
-  getPoolContract() {
-    return new ethers.Contract(this.CURRENT_POOL.poolAddress, PoolAbi, this.provider)
+  getPoolContract(provider?: any) {
+    return new ethers.Contract(this.CURRENT_POOL.poolAddress, PoolAbi, provider || this.provider)
   }
 
   getLogicContract(provider?: any) {

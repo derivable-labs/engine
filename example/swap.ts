@@ -23,7 +23,7 @@ const testLocal = async () => {
       amountOutMin: 0
     }
   ]
-  await engine.SWAP.multiSwap(steps)
+  await engine.SWAP.multiSwap(steps, bn(6000000))
 
   //
   // const a = await engine.SWAP.calculateAmountOuts(steps)

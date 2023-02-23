@@ -114,7 +114,6 @@ export class Resource {
           t.logIndex === log.logIndex && t.transactionHash === log.transactionHash
         ))
       })
-      console.log(newCacheSwapLogs)
 
       this.storage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account, headBlock.toString())
       this.storage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account, JSON.stringify(newCacheSwapLogs))
