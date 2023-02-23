@@ -187,10 +187,7 @@ export class Price {
     }
     const contract = new ethers.Contract(poolAddress, PoolAbi, this.provider)
     const cpTotalSupply = await contract.totalSupply(POOL_IDS.cp)
-    const R = states.Rc.add(
-      states.Rb.mul(states.twapBase).add(states.Rq).div(states.twapLP)
-    )
-    const rBc = R.sub(states.rDcNeutral).sub(states.rDcLong).sub(states.rDcShort)
+    const rBc = states.R.sub(states.rDcNeutral).sub(states.rDcLong).sub(states.rDcShort)
     const p = bn(numberToWei(cTokenPrice)).mul(rBc).div(cpTotalSupply)
     return weiToNumber(p)
   }

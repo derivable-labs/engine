@@ -316,9 +316,11 @@ export class Resource {
       pools[i].basePrice = this.getBasePrice(pairInfo, baseToken)
       pools[i].cPrice = bn(poolsState[i].twapLP).mul(LP_PRICE_UNIT).shr(112).toNumber() / LP_PRICE_UNIT
       const rdc = this.getRdc(poolsState[i], pools[i].powers, pools[i].cPrice)
+      const rentRate = this.getRentRate(rdc, pools[i].rentRate)
       pools[i].states = {
         ...poolsState[i],
-        ...rdc
+        ...rdc,
+        ...rentRate
       }
 
       powers.forEach((power: number, key: number) => {
@@ -356,6 +358,15 @@ export class Resource {
     }
 
     return { tokens, pools }
+  }
+
+  getRentRate({rDcLong, rDcShort, R}: {R: BigNumber, rDcLong: BigNumber, rDcShort: BigNumber}, rentRate: BigNumber) {
+    const diff = bn(rDcLong).sub(rDcShort).abs()
+    const rate = diff.mul(rentRate).div(R)
+    return {
+      rentRateLong: rate.mul(rDcLong).div(rDcLong.add(rDcShort)),
+      rentRateShort: rate.mul(rDcShort).div(rDcLong.add(rDcShort))
+    }
   }
 
   getPoolOverridedProvider(poolAddresses: string[]) {
@@ -440,7 +451,10 @@ export class Resource {
     return { tokens, poolsState: pools }
   }
 
-  getRdc(states: StatesType, powers: number[], cPrice: number): { rDcLong: BigNumber, rDcShort: BigNumber } {
+  getRdc(states: StatesType, powers: number[], cPrice: number): { R: BigNumber ,rDcLong: BigNumber, rDcShort: BigNumber } {
+    const R = states.Rc.add(
+      states.Rb.mul(states.twapBase).add(states.Rq).div(states.twapLP)
+    )
     let rDcLong: BigNumber = bn(0);
     let rDcShort: BigNumber = bn(0);
     const powerState = new PowerState({ powers: [...powers] })
@@ -459,7 +473,7 @@ export class Resource {
     rDcLong = cPrice ? rDcLong.mul(numberToWei(1)).div(numberToWei(cPrice)) : bn(0)
     rDcShort = cPrice ? rDcShort.mul(numberToWei(1)).div(numberToWei(cPrice)) : bn(0)
 
-    return { rDcLong: rDcLong, rDcShort: rDcShort }
+    return { R, rDcLong: rDcLong, rDcShort: rDcShort }
   }
 
   parseDdlLogs(ddlLogs: any) {
