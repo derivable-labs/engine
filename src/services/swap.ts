@@ -10,6 +10,7 @@ import LogicsAbi from "../abi/Logic.json";
 import UtrOverride from "../abi/UTROverride.json";
 import PoolAbi from "../abi/Pool.json";
 import Erc20Abi from "../abi/ERC20.json";
+import WtapAbi from "../abi/Wrap.json";
 import {JsonRpcProvider} from "@ethersproject/providers";
 
 type ConfigType = {
@@ -30,6 +31,7 @@ const gasLimit = 6000000
 const ACTION_RECORD_CALL_RESULT = 2;
 const ACTION_INJECT_CALL_RESULT = 4;
 const TRANSFER_FROM_SENDER = 0;
+const TRANSFER_FROM_ROUTER = 1;
 
 
 export class Swap {
@@ -176,10 +178,23 @@ export class Swap {
         recipient: this.account,
       })
     })
+    let nativeAmountToWrap = bn(0)
 
     const datas = await Promise.all(steps.map((step) => {
+      if (step.tokenIn === CONFIGS[this.chainId].nativeToken &&
+        this.CURRENT_POOL.baseToken !== CONFIGS[this.chainId].wrapToken
+      ) {
+        throw "This pool do not support swap by native Token"
+      }
+
+      let idIn = this.getIdByAddress(step.tokenIn)
+      if(step.tokenIn === CONFIGS[this.chainId].nativeToken) {
+        nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn)
+        idIn = bn(POOL_IDS.base)
+      }
+
       return poolContract.populateTransaction.swap(
-        this.getIdByAddress(step.tokenIn),
+        idIn,
         this.getIdByAddress(step.tokenOut),
         this.account
       )
@@ -202,7 +217,27 @@ export class Swap {
       }
     })
 
-    return { params: [outputs, actions], value: bn(0) }
+    if(nativeAmountToWrap.gt(0)) {
+      const poolContract = this.getWrapContract()
+
+      const data = await poolContract.populateTransaction.deposit()
+      actions.unshift({
+        flags: 0,
+        code: CONFIGS[this.chainId].wrapToken,
+        data: data.data,
+        inputs: [{
+          mode: TRANSFER_FROM_ROUTER,
+          recipient: CONFIGS[this.chainId].wrapToken,
+          eip: 0,
+          id: 0,
+          token: ZERO_ADDRESS,
+          amountInMax: nativeAmountToWrap,
+          amountSource: 0,
+        }]
+      })
+    }
+
+    return { params: [outputs, actions], value: nativeAmountToWrap }
   }
 
   getIdByAddress(address: string) {
@@ -265,5 +300,9 @@ export class Swap {
 
   getLogicContract(provider?: any) {
     return new ethers.Contract(<string>this.CURRENT_POOL.logicAddress, LogicsAbi, provider || this.provider)
+  }
+
+  getWrapContract(provider?: any) {
+    return new ethers.Contract(CONFIGS[this.chainId].wrapToken, WtapAbi, provider || this.provider)
   }
 }

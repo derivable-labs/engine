@@ -1,12 +1,12 @@
 import {Engine} from "../src/engine";
-import {ethers, Wallet} from "ethers";
 import {bn, numberToWei, weiToNumber} from "../src/utils/helper";
 import {getTestConfigs} from "./shared/testConfigs";
 import {POOL_IDS} from "../src/utils/constant";
+import {CONFIGS} from "../dist/utils/configs";
 
 const testLocal = async () => {
   const engine = new Engine(getTestConfigs(1337))
-  await engine.RESOURCE.fetchResourceData('0xbC52C688c34A480c6785A38715c693Bb22863DE1')
+  await engine.RESOURCE.fetchResourceData(engine.account || '')
 
   const currentPool = Object.values(engine.RESOURCE.pools)[0]
   engine.setCurrentPool({
@@ -18,7 +18,7 @@ const testLocal = async () => {
   const steps = [
     {
       amountIn: bn(numberToWei(1)),
-      tokenIn: currentPool.baseToken,
+      tokenIn: CONFIGS[engine.chainId].nativeToken,
       tokenOut: currentPool.poolAddress + "-" + POOL_IDS.cp,
       amountOutMin: 0
     }
