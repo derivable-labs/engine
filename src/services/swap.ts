@@ -31,6 +31,8 @@ const gasLimit = 6000000
 const ACTION_RECORD_CALL_RESULT = 2;
 const ACTION_INJECT_CALL_RESULT = 4;
 const TRANSFER_FROM_SENDER = 0;
+const AMOUNT_EXACT = 0;
+const AMOUNT_ALL = 1;
 const TRANSFER_FROM_ROUTER = 1;
 
 
@@ -188,7 +190,7 @@ export class Swap {
       }
 
       let idIn = this.getIdByAddress(step.tokenIn)
-      if(step.tokenIn === CONFIGS[this.chainId].nativeToken) {
+      if (step.tokenIn === CONFIGS[this.chainId].nativeToken) {
         nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn)
         idIn = bn(POOL_IDS.base)
       }
@@ -201,12 +203,13 @@ export class Swap {
     }))
 
     const actions = steps.map((step, key) => {
+      const mode = step.tokenIn === CONFIGS[this.chainId].nativeToken ? TRANSFER_FROM_ROUTER : TRANSFER_FROM_SENDER
       return {
         flags: 0,
         code: this.CURRENT_POOL.poolAddress,
         data: datas[key].data,
         inputs: [{
-          mode: TRANSFER_FROM_SENDER,
+          mode,
           recipient: this.CURRENT_POOL.poolAddress,
           eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
           id: isErc1155Address(step.tokenIn) ? this.getIdByAddress(step.tokenIn) : 0,
@@ -216,8 +219,7 @@ export class Swap {
         }]
       }
     })
-
-    if(nativeAmountToWrap.gt(0)) {
+    if (nativeAmountToWrap.gt(0)) {
       const poolContract = this.getWrapContract()
 
       const data = await poolContract.populateTransaction.deposit()
@@ -227,7 +229,7 @@ export class Swap {
         data: data.data,
         inputs: [{
           mode: TRANSFER_FROM_ROUTER,
-          recipient: CONFIGS[this.chainId].wrapToken,
+          recipient: this.account || '',
           eip: 0,
           id: 0,
           token: ZERO_ADDRESS,
@@ -244,8 +246,13 @@ export class Swap {
     try {
       if (address === this.CURRENT_POOL.baseToken) return bn(POOL_IDS.base)
       if (address === this.CURRENT_POOL.quoteToken) return bn(POOL_IDS.quote)
-      if (address === CONFIGS[this.chainId].nativeToken) return POOL_IDS.native
       if (address === this.CURRENT_POOL.cToken) return bn(POOL_IDS.cToken)
+      if (
+        address === CONFIGS[this.chainId].nativeToken &&
+        this.CURRENT_POOL.baseToken === CONFIGS[this.chainId].wrapToken
+      ) {
+        return bn(POOL_IDS.base)
+      }
       return bn(address.split('-')[1])
     } catch (e) {
       throw new Error('Token id not found')
@@ -287,6 +294,12 @@ export class Swap {
     if (isErc1155Address(address)) {
       return address.split('-')[0]
     }
+    if(address === CONFIGS[this.chainId].nativeToken &&
+      this.CURRENT_POOL.baseToken === CONFIGS[this.chainId].wrapToken
+    ) {
+      return this.CURRENT_POOL.baseToken
+    }
+
     return address
   }
 

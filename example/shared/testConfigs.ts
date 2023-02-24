@@ -1,7 +1,7 @@
 import {ethers, Wallet} from "ethers";
 
-const PRIVATE_KEY = '0x60f5906de1edfc4d14eb4aea49ed4c06641bbdbd5a56092392308e9730598373'
-const account = '0xbC52C688c34A480c6785A38715c693Bb22863DE1'
+const PRIVATE_KEY = '0x595cbe4fa0f0ec80e8f3f66373d60f3943baf00347382804b8bcc598a9e5bd77'
+const account = '0xDe6b460B889b4Aa9Cf90B453E24b3b569D34D39f'
 const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
 const walletPrivateKey = new Wallet(PRIVATE_KEY)
 const wallet = walletPrivateKey.connect(provider)
