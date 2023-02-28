@@ -228,13 +228,13 @@ export class Swap {
         code: CONFIGS[this.chainId].wrapToken,
         data: data.data,
         inputs: [{
-          mode: TRANSFER_FROM_ROUTER,
-          recipient: ZERO_ADDRESS,
+          mode: 2,
+          recipient: CONFIGS[this.chainId].wrapToken,
           eip: 0,
           id: 0,
           token: ZERO_ADDRESS,
           amountInMax: nativeAmountToWrap,
-          amountSource: 0,
+          amountSource: AMOUNT_EXACT,
         }]
       })
     }
@@ -265,10 +265,6 @@ export class Swap {
       if (isDeleverage) {
         params.unshift(this.getDeleverageStep())
       }
-      const token = this.getWrapContract(this.signer)
-      const a = await token.balanceOf(this.CURRENT_POOL.poolAddress)
-      console.log(a)
-
       await this.callStaticMultiSwap({ params, value, gasLimit })
       const contract = this.getRouterContract(this.signer)
       const res = await contract.exec(...params,
