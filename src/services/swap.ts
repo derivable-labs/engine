@@ -215,7 +215,7 @@ export class Swap {
           id: isErc1155Address(step.tokenIn) ? this.getIdByAddress(step.tokenIn) : 0,
           token: this.getAddressByErc1155Address(step.tokenIn),
           amountInMax: step.amountIn,
-          amountSource: 0,
+          amountSource: step.tokenIn === CONFIGS[this.chainId].nativeToken ? AMOUNT_ALL : AMOUNT_EXACT,
         }]
       }
     })
@@ -229,7 +229,7 @@ export class Swap {
         data: data.data,
         inputs: [{
           mode: TRANSFER_FROM_ROUTER,
-          recipient: this.account || '',
+          recipient: ZERO_ADDRESS,
           eip: 0,
           id: 0,
           token: ZERO_ADDRESS,
@@ -265,6 +265,10 @@ export class Swap {
       if (isDeleverage) {
         params.unshift(this.getDeleverageStep())
       }
+      const token = this.getWrapContract(this.signer)
+      const a = await token.balanceOf(this.CURRENT_POOL.poolAddress)
+      console.log(a)
+
       await this.callStaticMultiSwap({ params, value, gasLimit })
       const contract = this.getRouterContract(this.signer)
       const res = await contract.exec(...params,

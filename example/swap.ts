@@ -2,7 +2,7 @@ import {Engine} from "../src/engine";
 import {bn, numberToWei, weiToNumber} from "../src/utils/helper";
 import {getTestConfigs} from "./shared/testConfigs";
 import {POOL_IDS} from "../src/utils/constant";
-import {CONFIGS} from "../dist/utils/configs";
+import {CONFIGS} from "../src/utils/configs";
 
 const testLocal = async () => {
   const engine = new Engine(getTestConfigs(1337))

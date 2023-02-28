@@ -181,7 +181,7 @@ export class Resource {
         return log.address && [topics.LogicCreated, topics.PoolCreated, topics.Derivable].includes(log.topics[0])
       })
       const swapLogs = logs.filter((log: any) => {
-        return log.address && [topics.Transfer, topics.TransferSingle, topics.TransferBatch].includes(log.topics[0])
+        return log.address && [topics.Transfer, topics.TransferSingle, topics.TransferBatch, topics.Deposit].includes(log.topics[0])
       })
       this.cacheDdlLog({
         ddlLogs,
@@ -363,8 +363,8 @@ export class Resource {
     const diff = bn(rDcLong).sub(rDcShort).abs()
     const rate = diff.mul(rentRate).div(R)
     return {
-      rentRateLong: rate.mul(rDcLong).div(rDcLong.add(rDcShort)),
-      rentRateShort: rate.mul(rDcShort).div(rDcLong.add(rDcShort))
+      rentRateLong: rDcLong.add(rDcShort).isZero() ? bn(0) : rate.mul(rDcLong).div(rDcLong.add(rDcShort)),
+      rentRateShort: rDcLong.add(rDcShort).isZero() ? bn(0) : rate.mul(rDcShort).div(rDcLong.add(rDcShort))
     }
   }
 
