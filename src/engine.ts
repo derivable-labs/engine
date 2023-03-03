@@ -7,6 +7,7 @@ import {UniV2Pair}                              from "./services/uniV2Pair";
 import {History}                                from "./services/history";
 import {Swap}                  from "./services/swap";
 import {CurrentPool, PoolData} from "./services/currentPool";
+import {CreatePool}            from "./services/createPool";
 import {JsonRpcProvider} from "@ethersproject/providers";
 
 type ConfigType = {
@@ -38,12 +39,13 @@ export class Engine {
   SWAP: Swap
   CURRENT_POOL: CurrentPool
   currentPoolAddress: string
+  CREATE_POOL: CreatePool
 
   constructor(configs: ConfigType) {
     this.chainId = configs.chainId
     this.scanApi = configs.scanApi
     this.rpcUrl = configs.rpcUrl
-    this.overrideProvider = new JsonRpcProvider('http://localhost:8545/')
+    this.overrideProvider = new JsonRpcProvider('HTTP://0.0.0.0:8545')
     this.storage = configs.storage
     this.provider = configs.provider
     this.account = configs.account
@@ -99,6 +101,16 @@ export class Engine {
       scanApi: this.scanApi,
       UNIV2PAIR: this.UNIV2PAIR,
       CURRENT_POOL: this.CURRENT_POOL,
+      signer: this.signer,
+      account: this.account,
+      overrideProvider: this.overrideProvider
+    })
+
+    this.CREATE_POOL = new CreatePool({
+      chainId: this.chainId,
+      provider: this.provider,
+      scanApi: this.scanApi,
+      UNIV2PAIR: this.UNIV2PAIR,
       signer: this.signer,
       account: this.account,
       overrideProvider: this.overrideProvider

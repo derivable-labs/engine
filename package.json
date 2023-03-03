@@ -10,6 +10,7 @@
     "example:getPairDetail": "npx ts-node --files ./example/getPairDetail.ts",
     "example:price": "npx ts-node --files ./example/priceExample.ts",
     "example:swap": "npx ts-node --files ./example/swap.ts",
+    "example:createPool": "npx ts-node --files ./example/createPool.ts",
     "example:calcAmountOuts": "npx ts-node --files ./example/calculateAmountOuts.ts",
     "example:history": "npx ts-node --files ./example/history.ts"
   },
