@@ -15,7 +15,7 @@ class Engine {
         this.chainId = configs.chainId;
         this.scanApi = configs.scanApi;
         this.rpcUrl = configs.rpcUrl;
-        this.overrideProvider = new providers_1.JsonRpcProvider('HTTP://0.0.0.0:8545');
+        this.overrideProvider = new providers_1.JsonRpcProvider(configs.rpcUrl);
         this.storage = configs.storage;
         this.provider = configs.provider;
         this.account = configs.account;
