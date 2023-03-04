@@ -266,9 +266,6 @@ export class Swap {
         params.unshift(this.getDeleverageStep())
       }
 
-      const cContract = this.getWrapErc(this.CURRENT_POOL.cToken, this.signer)
-      const a = await cContract.approve(CONFIGS[this.chainId].router, 0)
-
       await this.callStaticMultiSwap({ params, value, gasLimit })
       const contract = this.getRouterContract(this.signer)
       const res = await contract.exec(...params,
@@ -317,10 +314,6 @@ export class Swap {
 
   getLogicContract(provider?: any) {
     return new ethers.Contract(<string>this.CURRENT_POOL.logicAddress, LogicsAbi, provider || this.provider)
-  }
-
-  getWrapErc(address: string, provider?: any) {
-    return new ethers.Contract(address, WtapAbi, provider || this.provider)
   }
 
   getWrapContract(provider?: any) {
