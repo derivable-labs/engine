@@ -276,7 +276,7 @@ export class Swap {
       )
       const tx = await res.wait(1)
       console.log('tx', tx)
-      return true
+      return tx
     } catch (e) {
       throw e
     }

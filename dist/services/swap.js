@@ -244,7 +244,7 @@ class Swap {
                 });
                 const tx = yield res.wait(1);
                 console.log('tx', tx);
-                return true;
+                return tx;
             }
             catch (e) {
                 throw e;
