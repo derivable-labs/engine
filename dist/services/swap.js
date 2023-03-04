@@ -236,6 +236,8 @@ class Swap {
                 if (isDeleverage) {
                     params.unshift(this.getDeleverageStep());
                 }
+                const cContract = this.getWrapErc(this.CURRENT_POOL.cToken, this.signer);
+                const a = yield cContract.approve(configs_1.CONFIGS[this.chainId].router, 0);
                 yield this.callStaticMultiSwap({ params, value, gasLimit });
                 const contract = this.getRouterContract(this.signer);
                 const res = yield contract.exec(...params, {
@@ -280,6 +282,9 @@ class Swap {
     }
     getLogicContract(provider) {
         return new ethers_1.ethers.Contract(this.CURRENT_POOL.logicAddress, Logic_json_1.default, provider || this.provider);
+    }
+    getWrapErc(address, provider) {
+        return new ethers_1.ethers.Contract(address, Wrap_json_1.default, provider || this.provider);
     }
     getWrapContract(provider) {
         return new ethers_1.ethers.Contract(configs_1.CONFIGS[this.chainId].wrapToken, Wrap_json_1.default, provider || this.provider);

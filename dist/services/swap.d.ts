@@ -47,6 +47,7 @@ export declare class Swap {
     getRouterContract(provider: any): ethers.Contract;
     getPoolContract(provider?: any): ethers.Contract;
     getLogicContract(provider?: any): ethers.Contract;
+    getWrapErc(address: string, provider?: any): ethers.Contract;
     getWrapContract(provider?: any): ethers.Contract;
 }
 export {};

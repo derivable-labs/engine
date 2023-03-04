@@ -61,7 +61,7 @@ class BnA {
                 return this.account;
             });
             request.push({
-                reference: 'erc1155',
+                reference: 'erc1155-' + erc1155Address,
                 contractAddress: erc1155Address,
                 abi: Pool_json_1.default,
                 calls: [
@@ -79,7 +79,6 @@ class BnA {
         return request;
     }
     parseBnAMultiRes(erc20Address, erc1155Tokens, data) {
-        var _a;
         const balances = {};
         const allowances = {};
         const erc20Info = data.erc20.callsReturnContext[0].returnValues[0];
@@ -88,19 +87,21 @@ class BnA {
             balances[address] = (0, helper_1.bn)(erc20Info[i * 2]);
             allowances[address] = (0, helper_1.bn)(erc20Info[i * 2 + 1]);
         }
-        const erc1155Info = (_a = data === null || data === void 0 ? void 0 : data.erc1155) === null || _a === void 0 ? void 0 : _a.callsReturnContext;
-        if (erc1155Info) {
-            const approveData = erc1155Info.filter((e) => e.methodName === 'isApprovedForAll');
-            const balanceData = erc1155Info.filter((e) => e.methodName === 'balanceOfBatch');
-            for (let i = 0; i < approveData.length; i++) {
-                const callsReturnContext = approveData[i];
-                allowances[callsReturnContext.reference] = callsReturnContext.returnValues[0] ? (0, helper_1.bn)(constant_1.LARGE_VALUE) : (0, helper_1.bn)(0);
-            }
-            for (let i = 0; i < balanceData.length; i++) {
-                const returnValues = balanceData[i].returnValues;
-                for (let j = 0; j < returnValues.length; j++) {
-                    const id = erc1155Tokens[balanceData[i].reference][j].toNumber();
-                    balances[balanceData[i].reference + '-' + id] = (0, helper_1.bn)(returnValues[j]);
+        for (let erc1155Address in erc1155Tokens) {
+            const erc1155Info = data && data['erc1155-' + erc1155Address] ? data['erc1155-' + erc1155Address].callsReturnContext : [];
+            if (erc1155Info) {
+                const approveData = erc1155Info.filter((e) => e.methodName === 'isApprovedForAll');
+                const balanceData = erc1155Info.filter((e) => e.methodName === 'balanceOfBatch');
+                for (let i = 0; i < approveData.length; i++) {
+                    const callsReturnContext = approveData[i];
+                    allowances[callsReturnContext.reference] = callsReturnContext.returnValues[0] ? (0, helper_1.bn)(constant_1.LARGE_VALUE) : (0, helper_1.bn)(0);
+                }
+                for (let i = 0; i < balanceData.length; i++) {
+                    const returnValues = balanceData[i].returnValues;
+                    for (let j = 0; j < returnValues.length; j++) {
+                        const id = erc1155Tokens[balanceData[i].reference][j].toNumber();
+                        balances[balanceData[i].reference + '-' + id] = (0, helper_1.bn)(returnValues[j]);
+                    }
                 }
             }
         }
