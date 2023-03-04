@@ -27,8 +27,8 @@ export const CONFIGS = {
     wrapUsdPair: '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16',
   },
   1337: {
-    rpcUrl: 'http://localhost:8545/',
-    rpcToGetLogs: 'http://localhost:8545/',
+    rpcUrl: 'http://localhost:8545',
+    rpcToGetLogs: 'http://localhost:8545',
     timePerBlock: 3000,
     nativeToken: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
     multiCall: '0x025ff8c5CB97f5f79dc396DCD501Db775B00F433',
@@ -38,5 +38,7 @@ export const CONFIGS = {
     router: '0xb60F861100aC9F8BE31D0e74DCae35D14cbcA2E2',
     wrapToken: '0x8F98902cf8255ab9D403Dfa68875b1024cd6C3d4',
     wrapUsdPair: '0x2B89B4931122EE4Fa474446Fa9B118F2852a8223',
+    poolFactory: "0x2e10024346cDd08E1e9071B16a51d89d46de8003",
+    logic: "0x8f114752F335c474873cC3cB738ebF093Ab85Bf9",
   }
 }

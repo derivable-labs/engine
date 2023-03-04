@@ -75,6 +75,13 @@ export type StatesType = {
   "rentRateShort": BigNumber
 }
 
+export type PoolConfig = {
+  priceToleranceRatio: BigNumber
+  rentRate: BigNumber
+  deleverageRate: BigNumber
+  powers: number[]
+}
+
 export type PoolType = {
   pool: string
   logic: string

@@ -1,11 +1,11 @@
 import {bn, getErc1155Token, getNormalAddress} from '../utils/helper';
-import {ethers}                                from 'ethers';
-import {Multicall}                             from 'ethereum-multicall';
-import {CONFIGS}                               from '../utils/configs';
-import {LARGE_VALUE}                           from '../utils/constant';
-import BnAAbi                                  from '../abi/BnA.json'
-import PoolAbi                                 from '../abi/Pool.json'
-import {AllowancesType, BalancesType}          from '../types';
+import {ethers} from 'ethers';
+import {Multicall} from 'ethereum-multicall';
+import {CONFIGS} from '../utils/configs';
+import {LARGE_VALUE} from '../utils/constant';
+import BnAAbi from '../abi/BnA.json'
+import PoolAbi from '../abi/Pool.json'
+import {AllowancesType, BalancesType} from '../types';
 
 type BnAReturnType = { balances: BalancesType, allowances: AllowancesType }
 
@@ -69,7 +69,7 @@ export class BnA {
       })
       request.push(
         {
-          reference: 'erc1155',
+          reference: 'erc1155-' + erc1155Address,
           contractAddress: erc1155Address,
           abi: PoolAbi,
           calls: [
@@ -99,21 +99,23 @@ export class BnA {
       allowances[address] = bn(erc20Info[i * 2 + 1])
     }
 
-    const erc1155Info = data?.erc1155?.callsReturnContext
-    if (erc1155Info) {
-      const approveData = erc1155Info.filter((e: any) => e.methodName === 'isApprovedForAll')
-      const balanceData = erc1155Info.filter((e: any) => e.methodName === 'balanceOfBatch')
+    for (let erc1155Address in erc1155Tokens) {
+      const erc1155Info = data && data['erc1155-' + erc1155Address] ? data['erc1155-' + erc1155Address].callsReturnContext : []
+      if (erc1155Info) {
+        const approveData = erc1155Info.filter((e: any) => e.methodName === 'isApprovedForAll')
+        const balanceData = erc1155Info.filter((e: any) => e.methodName === 'balanceOfBatch')
 
-      for (let i = 0; i < approveData.length; i++) {
-        const callsReturnContext = approveData[i]
-        allowances[callsReturnContext.reference] = callsReturnContext.returnValues[0] ? bn(LARGE_VALUE) : bn(0)
-      }
+        for (let i = 0; i < approveData.length; i++) {
+          const callsReturnContext = approveData[i]
+          allowances[callsReturnContext.reference] = callsReturnContext.returnValues[0] ? bn(LARGE_VALUE) : bn(0)
+        }
 
-      for (let i = 0; i < balanceData.length; i++) {
-        const returnValues = balanceData[i].returnValues
-        for (let j = 0; j < returnValues.length; j++) {
-          const id = erc1155Tokens[balanceData[i].reference][j].toNumber()
-          balances[balanceData[i].reference + '-' + id] = bn(returnValues[j])
+        for (let i = 0; i < balanceData.length; i++) {
+          const returnValues = balanceData[i].returnValues
+          for (let j = 0; j < returnValues.length; j++) {
+            const id = erc1155Tokens[balanceData[i].reference][j].toNumber()
+            balances[balanceData[i].reference + '-' + id] = bn(returnValues[j])
+          }
         }
       }
     }

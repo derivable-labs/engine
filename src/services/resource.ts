@@ -361,7 +361,7 @@ export class Resource {
 
   getRentRate({rDcLong, rDcShort, R}: {R: BigNumber, rDcLong: BigNumber, rDcShort: BigNumber}, rentRate: BigNumber) {
     const diff = bn(rDcLong).sub(rDcShort).abs()
-    const rate = diff.mul(rentRate).div(R)
+    const rate = R.isZero() ? bn(0) : diff.mul(rentRate).div(R)
     return {
       rentRateLong: rDcLong.add(rDcShort).isZero() ? bn(0) : rate.mul(rDcLong).div(rDcLong.add(rDcShort)),
       rentRateShort: rDcLong.add(rDcShort).isZero() ? bn(0) : rate.mul(rDcShort).div(rDcLong.add(rDcShort))
@@ -451,7 +451,7 @@ export class Resource {
   }
 
   getRdc(states: StatesType, powers: number[], cPrice: number): { R: BigNumber ,rDcLong: BigNumber, rDcShort: BigNumber } {
-    const R = states.Rc.add(
+    const R = states.twapLP.isZero() ? bn(0) : states.Rc.add(
       states.Rb.mul(states.twapBase).add(states.Rq).div(states.twapLP)
     )
     let rDcLong: BigNumber = bn(0);
@@ -462,7 +462,7 @@ export class Resource {
     const totalSupply = states.totalSupplies
     powers.forEach((power, id) => {
       const dPrice = powerState.getPrice(power)
-      const r = totalSupply[id].mul(numberToWei(dPrice)).div(numberToWei(1))
+      const r = dPrice || dPrice === Infinity ? bn(0) : totalSupply[id].mul(numberToWei(dPrice)).div(numberToWei(1))
       if (power >= 0) {
         rDcLong = rDcLong.add(r)
       } else {
