@@ -27,8 +27,8 @@ export const CONFIGS = {
     wrapUsdPair: '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16',
   },
   1337: {
-    rpcUrl: 'HTTP://0.0.0.0:8545',
-    rpcToGetLogs: 'HTTP://0.0.0.0:8545',
+    rpcUrl: 'http://localhost:8545',
+    rpcToGetLogs: 'http://localhost:8545',
     timePerBlock: 3000,
     nativeToken: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
     multiCall: '0x025ff8c5CB97f5f79dc396DCD501Db775B00F433',
