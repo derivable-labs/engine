@@ -123,10 +123,12 @@ export class Price {
       baseToken,
       cToken,
       quoteToken,
+      chainId,
       currentPrice
     }: {
       baseToken: TokenType,
       cToken: string,
+      chainId: string,
       quoteToken: TokenType,
       currentPrice: string
     }
@@ -136,6 +138,7 @@ export class Price {
       const result = await historyProvider.getBars({
         to: toTime,
         limit: 1,
+        chainId,
         resolution: '1',
         route: `${baseToken.address}/${cToken}/${quoteToken.address}`,
         outputToken: quoteToken,
