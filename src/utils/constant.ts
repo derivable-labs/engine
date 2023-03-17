@@ -16,7 +16,7 @@ export const LOCALSTORAGE_KEY = {
 
 export const ddlGenesisBlock = {
   56: 23917200,
-  42161: 70398030,
+  42161: 70615018,
 }
 
 export const POOL_IDS = {

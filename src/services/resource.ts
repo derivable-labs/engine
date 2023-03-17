@@ -257,12 +257,6 @@ export class Resource {
     })
     const normalTokens = getNormalAddress(listTokens)
 
-    console.log(CONFIGS[this.chainId].multiCall)
-
-    const contract = new ethers.Contract('0xaD600981f449cf2F41642863Ad5c182de3B47a9C', getLogicAbi(this.chainId), this.provider)
-    const a = await contract.getStates()
-    console.log(a)
-
     // @ts-ignore
     const context: ContractCallContext[] = this.getMultiCallRequest(normalTokens, listPools)
     console.log(context)
@@ -274,6 +268,7 @@ export class Resource {
     ])
 
     const { tokens: tokensArr, poolsState } = this.parseMultiCallResponse(results)
+    console.log(poolsState)
     const tokens = []
     for (let i = 0; i < tokensArr.length; i++) {
       tokens.push({
