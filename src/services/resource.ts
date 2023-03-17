@@ -400,13 +400,13 @@ export class Resource {
     return ddlLogs.map((log: any) => {
       try {
         return {
+          ...eventInterface.parseLog(log),
           address: log.address,
           timeStamp: Number(log.timeStamp),
           transactionHash: log.transactionHash,
           blockNumber: log.blockNumber,
           index: log.logIndex,
           logIndex: log.transactionHash + '-' + log.logIndex,
-          ...eventInterface.parseLog(log)
         }
       } catch (e) {
         return {}

@@ -10,6 +10,12 @@ const test = async () => {
     account: '0xC06F7cF8C9e8a8D39b0dF5A105d66127912Bc980',
     provider: new ethers.providers.JsonRpcProvider("https://arb1.arbitrum.io/rpc"),
     providerToGetLog: new ethers.providers.JsonRpcProvider('https://arb1.arbitrum.io/rpc'),
+    storage: {
+      //@ts-ignore
+      getItem: (a) => {return ''},
+      //@ts-ignore
+      setItem: (a, b) => {},
+    }
   })
   const res = await engine.RESOURCE.fetchResourceData('0xC06F7cF8C9e8a8D39b0dF5A105d66127912Bc980')
   console.log({
