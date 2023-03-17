@@ -93,7 +93,7 @@ export class Resource {
     const cachedDdlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) || '[]')
     const newCachedDdlLogs = [...ddlLogs, ...cachedDdlLogs].filter((log, index, self) => {
       return index === self.findIndex((t) => (
-        t.logIndex === log.logIndex
+        t.transactionHash + t.logIndex === log.transactionHash + log.logIndex
       ))
     })
     this.storage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS, headBlock.toString())
@@ -102,7 +102,7 @@ export class Resource {
       const cachedSwapLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account) || '[]')
       const newCacheSwapLogs = [...swapLogs, ...cachedSwapLogs].filter((log, index, self) => {
         return index === self.findIndex((t) => (
-          t.logIndex === log.logIndex
+          t.transactionHash + t.logIndex === log.transactionHash + log.logIndex
         ))
       })
 
@@ -400,13 +400,13 @@ export class Resource {
     return ddlLogs.map((log: any) => {
       try {
         return {
+          ...eventInterface.parseLog(log),
           address: log.address,
           timeStamp: Number(log.timeStamp),
           transactionHash: log.transactionHash,
           blockNumber: log.blockNumber,
           index: log.logIndex,
           logIndex: log.transactionHash + '-' + log.logIndex,
-          ...eventInterface.parseLog(log)
         }
       } catch (e) {
         return {}
