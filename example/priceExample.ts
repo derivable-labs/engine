@@ -4,15 +4,15 @@ import {bn, getLogicAbi}         from "../src/utils/helper";
 import {Engine}                  from "../src/engine";
 
 const token0 = {
-  address: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+  address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
   decimal: 18,
-  name: 'wbnb',
-  symbol: 'wbnb',
+  name: 'WETH',
+  symbol: 'WETH',
 }
 
 const token1 = {
-  address: '0xe9e7cea3dedca5984780bafc599bd69add087d56',
-  decimal: 18,
+  address: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8',
+  decimal: 6,
   name: 'BUSD',
   symbol: 'BUSD',
 }
@@ -42,7 +42,8 @@ const test = async () => {
   const res24hChange = await engine.PRICE.get24hChange({
     baseToken: token0,
     quoteToken: token1,
-    cToken: '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16',
+    chainId: '42161',
+    cToken: '0x905dfCD5649217c42684f23958568e533C711Aa3',
     currentPrice: '200'
   })
   console.log('res24hChange', res24hChange)

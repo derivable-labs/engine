@@ -285,6 +285,7 @@ export class Resource {
       const { baseToken, powers } = pools[i]
       const pairInfo = pairsInfo[pools[i].cToken]
       const quoteToken = pairInfo.token0.adr === baseToken ? pairInfo.token1.adr : pairInfo.token0.adr
+      const [baseTokenObj, quoteTokenObj] = pairInfo.token0.adr === baseToken ? [pairInfo.token0, pairInfo.token1] : [pairInfo.token1, pairInfo.token0]
       const [baseId, quoteId] = pairInfo.token0.adr === baseToken
         ? [POOL_IDS.token0, POOL_IDS.token1]
         : [POOL_IDS.token1, POOL_IDS.token0]
@@ -300,7 +301,7 @@ export class Resource {
         tokens.push({
           symbol: pools[i].baseSymbol + '^' + power,
           name: pools[i].baseSymbol + '^' + power,
-          decimal: 18,
+          decimal: 18 - baseTokenObj.decimals.toNumber() + quoteTokenObj.decimals.toNumber(),
           totalSupply: 0,
           address: i + '-' + key
         })
@@ -309,7 +310,7 @@ export class Resource {
         {
           symbol: 'DDL-CP',
           name: 'DDL-CP',
-          decimal: 18,
+          decimal: Math.floor((baseTokenObj.decimals.toNumber() - quoteTokenObj.decimals.toNumber()) / 2),
           totalSupply: 0,
           address: i + '-' + POOL_IDS.cp
         },
