@@ -23,7 +23,8 @@
     "ethereum-multicall": "^2.15.0",
     "ethers": "^5.5.4",
     "lodash": "^4.17.21",
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.6.7",
+    "canonical-weth": "^1.4.0"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.179",

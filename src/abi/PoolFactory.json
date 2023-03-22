@@ -1,8 +1,27 @@
 [
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "TOKEN",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [
@@ -15,48 +34,38 @@
           },
           {
             "internalType": "address",
-            "name": "pairToken",
+            "name": "tokenOracle",
             "type": "address"
           },
           {
             "internalType": "address",
-            "name": "baseToken",
+            "name": "tokenCollateral",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "recipient",
             "type": "address"
           },
           {
             "internalType": "uint224",
-            "name": "priceToleranceRatio",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint224",
-            "name": "rentRate",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint224",
-            "name": "deleverageRate",
+            "name": "markPrice",
             "type": "uint224"
           },
           {
             "internalType": "uint256",
-            "name": "powers",
+            "name": "power",
             "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "feeRecipient",
-            "type": "address"
           },
           {
             "internalType": "uint256",
-            "name": "feeDenominator",
+            "name": "a",
             "type": "uint256"
           },
           {
-            "internalType": "address",
-            "name": "UTR",
-            "type": "address"
+            "internalType": "uint256",
+            "name": "b",
+            "type": "uint256"
           }
         ],
         "internalType": "struct Params",
@@ -86,48 +95,38 @@
           },
           {
             "internalType": "address",
-            "name": "pairToken",
+            "name": "tokenOracle",
             "type": "address"
           },
           {
             "internalType": "address",
-            "name": "baseToken",
+            "name": "tokenCollateral",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "recipient",
             "type": "address"
           },
           {
             "internalType": "uint224",
-            "name": "priceToleranceRatio",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint224",
-            "name": "rentRate",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint224",
-            "name": "deleverageRate",
+            "name": "markPrice",
             "type": "uint224"
           },
           {
             "internalType": "uint256",
-            "name": "powers",
+            "name": "power",
             "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "feeRecipient",
-            "type": "address"
           },
           {
             "internalType": "uint256",
-            "name": "feeDenominator",
+            "name": "a",
             "type": "uint256"
           },
           {
-            "internalType": "address",
-            "name": "UTR",
-            "type": "address"
+            "internalType": "uint256",
+            "name": "b",
+            "type": "uint256"
           }
         ],
         "internalType": "struct Params",
@@ -159,48 +158,38 @@
           },
           {
             "internalType": "address",
-            "name": "pairToken",
+            "name": "tokenOracle",
             "type": "address"
           },
           {
             "internalType": "address",
-            "name": "baseToken",
+            "name": "tokenCollateral",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "recipient",
             "type": "address"
           },
           {
             "internalType": "uint224",
-            "name": "priceToleranceRatio",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint224",
-            "name": "rentRate",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint224",
-            "name": "deleverageRate",
+            "name": "markPrice",
             "type": "uint224"
           },
           {
             "internalType": "uint256",
-            "name": "powers",
+            "name": "power",
             "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "feeRecipient",
-            "type": "address"
           },
           {
             "internalType": "uint256",
-            "name": "feeDenominator",
+            "name": "a",
             "type": "uint256"
           },
           {
-            "internalType": "address",
-            "name": "UTR",
-            "type": "address"
+            "internalType": "uint256",
+            "name": "b",
+            "type": "uint256"
           }
         ],
         "internalType": "struct Params",

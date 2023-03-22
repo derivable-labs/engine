@@ -33,34 +33,28 @@ export class CreatePool {
     this.signer = configs.signer
   }
 
-  encodePowers(powers: any) {
-    let powersBytes = []
-    for (let i = powers.length-1; i >= 0; --i) {
-        let power = powers[i]
-        if (power < 0) {
-            power = 0x8000 - power
-        }
-        powersBytes.push(...ethers.utils.zeroPad(power, 2))
-    }
-    const encoded = ethers.utils.hexZeroPad(powers.length, 2) + ethers.utils.hexZeroPad(powersBytes, 30).slice(2)
-    return encoded
-  }
-
   async createPool(params: PoolConfig, gasLimit?: BigNumber) {
     try {
       const poolFactoryContract = new ethers.Contract(CONFIGS[this.chainId].poolFactory, PoolFactoryAbi, this.signer)
+      const compiledWETH = require("canonical-weth/build/contracts/WETH9.json")
+      const weth = new ethers.Contract(CONFIGS[this.chainId].wrapToken, compiledWETH.abi, this.signer)
+      weth.transfer(CONFIGS[this.chainId].poolFactory, ethers.utils.parseEther("10"))
+      
       const newPoolConfigs = {
-        UTR: CONFIGS[this.chainId].router,
         logic: CONFIGS[this.chainId].logic,
-        pairToken: CONFIGS[this.chainId].wrapUsdPair,
-        baseToken: CONFIGS[this.chainId].wrapToken,
-        priceToleranceRatio: params.priceToleranceRatio,
-        rentRate: params.rentRate,
-        deleverageRate: params.deleverageRate,
-        powers: this.encodePowers(params.powers),
-        feeRecipient: this.account,
-        feeDenominator: 33,
+        tokenOracle: CONFIGS[this.chainId].wrapUsdPair,
+        tokenCollateral: CONFIGS[this.chainId].wrapToken,
+        recipient: params.recipient,
+        markPrice: params.markPrice,
+        power: params.power,
+        a: params.a,
+        b: params.b
       }
+      const poolAddress = await poolFactoryContract.computePoolAddress(newPoolConfigs)
+      const res1 = await weth.transfer(poolAddress, ethers.utils.parseEther("10"),{
+        gasLimit: gasLimit || undefined
+      })
+      await res1.wait(1)
       const res = await poolFactoryContract.createPool(newPoolConfigs,
         {
           gasLimit: gasLimit || undefined

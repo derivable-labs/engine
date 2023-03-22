@@ -76,10 +76,11 @@ export type StatesType = {
 }
 
 export type PoolConfig = {
-  priceToleranceRatio: BigNumber
-  rentRate: BigNumber
-  deleverageRate: BigNumber
-  powers: number[]
+  recipient: string
+  markPrice: BigNumber
+  power: number
+  a: BigNumber
+  b: BigNumber
 }
 
 export type PoolGroupType = {
