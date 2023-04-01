@@ -83,8 +83,14 @@ export type PoolConfig = {
 }
 
 export type PoolType = {
+  UTR: string
+  TOKEN: string
+  MARK: string
+  ORACLE: string
+  TOKEN_R: string
   pool: string
   logic: string
+  k: BigNumber
   cTokenPrice: number
   baseSymbol: string
   states: StatesType
