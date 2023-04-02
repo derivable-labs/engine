@@ -334,12 +334,13 @@ export class Resource {
     return { tokens, pools }
   }
 
-  getBasePrice(pairInfo: any, baseToken: string) {
+  getBasePrice(pairInfo: any, baseTokenAddress: string) {
     const token0 = pairInfo.token0.adr
     const r0 = pairInfo.token0.reserve
     const r1 = pairInfo.token1.reserve
-    const [rb, rq] = token0 === baseToken ? [r0, r1] : [r1, r0]
-    return weiToNumber(rq.mul(numberToWei(1)).div(rb))
+    const [baseToken, quoteToken] = token0 === baseTokenAddress ? [pairInfo.token0, pairInfo.token1] : [pairInfo.token1, pairInfo.token0]
+    const [rb, rq] = token0 === baseTokenAddress ? [r0, r1] : [r1, r0]
+    return weiToNumber(rq.mul(numberToWei(1, baseToken.decimals)).div(rb), quoteToken.decimals)
   }
 
   /**
