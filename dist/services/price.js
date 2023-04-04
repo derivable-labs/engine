@@ -84,13 +84,14 @@ class Price {
             }
         });
     }
-    get24hChange({ baseToken, cToken, quoteToken, currentPrice }) {
+    get24hChange({ baseToken, cToken, quoteToken, chainId, currentPrice }) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const toTime = Math.floor((new Date().getTime() - constant_1.MINI_SECOND_PER_DAY) / 1000);
                 const result = yield historyProvider_1.default.getBars({
                     to: toTime,
                     limit: 1,
+                    chainId,
                     resolution: '1',
                     route: `${baseToken.address}/${cToken}/${quoteToken.address}`,
                     outputToken: quoteToken,

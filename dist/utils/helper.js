@@ -8,10 +8,12 @@ const ethers_1 = require("ethers");
 const Logic_json_1 = __importDefault(require("../abi/56/Logic.json"));
 const Logic_json_2 = __importDefault(require("../abi/97/Logic.json"));
 const Logic_json_3 = __importDefault(require("../abi/31337/Logic.json"));
+const Logic_json_4 = __importDefault(require("../abi/31337/Logic.json"));
 const LogicAbi = {
     56: Logic_json_1.default,
     97: Logic_json_2.default,
-    31337: Logic_json_3.default
+    31337: Logic_json_3.default,
+    42161: Logic_json_4.default
 };
 exports.provider = new ethers_1.ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
 exports.bn = ethers_1.BigNumber.from;

@@ -24,9 +24,10 @@ export declare class Price {
         headBlock?: number;
         range?: number;
     }): Promise<any>;
-    get24hChange({ baseToken, cToken, quoteToken, currentPrice }: {
+    get24hChange({ baseToken, cToken, quoteToken, chainId, currentPrice }: {
         baseToken: TokenType;
         cToken: string;
+        chainId: string;
         quoteToken: TokenType;
         currentPrice: string;
     }): Promise<number>;
