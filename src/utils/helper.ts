@@ -2,11 +2,13 @@ import {BigNumber, ethers, utils} from "ethers";
 import LogicAbi56                 from '../abi/56/Logic.json'
 import LogicAbi97                 from '../abi/97/Logic.json'
 import LogicAbi31337              from '../abi/31337/Logic.json'
+import LogicAbi42161              from '../abi/31337/Logic.json'
 
 const LogicAbi = {
   56: LogicAbi56,
   97: LogicAbi97,
-  31337: LogicAbi31337
+  31337: LogicAbi31337,
+  42161: LogicAbi42161
 }
 export const provider = new ethers.providers.JsonRpcProvider(
   "https://bsc-dataseed.binance.org/"

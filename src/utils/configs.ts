@@ -40,5 +40,18 @@ export const CONFIGS = {
     wrapUsdPair: '0x2B89B4931122EE4Fa474446Fa9B118F2852a8223',
     poolFactory: "0x2e10024346cDd08E1e9071B16a51d89d46de8003",
     logic: "0x8f114752F335c474873cC3cB738ebF093Ab85Bf9",
+  },
+  42161: {
+    rpcUrl: 'https://arb1.arbitrum.io/rpc',
+    rpcToGetLogs:'https://arb1.arbitrum.io/rpc',
+    timePerBlock: 1000,
+    nativeToken: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    multiCall: '0x07BBBb79619a45D041549Baf8Ee7A60376d649cf',
+    pairsInfo: '0x81C8f6bC2a602B9Ad403116ab4c0EC1a0e5B49B1',
+    bnA: '0x357FF35761979254F93a21995b20d9071904603d',
+    tokensInfo: '0x696630d3aE600147902c71bF967ec3eb7a2C8b44',
+    router: '0x0772BD1981f6092329F12FC041B83b2faBBB1A25',
+    wrapToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+    wrapUsdPair: '0xCB0E5bFa72bBb4d16AB5aA0c60601c438F04b4ad',
   }
 }

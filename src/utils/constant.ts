@@ -5,7 +5,7 @@ export const fee10000 = 30
 export const MINI_SECOND_PER_DAY = 86400000
 export const LP_PRICE_UNIT = 10000
 export const TIME_TO_REFRESH_STATE = 30000
-export const CHART_API_ENDPOINT = 'https://api.lz.finance/56/chart/'
+export const CHART_API_ENDPOINT = 'https://api.lz.finance/{chainId}/chart/'
 
 export const LOCALSTORAGE_KEY = {
   DDL_LOGS: 'ddl-log-v1.0',
@@ -17,6 +17,7 @@ export const LOCALSTORAGE_KEY = {
 export const ddlGenesisBlock = {
   56: 23917200,
   31337: 0,
+  42161: 70615018,
 }
 
 export const POOL_IDS = {
