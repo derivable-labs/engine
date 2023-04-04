@@ -41,6 +41,7 @@ type ResourceData = {
 }
 
 export class Resource {
+  poolGroups: any = {}
   pools: PoolsType = {}
   tokens: TokenType[] = []
   swapLogs: LogType[] = []
@@ -72,6 +73,7 @@ export class Resource {
       this.getResourceCached(account),
       this.getNewResource(account)
     ])
+    this.poolGroups = {...resultCached.poolGroups, ...newResource.poolGroups}
     this.pools = {...resultCached.pools, ...newResource.pools}
     this.tokens = [...resultCached.tokens, ...newResource.tokens]
     this.swapLogs = [...resultCached.swapLogs, ...newResource.swapLogs]
