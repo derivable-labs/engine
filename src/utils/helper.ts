@@ -150,3 +150,8 @@ export const detectDecimalFromPrice = (price: number | string) => {
     return rate.split('.')[0].length + 3
   }
 }
+
+export const packId = (kind: string, address: string) => {
+  const k = bn(kind)
+  return k.shl(160).add(address)
+}

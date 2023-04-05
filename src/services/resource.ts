@@ -17,6 +17,7 @@ import {UniV2Pair} from "./uniV2Pair";
 import {JsonRpcProvider} from "@ethersproject/providers";
 import PoolOverride from "../abi/PoolOverride.json";
 import {PowerState} from 'powerLib/dist/powerLib';
+import _ from "lodash";
 
 const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
@@ -265,7 +266,7 @@ export class Resource {
           cToken: data.TOKEN_R
         }
         // allUniPools.push(data.pairToken)
-        allTokens.push(data.token_R)
+        allTokens.push(data.TOKEN_R)
       }
     })
 
@@ -285,7 +286,7 @@ export class Resource {
       ethersProvider: this.getPoolOverridedProvider(Object.keys(listPools)),
       tryAggregate: true
     })
-    const normalTokens = getNormalAddress(listTokens)
+    const normalTokens = _.uniq(getNormalAddress(listTokens))
 
     // @ts-ignore
     const context: ContractCallContext[] = this.getMultiCallRequest(normalTokens, listPools)
@@ -353,36 +354,29 @@ export class Resource {
       //   ...rentRate
       // }
 
+      const tokenR: any = tokens.find((t) => t.address === pools[i].TOKEN_R)
+
       tokens.push({
-        symbol: pools[i].baseSymbol + '^' + k,
-        name: pools[i].baseSymbol + '^' + k,
+        symbol: tokenR?.symbol + '^' + k,
+        name: tokenR?.symbol + '^' + k,
         decimal: 18,
         totalSupply: 0,
-        address: pools[i].poolAddress + '-' + (poolGroups[id].powers.length - 2)
+        address: pools[i].poolAddress + '-' + POOL_IDS.A
       })
       tokens.push({
-        symbol: pools[i].baseSymbol + '^-' + k,
-        name: pools[i].baseSymbol + '^-' + k,
+        symbol: tokenR?.symbol + '^-' + k,
+        name: tokenR?.symbol + '^-' + k,
         decimal: 18,
         totalSupply: 0,
-        address: pools[i].poolAddress + '-' + (poolGroups[id].powers.length - 1)
+        address: pools[i].poolAddress + '-' + POOL_IDS.B
       })
-      tokens.push(
-        {
-          symbol: 'DDL-CP',
-          name: 'DDL-CP',
-          decimal: 18,
-          totalSupply: 0,
-          address: i + '-' + POOL_IDS.B
-        },
-        {
-          symbol: 'DDL-CP',
-          name: 'DDL-CP',
-          decimal: 18,
-          totalSupply: 0,
-          address: i + '-' + POOL_IDS.A
-        },
-      )
+      tokens.push({
+        symbol: tokenR?.symbol + ' CP',
+        name: tokenR?.symbol + ' CP',
+        decimal: 18,
+        totalSupply: 0,
+        address: pools[i].poolAddress + '-' + POOL_IDS.C
+      })
     }
 
     return {tokens, pools, poolGroups}
