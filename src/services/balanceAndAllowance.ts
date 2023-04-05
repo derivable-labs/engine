@@ -1,9 +1,10 @@
-import {bn, getErc1155Token, getNormalAddress} from '../utils/helper';
+import {bn, getErc1155Token, getNormalAddress, packId} from '../utils/helper';
 import {ethers} from 'ethers';
 import {Multicall} from 'ethereum-multicall';
 import {CONFIGS} from '../utils/configs';
 import {LARGE_VALUE} from '../utils/constant';
 import BnAAbi from '../abi/BnA.json'
+import TokenAbi from '../abi/Token.json'
 import PoolAbi from '../abi/Pool.json'
 import {AllowancesType, BalancesType} from '../types';
 
@@ -51,6 +52,15 @@ export class BnA {
     erc20Tokens: string[],
     erc1155Tokens: { [key: string]: string[] }
   }) {
+    const pack = []
+    const accounts = []
+    for (const poolAddress in erc1155Tokens) {
+      for(let side of erc1155Tokens[poolAddress]) {
+        pack.push(packId(side, poolAddress))
+        accounts.push(this.account)
+      }
+    }
+
     const request: any = [
       {
         reference: 'erc20',
@@ -60,31 +70,22 @@ export class BnA {
           reference: 'bna', methodName: 'getBnA',
           methodParameters: [erc20Tokens, [this.account], [CONFIGS[this.chainId].router]]
         }]
-      }
+      },
+      {
+        reference: 'erc1155',
+        contractAddress: CONFIGS[this.chainId].token,
+        abi: TokenAbi,
+        calls: [{
+          reference: 'balanceOfBatch', methodName: 'balanceOfBatch',
+          methodParameters: [accounts, pack]
+        },
+          {
+            reference: 'isApprovedForAll', methodName: 'isApprovedForAll',
+            methodParameters: [this.account, CONFIGS[this.chainId].router]
+          },
+        ]
+      },
     ]
-
-    for (const erc1155Address in erc1155Tokens) {
-      const accounts = erc1155Tokens[erc1155Address].map(() => {
-        return this.account
-      })
-      request.push(
-        {
-          reference: 'erc1155-' + erc1155Address,
-          contractAddress: erc1155Address,
-          abi: PoolAbi,
-          calls: [
-            {
-              reference: erc1155Address, methodName: 'isApprovedForAll',
-              methodParameters: [this.account, CONFIGS[this.chainId].router]
-            },
-            {
-              reference: erc1155Address, methodName: 'balanceOfBatch',
-              methodParameters: [accounts, erc1155Tokens[erc1155Address]]
-            }
-          ]
-        }
-      )
-    }
 
     return request
   }
@@ -99,25 +100,16 @@ export class BnA {
       allowances[address] = bn(erc20Info[i * 2 + 1])
     }
 
-    for (let erc1155Address in erc1155Tokens) {
-      const erc1155Info = data && data['erc1155-' + erc1155Address] ? data['erc1155-' + erc1155Address].callsReturnContext : []
-      if (erc1155Info) {
-        const approveData = erc1155Info.filter((e: any) => e.methodName === 'isApprovedForAll')
-        const balanceData = erc1155Info.filter((e: any) => e.methodName === 'balanceOfBatch')
+    const erc1155BalanceInfo = data.erc1155.callsReturnContext[0].returnValues
+    const erc1155ApproveInfo = data.erc1155.callsReturnContext[1].returnValues[0]
 
-        for (let i = 0; i < approveData.length; i++) {
-          const callsReturnContext = approveData[i]
-          allowances[callsReturnContext.reference] = callsReturnContext.returnValues[0] ? bn(LARGE_VALUE) : bn(0)
-        }
+    for (let poolAddress in erc1155Tokens) {
+        const approveData = erc1155ApproveInfo
 
-        for (let i = 0; i < balanceData.length; i++) {
-          const returnValues = balanceData[i].returnValues
-          for (let j = 0; j < returnValues.length; j++) {
-            const id = erc1155Tokens[balanceData[i].reference][j].toNumber()
-            balances[balanceData[i].reference + '-' + id] = bn(returnValues[j])
-          }
+        for (let i = 0; i < erc1155Tokens[poolAddress].length; i++) {
+          allowances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = approveData
+          balances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = erc1155BalanceInfo[i]
         }
-      }
     }
 
     return {
