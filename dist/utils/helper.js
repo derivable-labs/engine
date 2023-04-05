@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.detectDecimalFromPrice = exports.add = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.getLogicAbi = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
+exports.packId = exports.detectDecimalFromPrice = exports.add = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.getLogicAbi = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
 const ethers_1 = require("ethers");
 const Logic_json_1 = __importDefault(require("../abi/56/Logic.json"));
 const Logic_json_2 = __importDefault(require("../abi/97/Logic.json"));
@@ -146,4 +146,9 @@ const detectDecimalFromPrice = (price) => {
     }
 };
 exports.detectDecimalFromPrice = detectDecimalFromPrice;
+const packId = (kind, address) => {
+    const k = (0, exports.bn)(kind);
+    return k.shl(160).add(address);
+};
+exports.packId = packId;
 //# sourceMappingURL=helper.js.map

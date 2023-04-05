@@ -17,6 +17,7 @@ export declare const CONFIGS: {
         rpcToGetLogs: string;
         timePerBlock: number;
         nativeToken: string;
+        token: string;
         multiCall: string;
         pairsInfo: string;
         bnA: string;
@@ -31,6 +32,7 @@ export declare const CONFIGS: {
         rpcToGetLogs: string;
         timePerBlock: number;
         nativeToken: string;
+        token: string;
         multiCall: string;
         pairsInfo: string;
         bnA: string;

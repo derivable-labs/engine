@@ -22,6 +22,7 @@ const TokensInfo_json_1 = __importDefault(require("../abi/TokensInfo.json"));
 const helper_1 = require("../utils/helper");
 const PoolOverride_json_1 = __importDefault(require("../abi/PoolOverride.json"));
 const powerLib_1 = require("powerLib/dist/powerLib");
+const lodash_1 = __importDefault(require("lodash"));
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider');
 const MAX_BLOCK = 4294967295;
 const TOPIC_APP = ethers_1.ethers.utils.formatBytes32String('DDL');
@@ -212,7 +213,7 @@ class Resource {
                     factory,
                     powers, cToken: data.TOKEN_R });
                 // allUniPools.push(data.pairToken)
-                allTokens.push(data.token_R);
+                allTokens.push(data.TOKEN_R);
             }
         });
         return this.loadStatesData(allTokens, poolData, allUniPools);
@@ -231,7 +232,7 @@ class Resource {
                 ethersProvider: this.getPoolOverridedProvider(Object.keys(listPools)),
                 tryAggregate: true
             });
-            const normalTokens = (0, helper_1.getNormalAddress)(listTokens);
+            const normalTokens = lodash_1.default.uniq((0, helper_1.getNormalAddress)(listTokens));
             // @ts-ignore
             const context = this.getMultiCallRequest(normalTokens, listPools);
             const [{ results }] = yield Promise.all([
@@ -294,32 +295,27 @@ class Resource {
                 //   ...rdc,
                 //   ...rentRate
                 // }
+                const tokenR = tokens.find((t) => t.address === pools[i].TOKEN_R);
                 tokens.push({
-                    symbol: pools[i].baseSymbol + '^' + k,
-                    name: pools[i].baseSymbol + '^' + k,
+                    symbol: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + '^' + k,
+                    name: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + '^' + k,
                     decimal: 18,
                     totalSupply: 0,
-                    address: pools[i].poolAddress + '-' + (poolGroups[id].powers.length - 2)
+                    address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.A
                 });
                 tokens.push({
-                    symbol: pools[i].baseSymbol + '^-' + k,
-                    name: pools[i].baseSymbol + '^-' + k,
+                    symbol: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + '^-' + k,
+                    name: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + '^-' + k,
                     decimal: 18,
                     totalSupply: 0,
-                    address: pools[i].poolAddress + '-' + (poolGroups[id].powers.length - 1)
+                    address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.B
                 });
                 tokens.push({
-                    symbol: 'DDL-CP',
-                    name: 'DDL-CP',
+                    symbol: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + ' CP',
+                    name: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + ' CP',
                     decimal: 18,
                     totalSupply: 0,
-                    address: i + '-' + constant_1.POOL_IDS.B
-                }, {
-                    symbol: 'DDL-CP',
-                    name: 'DDL-CP',
-                    decimal: 18,
-                    totalSupply: 0,
-                    address: i + '-' + constant_1.POOL_IDS.A
+                    address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.C
                 });
             }
             return { tokens, pools, poolGroups };

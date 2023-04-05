@@ -20,3 +20,4 @@ export declare const sub: (a: any, b: any) => string;
 export declare const div: (a: any, b: any) => string;
 export declare const add: (a: any, b: any) => string;
 export declare const detectDecimalFromPrice: (price: number | string) => number;
+export declare const packId: (kind: string, address: string) => BigNumber;
