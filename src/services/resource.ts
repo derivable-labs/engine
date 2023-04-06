@@ -483,17 +483,23 @@ export class Resource {
     return {tokens, poolsState: pools}
   }
 
-  getRdc(pools: any): { R: BigNumber, rC: BigNumber, rDcLong: BigNumber, rDcShort: BigNumber } {
+  getRdc(pools: any): { supplyDetails: any, rDetails: any, R: BigNumber, rC: BigNumber, rDcLong: BigNumber, rDcShort: BigNumber } {
     let rC = bn(0)
     let rDcLong = bn(0)
     let rDcShort = bn(0)
-
+    let supplyDetails = {}
+    let rDetails = {}
     for (let pool of pools) {
       rC = pool.states.rC
       rDcLong = pool.states.rA
       rDcShort = pool.states.rB
+      rDetails[pool.k.toNumber()] = pool.states.rA
+      rDetails[-pool.k.toNumber()] = pool.states.rB
+
+      supplyDetails[pool.k.toNumber()] = pool.states.sA
+      supplyDetails[-pool.k.toNumber()] = pool.states.sB
     }
-    return {R: rC.add(rDcLong).add(rDcShort), rC, rDcLong, rDcShort}
+    return {supplyDetails, rDetails, R: rC.add(rDcLong).add(rDcShort), rC, rDcLong, rDcShort}
   }
 
   parseDdlLogs(ddlLogs: any) {
