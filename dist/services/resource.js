@@ -403,12 +403,18 @@ class Resource {
         let rC = (0, helper_1.bn)(0);
         let rDcLong = (0, helper_1.bn)(0);
         let rDcShort = (0, helper_1.bn)(0);
+        let supplyDetails = {};
+        let rDetails = {};
         for (let pool of pools) {
             rC = pool.states.rC;
             rDcLong = pool.states.rA;
             rDcShort = pool.states.rB;
+            rDetails[pool.k.toNumber()] = pool.states.rA;
+            rDetails[-pool.k.toNumber()] = pool.states.rB;
+            supplyDetails[pool.k.toNumber()] = pool.states.sA;
+            supplyDetails[-pool.k.toNumber()] = pool.states.sB;
         }
-        return { R: rC.add(rDcLong).add(rDcShort), rC, rDcLong, rDcShort };
+        return { supplyDetails, rDetails, R: rC.add(rDcLong).add(rDcShort), rC, rDcLong, rDcShort };
     }
     parseDdlLogs(ddlLogs) {
         const eventInterface = new ethers_1.ethers.utils.Interface(Events_json_1.default);

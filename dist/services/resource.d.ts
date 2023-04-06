@@ -131,6 +131,8 @@ export declare class Resource {
         poolsState: {};
     };
     getRdc(pools: any): {
+        supplyDetails: any;
+        rDetails: any;
         R: BigNumber;
         rC: BigNumber;
         rDcLong: BigNumber;
