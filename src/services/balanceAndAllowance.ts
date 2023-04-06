@@ -107,8 +107,8 @@ export class BnA {
         const approveData = erc1155ApproveInfo
 
         for (let i = 0; i < erc1155Tokens[poolAddress].length; i++) {
-          allowances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = approveData
-          balances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = erc1155BalanceInfo[i]
+          allowances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = approveData ? bn(LARGE_VALUE) : bn(0)
+          balances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = bn(erc1155BalanceInfo[i].hex)
         }
     }
 
