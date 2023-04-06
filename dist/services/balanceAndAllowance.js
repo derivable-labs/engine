@@ -16,6 +16,7 @@ exports.BnA = void 0;
 const helper_1 = require("../utils/helper");
 const ethereum_multicall_1 = require("ethereum-multicall");
 const configs_1 = require("../utils/configs");
+const constant_1 = require("../utils/constant");
 const BnA_json_1 = __importDefault(require("../abi/BnA.json"));
 const Token_json_1 = __importDefault(require("../abi/Token.json"));
 class BnA {
@@ -93,8 +94,8 @@ class BnA {
         for (let poolAddress in erc1155Tokens) {
             const approveData = erc1155ApproveInfo;
             for (let i = 0; i < erc1155Tokens[poolAddress].length; i++) {
-                allowances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = approveData;
-                balances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = erc1155BalanceInfo[i];
+                allowances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = approveData ? (0, helper_1.bn)(constant_1.LARGE_VALUE) : (0, helper_1.bn)(0);
+                balances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = (0, helper_1.bn)(erc1155BalanceInfo[i].hex);
             }
         }
         return {
