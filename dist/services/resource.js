@@ -21,7 +21,6 @@ const configs_1 = require("../utils/configs");
 const TokensInfo_json_1 = __importDefault(require("../abi/TokensInfo.json"));
 const helper_1 = require("../utils/helper");
 const PoolOverride_json_1 = __importDefault(require("../abi/PoolOverride.json"));
-const powerLib_1 = require("powerLib/dist/powerLib");
 const lodash_1 = __importDefault(require("lodash"));
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider');
 const MAX_BLOCK = 4294967295;
@@ -266,19 +265,22 @@ class Resource {
                 const id = [UTR, TOKEN, MARK, ORACLE, TOKEN_R].join('-');
                 if (poolGroups[id]) {
                     poolGroups[id].pools[i] = pools[i];
+                    const rdc = this.getRdc(Object.values(poolGroups[id].pools));
+                    poolGroups[id].states = Object.assign(Object.assign({}, poolGroups[id].states), rdc);
                 }
                 else {
                     poolGroups[id] = { pools: { [i]: pools[i] } };
+                    poolGroups[id].UTR = pools[i].UTR;
+                    poolGroups[id].TOKEN = pools[i].TOKEN;
+                    poolGroups[id].MARK = pools[i].MARK;
+                    poolGroups[id].ORACLE = pools[i].ORACLE;
+                    poolGroups[id].TOKEN_R = pools[i].TOKEN_R;
+                    poolGroups[id].states = {
+                        twapBase: poolsState[i].twap,
+                        spotBase: poolsState[i].spot
+                    };
+                    poolGroups[id].basePrice = (0, helper_1.parseUq112x112)(poolsState[i].spot);
                 }
-                poolGroups[id].states = {
-                    twapBase: poolsState[i].twap,
-                    spotBase: poolsState[i].spot
-                };
-                poolGroups[id].UTR = pools[i].UTR;
-                poolGroups[id].TOKEN = pools[i].TOKEN;
-                poolGroups[id].MARK = pools[i].MARK;
-                poolGroups[id].ORACLE = pools[i].ORACLE;
-                poolGroups[id].TOKEN_R = pools[i].TOKEN_R;
                 if (poolGroups[id].powers) {
                     poolGroups[id].powers.push(pools[i].powers[0], pools[i].powers[1]);
                 }
@@ -293,7 +295,6 @@ class Resource {
                 }
                 // pools[i].basePrice = this.getBasePrice(pairInfo, baseToken)
                 // pools[i].cPrice = bn(poolsState[i].twapLP).mul(LP_PRICE_UNIT).shr(112).toNumber() / LP_PRICE_UNIT
-                // const rdc = this.getRdc(poolsState[i], pools[i].powers, pools[i].cPrice)
                 // const rentRate = this.getRentRate(rdc, pools[i].rentRate)
                 // pools[i].states = {
                 //   ...poolsState[i],
@@ -398,27 +399,16 @@ class Resource {
         });
         return { tokens, poolsState: pools };
     }
-    getRdc(states, powers, cPrice) {
-        const R = states.twapLP.isZero() ? (0, helper_1.bn)(0) : states.Rc.add(states.Rb.mul(states.twapBase).add(states.Rq).div(states.twapLP));
+    getRdc(pools) {
+        let rC = (0, helper_1.bn)(0);
         let rDcLong = (0, helper_1.bn)(0);
         let rDcShort = (0, helper_1.bn)(0);
-        const powerState = new powerLib_1.PowerState({ powers: [...powers] });
-        //@ts-ignore
-        powerState.loadStates(states);
-        const totalSupply = states.totalSupplies;
-        powers.forEach((power, id) => {
-            const dPrice = powerState.getPrice(power);
-            const r = dPrice || dPrice === Infinity ? (0, helper_1.bn)(0) : totalSupply[id].mul((0, helper_1.numberToWei)(dPrice)).div((0, helper_1.numberToWei)(1));
-            if (power >= 0) {
-                rDcLong = rDcLong.add(r);
-            }
-            else {
-                rDcShort = rDcShort.add(r);
-            }
-        });
-        rDcLong = cPrice ? rDcLong.mul((0, helper_1.numberToWei)(1)).div((0, helper_1.numberToWei)(cPrice)) : (0, helper_1.bn)(0);
-        rDcShort = cPrice ? rDcShort.mul((0, helper_1.numberToWei)(1)).div((0, helper_1.numberToWei)(cPrice)) : (0, helper_1.bn)(0);
-        return { R, rDcLong: rDcLong, rDcShort: rDcShort };
+        for (let pool of pools) {
+            rC = pool.states.rC;
+            rDcLong = pool.states.rA;
+            rDcShort = pool.states.rB;
+        }
+        return { R: rC.add(rDcLong).add(rDcShort), rC, rDcLong, rDcShort };
     }
     parseDdlLogs(ddlLogs) {
         const eventInterface = new ethers_1.ethers.utils.Interface(Events_json_1.default);

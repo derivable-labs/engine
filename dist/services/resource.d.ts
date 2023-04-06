@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from "ethers";
-import { LogType, ParseLogType, PoolsType, PoolType, StatesType, Storage, TokenType } from "../types";
+import { LogType, ParseLogType, PoolsType, PoolType, Storage, TokenType } from "../types";
 import { UniV2Pair } from "./uniV2Pair";
 import { JsonRpcProvider } from "@ethersproject/providers";
 declare type ConfigType = {
@@ -130,8 +130,9 @@ export declare class Resource {
         tokens: any;
         poolsState: {};
     };
-    getRdc(states: StatesType, powers: number[], cPrice: number): {
+    getRdc(pools: any): {
         R: BigNumber;
+        rC: BigNumber;
         rDcLong: BigNumber;
         rDcShort: BigNumber;
     };
