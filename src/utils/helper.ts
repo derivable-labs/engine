@@ -155,3 +155,7 @@ export const packId = (kind: string, address: string) => {
   const k = bn(kind)
   return k.shl(160).add(address)
 }
+
+export const parseUq112x112 = (value: BigNumber, unit = 1000) => {
+  return value.mul(unit).shr(112).toNumber() / unit
+}

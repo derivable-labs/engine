@@ -10,7 +10,7 @@ import {
   formatMultiCallBignumber,
   getLogicAbi,
   getNormalAddress,
-  numberToWei,
+  numberToWei, parseUq112x112,
   weiToNumber
 } from "../utils/helper";
 import {UniV2Pair} from "./uniV2Pair";
@@ -325,19 +325,25 @@ export class Resource {
       const id = [UTR, TOKEN, MARK, ORACLE, TOKEN_R].join('-')
       if (poolGroups[id]) {
         poolGroups[id].pools[i] = pools[i]
+        const rdc = this.getRdc(Object.values(poolGroups[id].pools))
+        poolGroups[id].states = {
+          ...poolGroups[id].states,
+          ...rdc
+        }
       } else {
         poolGroups[id] = {pools: {[i]: pools[i]}}
+        poolGroups[id].UTR = pools[i].UTR
+        poolGroups[id].TOKEN = pools[i].TOKEN
+        poolGroups[id].MARK = pools[i].MARK
+        poolGroups[id].ORACLE = pools[i].ORACLE
+        poolGroups[id].TOKEN_R = pools[i].TOKEN_R
+        poolGroups[id].states = {
+          twapBase: poolsState[i].twap,
+          spotBase: poolsState[i].spot
+        }
+        poolGroups[id].basePrice = parseUq112x112(poolsState[i].spot)
       }
 
-      poolGroups[id].states = {
-        twapBase: poolsState[i].twap,
-        spotBase: poolsState[i].spot
-      }
-      poolGroups[id].UTR = pools[i].UTR
-      poolGroups[id].TOKEN = pools[i].TOKEN
-      poolGroups[id].MARK = pools[i].MARK
-      poolGroups[id].ORACLE = pools[i].ORACLE
-      poolGroups[id].TOKEN_R = pools[i].TOKEN_R
       if (poolGroups[id].powers) {
         poolGroups[id].powers.push(pools[i].powers[0], pools[i].powers[1])
       } else {
@@ -351,7 +357,6 @@ export class Resource {
 
       // pools[i].basePrice = this.getBasePrice(pairInfo, baseToken)
       // pools[i].cPrice = bn(poolsState[i].twapLP).mul(LP_PRICE_UNIT).shr(112).toNumber() / LP_PRICE_UNIT
-      // const rdc = this.getRdc(poolsState[i], pools[i].powers, pools[i].cPrice)
       // const rentRate = this.getRentRate(rdc, pools[i].rentRate)
       // pools[i].states = {
       //   ...poolsState[i],
@@ -478,29 +483,17 @@ export class Resource {
     return {tokens, poolsState: pools}
   }
 
-  getRdc(states: StatesType, powers: number[], cPrice: number): { R: BigNumber, rDcLong: BigNumber, rDcShort: BigNumber } {
-    const R = states.twapLP.isZero() ? bn(0) : states.Rc.add(
-      states.Rb.mul(states.twapBase).add(states.Rq).div(states.twapLP)
-    )
-    let rDcLong: BigNumber = bn(0);
-    let rDcShort: BigNumber = bn(0);
-    const powerState = new PowerState({powers: [...powers]})
-    //@ts-ignore
-    powerState.loadStates(states)
-    const totalSupply = states.totalSupplies
-    powers.forEach((power, id) => {
-      const dPrice = powerState.getPrice(power)
-      const r = dPrice || dPrice === Infinity ? bn(0) : totalSupply[id].mul(numberToWei(dPrice)).div(numberToWei(1))
-      if (power >= 0) {
-        rDcLong = rDcLong.add(r)
-      } else {
-        rDcShort = rDcShort.add(r)
-      }
-    })
-    rDcLong = cPrice ? rDcLong.mul(numberToWei(1)).div(numberToWei(cPrice)) : bn(0)
-    rDcShort = cPrice ? rDcShort.mul(numberToWei(1)).div(numberToWei(cPrice)) : bn(0)
+  getRdc(pools: any): { R: BigNumber, rC: BigNumber, rDcLong: BigNumber, rDcShort: BigNumber } {
+    let rC = bn(0)
+    let rDcLong = bn(0)
+    let rDcShort = bn(0)
 
-    return {R, rDcLong: rDcLong, rDcShort: rDcShort}
+    for (let pool of pools) {
+      rC = pool.states.rC
+      rDcLong = pool.states.rA
+      rDcShort = pool.states.rB
+    }
+    return {R: rC.add(rDcLong).add(rDcShort), rC, rDcLong, rDcShort}
   }
 
   parseDdlLogs(ddlLogs: any) {
