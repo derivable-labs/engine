@@ -318,6 +318,7 @@ export class Resource {
     const poolGroups = {}
 
     for (const i in pools) {
+      pools[i].states = poolsState[i]
       const {UTR, TOKEN, MARK: _MARK, ORACLE, TOKEN_R, powers, k: _k} = pools[i]
       const MARK = _MARK.toString()
       const k = _k.toNumber()
@@ -328,6 +329,10 @@ export class Resource {
         poolGroups[id] = {pools: {[i]: pools[i]}}
       }
 
+      poolGroups[id].states = {
+        twapBase: poolsState[i].twap,
+        spotBase: poolsState[i].spot
+      }
       poolGroups[id].UTR = pools[i].UTR
       poolGroups[id].TOKEN = pools[i].TOKEN
       poolGroups[id].MARK = pools[i].MARK
