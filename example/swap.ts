@@ -8,18 +8,19 @@ const testLocal = async () => {
   const engine = new Engine(getTestConfigs(1337))
   await engine.RESOURCE.fetchResourceData(engine.account || '')
 
-  const currentPool = Object.values(engine.RESOURCE.pools)[0]
+  const currentPool = Object.values(engine.RESOURCE.poolGroups)[0]
   engine.setCurrentPool({
     ...currentPool,
-    logic: currentPool.logic,
-    cTokenPrice: currentPool.cTokenPrice
+    // logic: currentPool.logic,
+    // cTokenPrice: currentPool.cTokenPrice
   })
 
   const steps = [
     {
       amountIn: bn(numberToWei(1)),
-      tokenIn: CONFIGS[engine.chainId].nativeToken,
-      tokenOut: currentPool.poolAddress + "-" + POOL_IDS.cp,
+      // tokenIn: CONFIGS[engine.chainId].nativeToken,
+      tokenIn: currentPool.TOKEN_R,
+      tokenOut: Object.values(currentPool.pools)[0].poolAddress + "-" + POOL_IDS.C,
       amountOutMin: 0
     }
   ]

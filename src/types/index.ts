@@ -82,6 +82,24 @@ export type PoolConfig = {
   powers: number[]
 }
 
+export type PoolGroupType = {
+  UTR: string
+  TOKEN: string
+  pools: {[key: string]: PoolType}
+  ORACLE: string
+  TOKEN_R: string
+  states: {
+    twapBase: BigNumber
+    spotBase: BigNumber
+    supplyDetails: {[key: number]: BigNumber}
+    rDetails: {[key: number]: BigNumber}
+    R: BigNumber
+    rC: BigNumber
+    rDcLong: BigNumber
+    rDcShort: BigNumber
+  }
+}
+
 export type PoolType = {
   UTR: string
   TOKEN: string
@@ -118,6 +136,7 @@ export type SwapLog = {
 }
 
 export type PoolsType = {[key: string]: PoolType}
+export type PoolGroupsType = {[key: string]: PoolGroupType}
 export type TokenType = {
   address:string
   decimal:number

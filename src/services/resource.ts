@@ -4,7 +4,17 @@ import EventsAbi from '../abi/Events.json'
 import {Multicall} from "ethereum-multicall";
 import {CONFIGS} from "../utils/configs";
 import TokensInfoAbi from "../abi/TokensInfo.json";
-import {LogType, ParseLogType, PoolsType, PoolType, StatesType, Storage, SwapLog, TokenType} from "../types";
+import {
+  LogType,
+  ParseLogType,
+  PoolGroupsType,
+  PoolsType,
+  PoolType,
+  StatesType,
+  Storage,
+  SwapLog,
+  TokenType
+} from "../types";
 import {
   bn, decodePowers,
   formatMultiCallBignumber,
@@ -42,7 +52,7 @@ type ResourceData = {
 }
 
 export class Resource {
-  poolGroups: any = {}
+  poolGroups: PoolGroupsType = {}
   pools: PoolsType = {}
   tokens: TokenType[] = []
   swapLogs: LogType[] = []

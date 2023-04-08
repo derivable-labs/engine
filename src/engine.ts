@@ -117,7 +117,7 @@ export class Engine {
     })
   }
 
-  setCurrentPool(poolData: PoolData) {
+  setCurrentPool(poolData: any) {
     this.CURRENT_POOL.initCurrentPoolData(poolData)
   }
 
