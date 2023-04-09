@@ -43,9 +43,9 @@ export declare class Swap {
     getIdByAddress(address: string): BigNumber;
     multiSwap(steps: SwapStepType[], gasLimit?: BigNumber, isDeleverage?: boolean): Promise<any>;
     updateLeverageAndSize(rawStep: StepType[], gasLimit?: BigNumber, isDeleverage?: boolean): Promise<any>;
-    getAddressByErc1155Address(address: string): string;
+    getAddressByErc1155Address(address: string): any;
     getRouterContract(provider: any): ethers.Contract;
-    getPoolContract(provider?: any): ethers.Contract;
+    getPoolContract(poolAddress: string, provider?: any): ethers.Contract;
     getLogicContract(provider?: any): ethers.Contract;
     getWrapContract(provider?: any): ethers.Contract;
 }

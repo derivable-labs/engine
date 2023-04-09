@@ -23,18 +23,21 @@ class CurrentPool {
     //   }
     // }
     initCurrentPoolData(poolData) {
-        this.poolAddress = poolData.poolAddress;
-        this.baseToken = poolData.baseToken;
-        this.quoteToken = poolData.quoteToken;
-        this.cToken = poolData.cToken;
-        this.dTokens = poolData.dTokens;
-        this.logicAddress = poolData.logic;
-        this.cTokenPrice = poolData.cTokenPrice;
-        this.states = poolData.states;
-        this.powers = poolData.powers;
-        this.basePrice = poolData.basePrice;
-        this.baseId = poolData.baseId;
-        this.quoteId = poolData.quoteId;
+        for (let i in poolData) {
+            this[i] = poolData[i];
+        }
+        // this.poolAddress = poolData.poolAddress;
+        // this.baseToken = poolData.baseToken;
+        // this.quoteToken = poolData.quoteToken;
+        // this.cToken = poolData.cToken;
+        // this.dTokens = poolData.dTokens;
+        // this.logicAddress = poolData.logic;
+        // this.cTokenPrice = poolData.cTokenPrice;
+        // this.states = poolData.states;
+        // this.powers = poolData.powers;
+        // this.basePrice = poolData.basePrice;
+        // this.baseId = poolData.baseId;
+        // this.quoteId = poolData.quoteId;
     }
     getTokenByPower(power) {
         if (power === 'C') {

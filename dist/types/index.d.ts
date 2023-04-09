@@ -76,6 +76,29 @@ export declare type PoolConfig = {
     deleverageRate: BigNumber;
     powers: number[];
 };
+export declare type PoolGroupType = {
+    UTR: string;
+    TOKEN: string;
+    pools: {
+        [key: string]: PoolType;
+    };
+    ORACLE: string;
+    TOKEN_R: string;
+    states: {
+        twapBase: BigNumber;
+        spotBase: BigNumber;
+        supplyDetails: {
+            [key: number]: BigNumber;
+        };
+        rDetails: {
+            [key: number]: BigNumber;
+        };
+        R: BigNumber;
+        rC: BigNumber;
+        rDcLong: BigNumber;
+        rDcShort: BigNumber;
+    };
+};
 export declare type PoolType = {
     UTR: string;
     TOKEN: string;
@@ -110,6 +133,9 @@ export declare type SwapLog = {
 };
 export declare type PoolsType = {
     [key: string]: PoolType;
+};
+export declare type PoolGroupsType = {
+    [key: string]: PoolGroupType;
 };
 export declare type TokenType = {
     address: string;

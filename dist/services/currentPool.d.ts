@@ -24,6 +24,7 @@ export declare class CurrentPool {
     baseToken: string;
     quoteToken: string;
     cToken: string;
+    TOKEN_R: string;
     dTokens: string[];
     logicAddress?: string;
     cTokenPrice: number;

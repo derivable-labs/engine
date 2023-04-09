@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from "ethers";
-import { LogType, ParseLogType, PoolsType, PoolType, Storage, TokenType } from "../types";
+import { LogType, ParseLogType, PoolGroupsType, PoolsType, PoolType, Storage, TokenType } from "../types";
 import { UniV2Pair } from "./uniV2Pair";
 import { JsonRpcProvider } from "@ethersproject/providers";
 declare type ConfigType = {
@@ -19,7 +19,7 @@ declare type ResourceData = {
     poolGroups: any;
 };
 export declare class Resource {
-    poolGroups: any;
+    poolGroups: PoolGroupsType;
     pools: PoolsType;
     tokens: TokenType[];
     swapLogs: LogType[];

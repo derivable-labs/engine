@@ -27,10 +27,12 @@ const fee10000 = 30;
 const gasLimit = 6000000;
 const ACTION_RECORD_CALL_RESULT = 2;
 const ACTION_INJECT_CALL_RESULT = 4;
-const TRANSFER_FROM_SENDER = 0;
 const AMOUNT_EXACT = 0;
 const AMOUNT_ALL = 1;
+const TRANSFER_FROM_SENDER = 0;
 const TRANSFER_FROM_ROUTER = 1;
+const TRANSFER_CALL_VALUE = 2;
+const IN_TX_PAYMENT = 4;
 class Swap {
     constructor(configs) {
         this.account = configs.account;
@@ -149,44 +151,46 @@ class Swap {
     }
     convertStepToActions(steps) {
         return __awaiter(this, void 0, void 0, function* () {
-            const poolContract = this.getPoolContract();
+            const poolContract = this.getPoolContract(constant_1.ZERO_ADDRESS);
             const outputs = [];
-            steps.forEach((step) => {
-                outputs.push({
-                    eip: (0, helper_1.isErc1155Address)(step.tokenOut) ? 1155 : 20,
-                    token: this.getAddressByErc1155Address(step.tokenOut),
-                    id: (0, helper_1.isErc1155Address)(step.tokenOut) ? this.getIdByAddress(step.tokenOut) : (0, helper_1.bn)(0),
-                    amountOutMin: step.amountOutMin,
-                    recipient: this.account,
-                });
-            });
+            // steps.forEach((step) => {
+            //   outputs.push({
+            //     eip: isErc1155Address(step.tokenOut) ? 1155 : 20,
+            //     token: this.getAddressByErc1155Address(step.tokenOut),
+            //     id: isErc1155Address(step.tokenOut) ? this.getIdByAddress(step.tokenOut) : bn(0),
+            //     amountOutMin: step.amountOutMin,
+            //     recipient: this.account,
+            //   })
+            // })
             let nativeAmountToWrap = (0, helper_1.bn)(0);
             const datas = yield Promise.all(steps.map((step) => {
                 if (step.tokenIn === configs_1.CONFIGS[this.chainId].nativeToken &&
-                    this.CURRENT_POOL.baseToken !== configs_1.CONFIGS[this.chainId].wrapToken) {
+                    this.CURRENT_POOL.TOKEN_R !== configs_1.CONFIGS[this.chainId].wrapToken) {
                     throw "This pool do not support swap by native Token";
                 }
                 let idIn = this.getIdByAddress(step.tokenIn);
                 if (step.tokenIn === configs_1.CONFIGS[this.chainId].nativeToken) {
                     nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn);
-                    idIn = (0, helper_1.bn)(constant_1.POOL_IDS.base);
                 }
-                return poolContract.populateTransaction.swap(idIn, this.getIdByAddress(step.tokenOut), this.account);
+                return poolContract.populateTransaction.exactIn(idIn, step.amountIn, this.getIdByAddress(step.tokenOut), this.account, this.account);
             }));
             const actions = steps.map((step, key) => {
                 const mode = step.tokenIn === configs_1.CONFIGS[this.chainId].nativeToken ? TRANSFER_FROM_ROUTER : TRANSFER_FROM_SENDER;
+                const poolAddress = (0, helper_1.isErc1155Address)(step.tokenIn)
+                    ? this.getAddressByErc1155Address(step.tokenIn)
+                    : this.getAddressByErc1155Address(step.tokenOut);
                 return {
                     flags: 0,
-                    code: this.CURRENT_POOL.poolAddress,
+                    code: poolAddress,
                     data: datas[key].data,
                     inputs: [{
-                            mode,
-                            recipient: this.CURRENT_POOL.poolAddress,
+                            mode: IN_TX_PAYMENT,
+                            recipient: poolAddress,
                             eip: (0, helper_1.isErc1155Address)(step.tokenIn) ? 1155 : 20,
                             id: (0, helper_1.isErc1155Address)(step.tokenIn) ? this.getIdByAddress(step.tokenIn) : 0,
                             token: this.getAddressByErc1155Address(step.tokenIn),
                             amountInMax: step.amountIn,
-                            amountSource: step.tokenIn === configs_1.CONFIGS[this.chainId].nativeToken ? AMOUNT_ALL : AMOUNT_EXACT,
+                            amountSource: AMOUNT_EXACT,
                         }]
                 };
             });
@@ -198,7 +202,7 @@ class Swap {
                     code: configs_1.CONFIGS[this.chainId].wrapToken,
                     data: data.data,
                     inputs: [{
-                            mode: 2,
+                            mode: TRANSFER_CALL_VALUE,
                             recipient: configs_1.CONFIGS[this.chainId].wrapToken,
                             eip: 0,
                             id: 0,
@@ -206,6 +210,20 @@ class Swap {
                             amountInMax: nativeAmountToWrap,
                             amountSource: AMOUNT_EXACT,
                         }]
+                }, {
+                    inputs: [{
+                            mode: TRANSFER_FROM_ROUTER,
+                            eip: 20,
+                            token: configs_1.CONFIGS[this.chainId].wrapToken,
+                            id: 0,
+                            amountInMax: nativeAmountToWrap,
+                            amountSource: AMOUNT_ALL,
+                            recipient: this.account,
+                        }],
+                    // ... continue to use WETH in SomeRecipient
+                    flags: 0,
+                    code: constant_1.ZERO_ADDRESS,
+                    data: '0x',
                 });
             }
             return { params: [outputs, actions], value: nativeAmountToWrap };
@@ -213,15 +231,11 @@ class Swap {
     }
     getIdByAddress(address) {
         try {
-            if (address === this.CURRENT_POOL.baseToken)
-                return (0, helper_1.bn)(constant_1.POOL_IDS.base);
-            if (address === this.CURRENT_POOL.quoteToken)
-                return (0, helper_1.bn)(constant_1.POOL_IDS.quote);
-            if (address === this.CURRENT_POOL.cToken)
-                return (0, helper_1.bn)(constant_1.POOL_IDS.cToken);
+            if (address === this.CURRENT_POOL.TOKEN_R)
+                return (0, helper_1.bn)(constant_1.POOL_IDS.R);
             if (address === configs_1.CONFIGS[this.chainId].nativeToken &&
-                this.CURRENT_POOL.baseToken === configs_1.CONFIGS[this.chainId].wrapToken) {
-                return (0, helper_1.bn)(constant_1.POOL_IDS.base);
+                this.CURRENT_POOL.TOKEN_R === configs_1.CONFIGS[this.chainId].wrapToken) {
+                return (0, helper_1.bn)(constant_1.POOL_IDS.R);
             }
             return (0, helper_1.bn)(address.split('-')[1]);
         }
@@ -236,6 +250,8 @@ class Swap {
                 if (isDeleverage) {
                     params.unshift(this.getDeleverageStep());
                 }
+                // const weth = new ethers.Contract(this.CURRENT_POOL.TOKEN_R, WtapAbi, this.signer)
+                // await weth.approve(CONFIGS[this.chainId].router, LARGE_VALUE)
                 yield this.callStaticMultiSwap({ params, value, gasLimit });
                 const contract = this.getRouterContract(this.signer);
                 const res = yield contract.exec(...params, {
@@ -267,16 +283,16 @@ class Swap {
             return address.split('-')[0];
         }
         if (address === configs_1.CONFIGS[this.chainId].nativeToken &&
-            this.CURRENT_POOL.baseToken === configs_1.CONFIGS[this.chainId].wrapToken) {
-            return this.CURRENT_POOL.baseToken;
+            this.CURRENT_POOL.TOKEN_R === configs_1.CONFIGS[this.chainId].wrapToken) {
+            return configs_1.CONFIGS[this.chainId].wrapToken;
         }
         return address;
     }
     getRouterContract(provider) {
         return new ethers_1.ethers.Contract(configs_1.CONFIGS[this.chainId].router, UTR_json_1.default, provider);
     }
-    getPoolContract(provider) {
-        return new ethers_1.ethers.Contract(this.CURRENT_POOL.poolAddress, Pool_json_1.default, provider || this.provider);
+    getPoolContract(poolAddress, provider) {
+        return new ethers_1.ethers.Contract(poolAddress, Pool_json_1.default, provider || this.provider);
     }
     getLogicContract(provider) {
         return new ethers_1.ethers.Contract(this.CURRENT_POOL.logicAddress, Logic_json_1.default, provider || this.provider);

@@ -6,7 +6,7 @@ import { BnA } from "./services/balanceAndAllowance";
 import { UniV2Pair } from "./services/uniV2Pair";
 import { History } from "./services/history";
 import { Swap } from "./services/swap";
-import { CurrentPool, PoolData } from "./services/currentPool";
+import { CurrentPool } from "./services/currentPool";
 import { CreatePool } from "./services/createPool";
 import { JsonRpcProvider } from "@ethersproject/providers";
 declare type ConfigType = {
@@ -40,6 +40,6 @@ export declare class Engine {
     CREATE_POOL: CreatePool;
     constructor(configs: ConfigType);
     initServices(): void;
-    setCurrentPool(poolData: PoolData): void;
+    setCurrentPool(poolData: any): void;
 }
 export {};
