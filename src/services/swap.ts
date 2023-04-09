@@ -1,7 +1,7 @@
 import {BigNumber, ethers} from "ethers";
 import {UniV2Pair} from "./uniV2Pair";
 import {PoolErc1155StepType, StepType, SwapStepType} from "../types";
-import {bn, isErc1155Address, numberToWei} from "../utils/helper";
+import {bn, isErc1155Address, numberToWei, weiToNumber} from "../utils/helper";
 import {LARGE_VALUE, POOL_IDS, ZERO_ADDRESS} from "../utils/constant";
 import {CONFIGS} from "../utils/configs";
 import {CurrentPool} from "./currentPool";
@@ -196,16 +196,6 @@ export class Swap {
         nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn)
       }
 
-      const idOut = this.getIdByAddress(step.tokenOut);
-
-      console.log([
-        idIn,
-        step.amountIn,
-        this.getIdByAddress(step.tokenOut),
-        ZERO_ADDRESS,
-        this.account
-      ])
-
       return poolContract.populateTransaction.exactIn(
         idIn,
         step.amountIn,
@@ -231,7 +221,7 @@ export class Swap {
           id: isErc1155Address(step.tokenIn) ? this.getIdByAddress(step.tokenIn) : 0,
           token: this.getAddressByErc1155Address(step.tokenIn),
           amountInMax: step.amountIn,
-          amountSource: step.tokenIn === CONFIGS[this.chainId].nativeToken ? AMOUNT_ALL : AMOUNT_EXACT,
+          amountSource: AMOUNT_EXACT,
         }]
       }
     })
@@ -244,7 +234,7 @@ export class Swap {
         code: CONFIGS[this.chainId].wrapToken,
         data: data.data,
         inputs: [{
-          mode: 2,
+          mode: TRANSFER_CALL_VALUE,
           recipient: CONFIGS[this.chainId].wrapToken,
           eip: 0,
           id: 0,
@@ -252,6 +242,20 @@ export class Swap {
           amountInMax: nativeAmountToWrap,
           amountSource: AMOUNT_EXACT,
         }]
+      }, {
+        inputs: [{
+          mode: TRANSFER_FROM_ROUTER, // transfer token out from this UTR contract
+          eip: 20,
+          token: CONFIGS[this.chainId].wrapToken,
+          id: 0,
+          amountInMax: nativeAmountToWrap,
+          amountSource: AMOUNT_ALL,   // entire WETH balance of this UTR contract
+          recipient: this.account,
+        }],
+        // ... continue to use WETH in SomeRecipient
+        flags: 0,
+        code: ZERO_ADDRESS,
+        data: '0x',
       })
     }
 
@@ -280,13 +284,8 @@ export class Swap {
         params.unshift(this.getDeleverageStep())
       }
 
-      const weth = new ethers.Contract(this.CURRENT_POOL.TOKEN_R, WtapAbi, this.signer)
-      await weth.deposit({
-        value: steps[0].amountIn
-      })
-      await weth.approve(CONFIGS[this.chainId].router, LARGE_VALUE)
-
-      const a = await weth.balanceOf(this.account)
+      // const weth = new ethers.Contract(this.CURRENT_POOL.TOKEN_R, WtapAbi, this.signer)
+      // await weth.approve(CONFIGS[this.chainId].router, LARGE_VALUE)
 
       await this.callStaticMultiSwap({ params, value, gasLimit })
       const contract = this.getRouterContract(this.signer)
