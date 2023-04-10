@@ -2,44 +2,30 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "inputs": [],
-    "name": "TOKEN",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "components": [
+          {
+            "internalType": "address",
+            "name": "utr",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
           {
             "internalType": "address",
             "name": "logic",
             "type": "address"
           },
           {
-            "internalType": "address",
-            "name": "tokenOracle",
-            "type": "address"
+            "internalType": "bytes32",
+            "name": "oracle",
+            "type": "bytes32"
           },
           {
             "internalType": "address",
-            "name": "tokenCollateral",
+            "name": "reserveToken",
             "type": "address"
           },
           {
@@ -49,12 +35,12 @@
           },
           {
             "internalType": "uint224",
-            "name": "markPrice",
+            "name": "mark",
             "type": "uint224"
           },
           {
             "internalType": "uint256",
-            "name": "power",
+            "name": "k",
             "type": "uint256"
           },
           {
@@ -65,6 +51,11 @@
           {
             "internalType": "uint256",
             "name": "b",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "halfLife",
             "type": "uint256"
           }
         ],
@@ -90,17 +81,27 @@
         "components": [
           {
             "internalType": "address",
+            "name": "utr",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
             "name": "logic",
             "type": "address"
           },
           {
-            "internalType": "address",
-            "name": "tokenOracle",
-            "type": "address"
+            "internalType": "bytes32",
+            "name": "oracle",
+            "type": "bytes32"
           },
           {
             "internalType": "address",
-            "name": "tokenCollateral",
+            "name": "reserveToken",
             "type": "address"
           },
           {
@@ -110,12 +111,12 @@
           },
           {
             "internalType": "uint224",
-            "name": "markPrice",
+            "name": "mark",
             "type": "uint224"
           },
           {
             "internalType": "uint256",
-            "name": "power",
+            "name": "k",
             "type": "uint256"
           },
           {
@@ -126,6 +127,11 @@
           {
             "internalType": "uint256",
             "name": "b",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "halfLife",
             "type": "uint256"
           }
         ],
@@ -153,17 +159,27 @@
         "components": [
           {
             "internalType": "address",
+            "name": "utr",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
             "name": "logic",
             "type": "address"
           },
           {
-            "internalType": "address",
-            "name": "tokenOracle",
-            "type": "address"
+            "internalType": "bytes32",
+            "name": "oracle",
+            "type": "bytes32"
           },
           {
             "internalType": "address",
-            "name": "tokenCollateral",
+            "name": "reserveToken",
             "type": "address"
           },
           {
@@ -173,12 +189,12 @@
           },
           {
             "internalType": "uint224",
-            "name": "markPrice",
+            "name": "mark",
             "type": "uint224"
           },
           {
             "internalType": "uint256",
-            "name": "power",
+            "name": "k",
             "type": "uint256"
           },
           {
@@ -189,6 +205,11 @@
           {
             "internalType": "uint256",
             "name": "b",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "halfLife",
             "type": "uint256"
           }
         ],

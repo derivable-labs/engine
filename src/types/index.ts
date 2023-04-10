@@ -76,9 +76,9 @@ export type StatesType = {
 }
 
 export type PoolConfig = {
+  amountInit: BigNumber
   recipient: string
-  markPrice: BigNumber
-  power: number
+  k: number
   a: BigNumber
   b: BigNumber
 }
