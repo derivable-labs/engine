@@ -20,7 +20,7 @@ const testLocal = async () => {
       amountIn: bn(numberToWei(1)),
       // tokenIn: CONFIGS[engine.chainId].nativeToken,
       tokenIn: CONFIGS[engine.chainId].nativeToken,
-      tokenOut: Object.values(currentPool.pools)[0].poolAddress + "-" + POOL_IDS.C,
+      tokenOut: Object.values(currentPool.pools)[0].poolAddress + "-" + POOL_IDS.A,
       amountOutMin: 0
     }
   ]
