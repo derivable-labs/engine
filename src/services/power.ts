@@ -437,7 +437,7 @@ export const encodePowers = (powers: number[]) => {
 export const decodePowers = (powersBytes: string) => {
   powersBytes = ethers.utils.hexStripZeros(powersBytes).slice(2)
   const raws: any = powersBytes.match(/.{1,4}/g)
-  const powers = []
+  const powers: any = []
   for (let i = raws.length - 1; i >= 0; --i) {
     let power = Number('0x' + raws[i])
     if (power > 0x8000) {

@@ -3,15 +3,20 @@ import { UniV2Pair } from './uniV2Pair'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { PoolConfig } from '../types'
 import { CONFIGS } from '../utils/configs'
-import { LARGE_VALUE, ZERO_ADDRESS } from '../utils/constant'
+import { bn } from '../utils/helper'
+import { ZERO_ADDRESS } from '../utils/constant'
 import PoolFactoryAbi from '../abi/PoolFactory.json'
 import UtrAbi from '../abi/UTR.json'
 import WtapAbi from '../abi/Wrap.json'
 
 const HALF_LIFE = 10 * 365 * 24 * 60 * 60
+// utr
 const AMOUNT_EXACT = 0
+const AMOUNT_ALL = 1
 const TRANSFER_FROM_SENDER = 0
-const bn = ethers.BigNumber.from
+const TRANSFER_FROM_ROUTER = 1
+const TRANSFER_CALL_VALUE = 2
+const IN_TX_PAYMENT = 4
 
 type ConfigType = {
   account?: string
@@ -44,24 +49,13 @@ export class CreatePool {
   async createPool(params: PoolConfig, gasLimit?: BigNumber) {
     try {
       const poolFactoryContract = this.getPoolFactoryContract(this.signer)
-      const oracle = bn(1)
-        .shl(255)
-        .add(bn(300).shl(256 - 64))
-        .add(CONFIGS[this.chainId].wrapUsdPair)
-        .toHexString()
-      const newPoolConfigs = {
-        utr: CONFIGS[this.chainId].router,
-        token: CONFIGS[this.chainId].token,
-        logic: CONFIGS[this.chainId].logic,
-        oracle,
-        reserveToken: CONFIGS[this.chainId].wrapToken,
-        recipient: params.recipient,
-        mark: bn(38).shl(112),
-        k: params.k,
-        a: params.a,
-        b: params.b,
-        halfLife: HALF_LIFE, // ten years
-      }
+      const wrapToken = this.getWrapTokenContract(this.signer)
+      const newPoolConfigs = this.generateConfig(
+        params.k,
+        params.a,
+        params.b,
+        params.recipient,
+      )
       const poolAddress = await poolFactoryContract.computePoolAddress(
         newPoolConfigs,
         {
@@ -69,25 +63,33 @@ export class CreatePool {
         },
       )
       const utr = this.getRouterContract(this.signer)
-
-      // const weth = new ethers.Contract(
-      //   CONFIGS[this.chainId].wrapToken,
-      //   WtapAbi,
-      //   this.signer,
-      // )
-      // await weth.approve(CONFIGS[this.chainId].router, LARGE_VALUE)
-
       const res = await utr.exec(
         [],
         [
           {
             inputs: [
               {
-                mode: TRANSFER_FROM_SENDER,
+                mode: TRANSFER_CALL_VALUE,
+                eip: 0,
+                token: ZERO_ADDRESS,
+                id: 0,
+                amountSource: AMOUNT_EXACT,
+                amountInMax: params.amountInit,
+                recipient: CONFIGS[this.chainId].router,
+              },
+            ],
+            flags: 0,
+            code: CONFIGS[this.chainId].wrapToken,
+            data: (await wrapToken.populateTransaction.deposit()).data,
+          },
+          {
+            inputs: [
+              {
+                mode: TRANSFER_FROM_ROUTER,
                 eip: 20,
                 token: CONFIGS[this.chainId].wrapToken,
                 id: 0,
-                amountSource: AMOUNT_EXACT,
+                amountSource: AMOUNT_ALL,
                 amountInMax: params.amountInit,
                 recipient: poolAddress,
               },
@@ -102,6 +104,7 @@ export class CreatePool {
           },
         ],
         {
+          value: params.amountInit,
           gasLimit: gasLimit || undefined,
         },
       )
@@ -113,8 +116,36 @@ export class CreatePool {
     }
   }
 
+  generateConfig(k: number, a: BigNumber, b: BigNumber, recipient: string) {
+    const oracle = bn(1)
+      .shl(255)
+      .add(bn(300).shl(256 - 64))
+      .add(CONFIGS[this.chainId].wrapUsdPair)
+      .toHexString()
+    return {
+      utr: CONFIGS[this.chainId].router,
+      token: CONFIGS[this.chainId].token,
+      logic: CONFIGS[this.chainId].logic,
+      oracle,
+      reserveToken: CONFIGS[this.chainId].wrapToken,
+      recipient: recipient,
+      mark: bn(38).shl(112),
+      k,
+      a,
+      b,
+      halfLife: HALF_LIFE, // ten years
+    }
+  }
+
   getRouterContract(provider: any) {
     return new ethers.Contract(CONFIGS[this.chainId].router, UtrAbi, provider)
+  }
+  getWrapTokenContract(provider: any) {
+    return new ethers.Contract(
+      CONFIGS[this.chainId].wrapToken,
+      WtapAbi,
+      provider,
+    )
   }
   getPoolFactoryContract(provider: any) {
     return new ethers.Contract(
