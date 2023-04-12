@@ -4,6 +4,7 @@ import {Price}                                  from "./services/price";
 import {Resource}                               from "./services/resource";
 import {BnA}                                    from "./services/balanceAndAllowance";
 import {UniV2Pair}                              from "./services/uniV2Pair";
+import {UniV3Pair}                              from "./services/uniV3Pair";
 import {History}                                from "./services/history";
 import {Swap}                  from "./services/swap";
 import {CurrentPool, PoolData} from "./services/currentPool";
