@@ -3,13 +3,11 @@ import { UniV2Pair } from './uniV2Pair'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { PoolConfig } from '../types'
 import { CONFIGS } from '../utils/configs'
-import { bn } from '../utils/helper'
 import { ZERO_ADDRESS } from '../utils/constant'
 import PoolFactoryAbi from '../abi/PoolFactory.json'
 import UtrAbi from '../abi/UTR.json'
 import WtapAbi from '../abi/Wrap.json'
 
-const HALF_LIFE = 10 * 365 * 24 * 60 * 60
 // utr
 const AMOUNT_EXACT = 0
 const AMOUNT_ALL = 1
@@ -54,7 +52,10 @@ export class CreatePool {
         params.k,
         params.a,
         params.b,
+        params.mark,
         params.recipient,
+        params.oracle,
+        params.halfLife
       )
       const poolAddress = await poolFactoryContract.computePoolAddress(
         newPoolConfigs,
@@ -62,6 +63,7 @@ export class CreatePool {
           gasLimit: gasLimit || undefined,
         },
       )
+      console.log(poolAddress)
       const utr = this.getRouterContract(this.signer)
       const res = await utr.exec(
         [],
@@ -116,12 +118,7 @@ export class CreatePool {
     }
   }
 
-  generateConfig(k: number, a: BigNumber, b: BigNumber, recipient: string) {
-    const oracle = bn(1)
-      .shl(255)
-      .add(bn(300).shl(256 - 64))
-      .add(CONFIGS[this.chainId].wrapUsdPair)
-      .toHexString()
+  generateConfig(k: number, a: BigNumber, b: BigNumber, mark: BigNumber, recipient: string, oracle: string, halfLife: number) {
     return {
       utr: CONFIGS[this.chainId].router,
       token: CONFIGS[this.chainId].token,
@@ -129,11 +126,11 @@ export class CreatePool {
       oracle,
       reserveToken: CONFIGS[this.chainId].wrapToken,
       recipient: recipient,
-      mark: bn(38).shl(112),
+      mark,
       k,
       a,
       b,
-      halfLife: HALF_LIFE, // ten years
+      halfLife
     }
   }
 

@@ -81,6 +81,9 @@ export type PoolConfig = {
   k: number
   a: BigNumber
   b: BigNumber
+  halfLife: number
+  mark: BigNumber
+  oracle: string
 }
 
 export type PoolGroupType = {

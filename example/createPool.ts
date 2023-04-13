@@ -6,17 +6,23 @@ import {getTestConfigs} from "./shared/testConfigs"
 const testLocal = async () => {
   const engine = new Engine(getTestConfigs(1337))
   await engine.RESOURCE.fetchResourceData("0xbC52C688c34A480c6785A38715c693Bb22863DE1")
-  const amountInit = bn("150000000000000000000")
+  const amountInit = bn(numberToWei(10))
   const recipient = "0xbC52C688c34A480c6785A38715c693Bb22863DE1"
-  const k = 11
+  const k = 14
   const a = bn(numberToWei(1))
   const b = bn(numberToWei(1))
+  const oracle = "0x800000000000012c000000002c8c4d78c6187602ddb8c4b803c3bcfb614ce6d7"
+  const halfLife = 19932680
+  const mark = bn(38).shl(112)
   const params = {
     amountInit,
     recipient,
     k,
     a,
-    b
+    b,
+    oracle,
+    mark,
+    halfLife
   }
   await engine.CREATE_POOL.createPool(params, bn(6000000))
 
