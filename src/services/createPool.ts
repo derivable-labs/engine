@@ -9,12 +9,11 @@ import UtrAbi from '../abi/UTR.json'
 import WtapAbi from '../abi/Wrap.json'
 
 // utr
-const AMOUNT_EXACT = 0
-const AMOUNT_ALL = 1
-const TRANSFER_FROM_SENDER = 0
-const TRANSFER_FROM_ROUTER = 1
-const TRANSFER_CALL_VALUE = 2
-const IN_TX_PAYMENT = 4
+const FROM_ROUTER   = 10;
+const PAYMENT       = 0;
+const TRANSFER      = 1;
+const ALLOWANCE     = 2;
+const CALL_VALUE    = 3;
 
 type ConfigType = {
   account?: string
@@ -63,7 +62,6 @@ export class CreatePool {
           gasLimit: gasLimit || undefined,
         },
       )
-      console.log(poolAddress)
       const utr = this.getRouterContract(this.signer)
       const res = await utr.exec(
         [],
@@ -71,13 +69,12 @@ export class CreatePool {
           {
             inputs: [
               {
-                mode: TRANSFER_CALL_VALUE,
+                mode: CALL_VALUE,
                 eip: 0,
                 token: ZERO_ADDRESS,
                 id: 0,
-                amountSource: AMOUNT_EXACT,
-                amountInMax: params.amountInit,
-                recipient: CONFIGS[this.chainId].router,
+                amountIn: params.amountInit,
+                recipient: ZERO_ADDRESS,
               },
             ],
             flags: 0,
@@ -87,12 +84,11 @@ export class CreatePool {
           {
             inputs: [
               {
-                mode: TRANSFER_FROM_ROUTER,
+                mode: TRANSFER + FROM_ROUTER,
                 eip: 20,
                 token: CONFIGS[this.chainId].wrapToken,
                 id: 0,
-                amountSource: AMOUNT_ALL,
-                amountInMax: params.amountInit,
+                amountIn: 0,
                 recipient: poolAddress,
               },
             ],

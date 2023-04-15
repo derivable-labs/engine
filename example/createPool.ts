@@ -8,10 +8,10 @@ const testLocal = async () => {
   await engine.RESOURCE.fetchResourceData("0xbC52C688c34A480c6785A38715c693Bb22863DE1")
   const amountInit = bn(numberToWei(10))
   const recipient = "0xbC52C688c34A480c6785A38715c693Bb22863DE1"
-  const k = 14
+  const k = 4
   const a = bn(numberToWei(1))
   const b = bn(numberToWei(1))
-  const oracle = "0x800000000000012c000000002c8c4d78c6187602ddb8c4b803c3bcfb614ce6d7"
+  const oracle = "0x800000000000012c00000000bf4cc059dff52aefe7f12516e4ca4bc691d97474"
   const halfLife = 19932680
   const mark = bn(38).shl(112)
   const params = {
@@ -24,7 +24,7 @@ const testLocal = async () => {
     mark,
     halfLife
   }
-  await engine.CREATE_POOL.createPool(params, bn(6000000))
+  await engine.CREATE_POOL.createPool(params, bn(30000000))
 
 }
 
