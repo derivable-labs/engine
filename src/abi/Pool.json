@@ -57,13 +57,18 @@
       },
       {
         "internalType": "uint256",
-        "name": "amountIn",
+        "name": "sideOut",
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
-        "name": "sideOut",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "helper",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "payload",
+        "type": "bytes"
       },
       {
         "internalType": "address",
@@ -76,8 +81,13 @@
         "type": "address"
       }
     ],
-    "name": "exactIn",
+    "name": "swap",
     "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "amountIn",
+        "type": "uint256"
+      },
       {
         "internalType": "uint256",
         "name": "amountOut",

@@ -42,6 +42,7 @@ export const CONFIGS = {
     wrapUsdPair: '0x2B89B4931122EE4Fa474446Fa9B118F2852a8223',
     poolFactory: "0x2e10024346cDd08E1e9071B16a51d89d46de8003",
     logic: "0x8f114752F335c474873cC3cB738ebF093Ab85Bf9",
+    stateCalHelper: "0xb5C8f5792EcF6bF6105a2a7ebFa118Fcf6d4636d"
   },
   42161: {
     rpcUrl: 'https://arb1.arbitrum.io/rpc',

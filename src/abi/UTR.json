@@ -71,9 +71,9 @@
           {
             "components": [
               {
-                "internalType": "bytes32",
+                "internalType": "uint256",
                 "name": "mode",
-                "type": "bytes32"
+                "type": "uint256"
               },
               {
                 "internalType": "address",
@@ -97,12 +97,7 @@
               },
               {
                 "internalType": "uint256",
-                "name": "amountInMax",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "amountSource",
+                "name": "amountIn",
                 "type": "uint256"
               }
             ],
