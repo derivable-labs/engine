@@ -28,8 +28,8 @@ export class BnA {
   }
 
   async getBalanceAndAllowance({
-    tokens
-  }: any): Promise<BnAReturnType> {
+                                 tokens
+                               }: any): Promise<BnAReturnType> {
     if (this.account) {
       const multicall = new Multicall({
         multicallCustomContractAddress: CONFIGS[this.chainId].multiCall,
@@ -41,21 +41,21 @@ export class BnA {
       const multiCallRequest = this.getBnAMulticallRequest({
         erc20Tokens, erc1155Tokens
       })
-      const { results } = await multicall.call(multiCallRequest)
+      const {results} = await multicall.call(multiCallRequest)
 
       return this.parseBnAMultiRes(erc20Tokens, erc1155Tokens, results)
     }
-    return { balances: {}, allowances: {} }
+    return {balances: {}, allowances: {}}
   }
 
-  getBnAMulticallRequest({ erc20Tokens, erc1155Tokens }: {
+  getBnAMulticallRequest({erc20Tokens, erc1155Tokens}: {
     erc20Tokens: string[],
     erc1155Tokens: { [key: string]: string[] }
   }) {
     const pack = []
     const accounts = []
     for (const poolAddress in erc1155Tokens) {
-      for(let side of erc1155Tokens[poolAddress]) {
+      for (let side of erc1155Tokens[poolAddress]) {
         pack.push(packId(side, poolAddress))
         accounts.push(this.account)
       }
@@ -75,10 +75,11 @@ export class BnA {
         reference: 'erc1155',
         contractAddress: CONFIGS[this.chainId].token,
         abi: TokenAbi,
-        calls: [{
-          reference: 'balanceOfBatch', methodName: 'balanceOfBatch',
-          methodParameters: [accounts, pack]
-        },
+        calls: [
+          {
+            reference: 'balanceOfBatch', methodName: 'balanceOfBatch',
+            methodParameters: [accounts, pack]
+          },
           {
             reference: 'isApprovedForAll', methodName: 'isApprovedForAll',
             methodParameters: [this.account, CONFIGS[this.chainId].router]
@@ -104,12 +105,12 @@ export class BnA {
     const erc1155ApproveInfo = data.erc1155.callsReturnContext[1].returnValues[0]
 
     for (let poolAddress in erc1155Tokens) {
-        const approveData = erc1155ApproveInfo
+      const approveData = erc1155ApproveInfo
 
-        for (let i = 0; i < erc1155Tokens[poolAddress].length; i++) {
-          allowances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = approveData ? bn(LARGE_VALUE) : bn(0)
-          balances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = bn(erc1155BalanceInfo[i].hex)
-        }
+      for (let i = 0; i < erc1155Tokens[poolAddress].length; i++) {
+        allowances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = approveData ? bn(LARGE_VALUE) : bn(0)
+        balances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = bn(erc1155BalanceInfo[i].hex)
+      }
     }
 
     return {

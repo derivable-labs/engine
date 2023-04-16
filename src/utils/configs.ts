@@ -32,7 +32,7 @@ export const CONFIGS = {
     rpcToGetLogs: 'http://localhost:8545',
     timePerBlock: 3000,
     nativeToken: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
-    token: '0xc28A7e46bE1BB74a63aD32784D785A941D1954ab',
+    token: '0x63568a211803b54892527E0214a4bE8038a0E684',
     multiCall: '0xDa033Ba5a26ad0DaCa8e9F6240F661629A129D0f',
     pairsInfo: '0xC98e5978E008f706C8Db1AcB9f4Bc8B885d62D5a',
     bnA: '0xe83FB30A2624B51D67CC9BE1e0bb07A831Ff25CF',

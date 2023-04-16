@@ -1,6 +1,7 @@
 import {Engine} from "../src/engine";
 import {ethers} from "ethers";
 import {getTestConfigs} from "./shared/testConfigs";
+import {weiToNumber} from "../dist/utils/helper";
 
 const test = async () => {
   const engine = new Engine(getTestConfigs(1337))
@@ -11,6 +12,9 @@ const test = async () => {
   const res = await engine.BNA.getBalanceAndAllowance({
     tokens: tokenArr
   })
+
+  console.log(weiToNumber(res.balances['0xD9de0da3adE2a8b2FB27C453c065D46aa01574BA']))
+
   console.log(res)
 }
 

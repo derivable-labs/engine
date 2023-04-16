@@ -37,6 +37,7 @@ const TRANSFER_FROM_ROUTER = 1
 const TRANSFER_CALL_VALUE = 2
 const IN_TX_PAYMENT = 4
 
+const mode = (x: string) => ethers.utils.formatBytes32String(x)
 
 export class Swap {
   account?: string
@@ -59,7 +60,7 @@ export class Swap {
   }
 
   async getDeleverageStep(): Promise<any> {
-    const { priceScaleLong, twapBase } = this.CURRENT_POOL.states
+    const {priceScaleLong, twapBase} = this.CURRENT_POOL.states
     const [start, end] = twapBase.lt(priceScaleLong) ?
       [twapBase, priceScaleLong] : [priceScaleLong, twapBase]
     const logicContract = this.getLogicContract()
@@ -86,9 +87,9 @@ export class Swap {
     if (!this.signer) return [[bn(0)], bn(0)]
     try {
       const stepsToSwap: SwapStepType[] = [...steps].map((step) => {
-        return { ...step, amountOutMin: 0 }
+        return {...step, amountOutMin: 0}
       })
-      const { params, value } = await this.convertStepToActions(stepsToSwap)
+      const {params, value} = await this.convertStepToActions(stepsToSwap)
       if (isDeleverage) {
         params[1].unshift(await this.getDeleverageStep())
       }
@@ -108,7 +109,7 @@ export class Swap {
       })
       const result = []
       for (const i in steps) {
-        result.push({ ...steps[i], amountOut: res[0][i] })
+        result.push({...steps[i], amountOut: res[0][i]})
       }
       return [result, bn(gasLimit).sub(res.gasLeft)]
     } catch (e) {
@@ -138,10 +139,10 @@ export class Swap {
   }
 
   async callStaticMultiSwap({
-    params,
-    value,
-    gasLimit
-  }: any) {
+                              params,
+                              value,
+                              gasLimit
+                            }: any) {
     const contract = this.getRouterContract(this.signer)
     return await contract.callStatic.exec(...params, {
       value: value || bn(0),
@@ -166,7 +167,7 @@ export class Swap {
       }
     })
 
-    return { stepsToSwap, value }
+    return {stepsToSwap, value}
   }
 
   async convertStepToActions(steps: SwapStepType[]): Promise<{ params: any, value: BigNumber }> {
@@ -196,35 +197,46 @@ export class Swap {
         nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn)
       }
 
+      console.log([
+        idIn,
+        step.amountIn,
+        this.getIdByAddress(step.tokenOut),
+        step.tokenIn === CONFIGS[this.chainId].nativeToken ? ZERO_ADDRESS : this.account,
+        this.account
+      ])
+
       return poolContract.populateTransaction.exactIn(
         idIn,
         step.amountIn,
         this.getIdByAddress(step.tokenOut),
-        this.account,
+        step.tokenIn === CONFIGS[this.chainId].nativeToken ? ZERO_ADDRESS : this.account,
         this.account
       )
     }))
 
-    const actions = steps.map((step, key) => {
-      const mode = step.tokenIn === CONFIGS[this.chainId].nativeToken ? TRANSFER_FROM_ROUTER : TRANSFER_FROM_SENDER
+    const actions = []
+    //@ts-ignore
+    steps.forEach((step, key) => {
+      // const mode = step.tokenIn === CONFIGS[this.chainId].nativeToken ? TRANSFER_FROM_ROUTER : TRANSFER_FROM_SENDER
       const poolAddress = isErc1155Address(step.tokenIn)
         ? this.getAddressByErc1155Address(step.tokenIn)
         : this.getAddressByErc1155Address(step.tokenOut)
-      return {
+      actions.push({
         flags: 0,
         code: poolAddress,
-        data: datas[key].data,
+        data: '0x',
         inputs: [{
-          mode: IN_TX_PAYMENT,
-          recipient: poolAddress,
+          mode: step.tokenIn === CONFIGS[this.chainId].nativeToken ? mode('ROUTER_APPROVE') : mode('ROUTER_PAY'),
           eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
-          id: isErc1155Address(step.tokenIn) ? this.getIdByAddress(step.tokenIn) : 0,
           token: this.getAddressByErc1155Address(step.tokenIn),
-          amountInMax: step.amountIn,
+          id: isErc1155Address(step.tokenIn) ? this.getIdByAddress(step.tokenIn) : 0,
           amountSource: AMOUNT_EXACT,
+          amountInMax: step.amountIn,
+          recipient: poolAddress,
         }]
-      }
+      })
     })
+
     if (nativeAmountToWrap.gt(0)) {
       const poolContract = this.getWrapContract()
 
@@ -232,34 +244,21 @@ export class Swap {
       actions.unshift({
         flags: 0,
         code: CONFIGS[this.chainId].wrapToken,
+        //@ts-ignore
         data: data.data,
         inputs: [{
-          mode: TRANSFER_CALL_VALUE,
-          recipient: CONFIGS[this.chainId].wrapToken,
+          mode: mode('CALL_VALUE'),
           eip: 0,
-          id: 0,
           token: ZERO_ADDRESS,
+          id: 0,
           amountInMax: nativeAmountToWrap,
           amountSource: AMOUNT_EXACT,
+          recipient: ZERO_ADDRESS,
         }]
-      }, {
-        inputs: [{
-          mode: TRANSFER_FROM_ROUTER, // transfer token out from this UTR contract
-          eip: 20,
-          token: CONFIGS[this.chainId].wrapToken,
-          id: 0,
-          amountInMax: nativeAmountToWrap,
-          amountSource: AMOUNT_ALL,   // entire WETH balance of this UTR contract
-          recipient: this.account,
-        }],
-        // ... continue to use WETH in SomeRecipient
-        flags: 0,
-        code: ZERO_ADDRESS,
-        data: '0x',
       })
     }
 
-    return { params: [outputs, actions], value: nativeAmountToWrap }
+    return {params: [outputs, actions], value: nativeAmountToWrap}
   }
 
   getIdByAddress(address: string) {
@@ -279,13 +278,30 @@ export class Swap {
 
   async multiSwap(steps: SwapStepType[], gasLimit?: BigNumber, isDeleverage = false) {
     try {
-      const { params, value } = await this.convertStepToActions([...steps])
+      const {params, value} = await this.convertStepToActions([...steps])
       if (isDeleverage) {
         params.unshift(this.getDeleverageStep())
       }
 
       // const weth = new ethers.Contract(this.CURRENT_POOL.TOKEN_R, WtapAbi, this.signer)
-      // await weth.approve(CONFIGS[this.chainId].router, LARGE_VALUE)
+      // await weth.approve('0x1351ad85168aE8d095c8eC6Af0C5333d7A4929d0', LARGE_VALUE)
+      // const a = await weth.allowance(this.account, '0xd84E414f35E6661B25eE98A87428d108e3056661')
+      // const b = await weth.balanceOf(this.account)
+      // const c = weiToNumber(b)
+      // const d = weiToNumber(a)
+
+      // const derivablePool = this.getPoolContract('0x1351ad85168aE8d095c8eC6Af0C5333d7A4929d0', this.signer)
+      //
+      // await derivablePool.exactIn(
+      //   POOL_IDS.R,
+      //   numberToWei(1),
+      //   POOL_IDS.C,
+      //   ZERO_ADDRESS,
+      //   this.account,
+      //   {
+      //     gasLimit: 3_000_000
+      //   }
+      // )
 
       await this.callStaticMultiSwap({ params, value, gasLimit })
       const contract = this.getRouterContract(this.signer)
@@ -316,7 +332,7 @@ export class Swap {
     if (isErc1155Address(address)) {
       return address.split('-')[0]
     }
-    if(address === CONFIGS[this.chainId].nativeToken &&
+    if (address === CONFIGS[this.chainId].nativeToken &&
       this.CURRENT_POOL.TOKEN_R === CONFIGS[this.chainId].wrapToken
     ) {
       return CONFIGS[this.chainId].wrapToken
