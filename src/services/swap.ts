@@ -1,7 +1,7 @@
 import {BigNumber, ethers} from "ethers";
 import {UniV2Pair} from "./uniV2Pair";
 import {PoolErc1155StepType, StepType, SwapStepType} from "../types";
-import {bn, isErc1155Address, numberToWei, weiToNumber} from "../utils/helper";
+import {bn, isErc1155Address, numberToWei, packId, weiToNumber} from "../utils/helper";
 import {LARGE_VALUE, POOL_IDS, ZERO_ADDRESS} from "../utils/constant";
 import {CONFIGS} from "../utils/configs";
 import {CurrentPool} from "./currentPool";
@@ -9,6 +9,7 @@ import UtrAbi from "../abi/UTR.json";
 import LogicsAbi from "../abi/Logic.json";
 import UtrOverride from "../abi/UTROverride.json";
 import PoolAbi from "../abi/Pool.json";
+import HelperAbi from "../abi/Helper.json";
 import Erc20Abi from "../abi/ERC20.json";
 import WtapAbi from "../abi/Wrap.json";
 import {JsonRpcProvider} from "@ethersproject/providers";
@@ -37,11 +38,11 @@ const TRANSFER_FROM_ROUTER = 1
 const TRANSFER_CALL_VALUE = 2
 const IN_TX_PAYMENT = 4
 
-const FROM_ROUTER   = 10;
-const PAYMENT       = 0;
-const TRANSFER      = 1;
-const ALLOWANCE     = 2;
-const CALL_VALUE    = 3;
+const FROM_ROUTER = 10;
+const PAYMENT = 0;
+const TRANSFER = 1;
+const ALLOWANCE = 2;
+const CALL_VALUE = 3;
 
 const mode = (x: string) => ethers.utils.formatBytes32String(x)
 
@@ -178,6 +179,7 @@ export class Swap {
 
   async convertStepToActions(steps: SwapStepType[]): Promise<{ params: any, value: BigNumber }> {
     const poolContract = this.getPoolContract(ZERO_ADDRESS)
+    const stateCalHelper = this.getStateCalHelperContract(ZERO_ADDRESS)
 
     const outputs: { eip: number; token: string; id: string | BigNumber; amountOutMin: string | number | BigNumber; recipient: string | undefined; }[] = []
     // steps.forEach((step) => {
@@ -192,18 +194,23 @@ export class Swap {
     let nativeAmountToWrap = bn(0)
     let withdrawWrapToNative = false
 
+    const metaDatas: any = []
     const promises: any = []
     steps.forEach((step) => {
       if ((
-        step.tokenIn === CONFIGS[this.chainId].nativeToken ||
-        step.tokenOut === CONFIGS[this.chainId].nativeToken
+          step.tokenIn === CONFIGS[this.chainId].nativeToken ||
+          step.tokenOut === CONFIGS[this.chainId].nativeToken
         ) &&
         this.CURRENT_POOL.TOKEN_R !== CONFIGS[this.chainId].wrapToken
       ) {
         throw "This pool do not support swap by native Token"
       }
 
+      const poolIn = this.getAddressByErc1155Address(step.tokenIn)
+      const poolOut = this.getAddressByErc1155Address(step.tokenOut)
+
       let idIn = this.getIdByAddress(step.tokenIn)
+      const idOut = this.getIdByAddress(step.tokenOut)
       if (step.tokenIn === CONFIGS[this.chainId].nativeToken) {
         nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn)
       }
@@ -212,37 +219,61 @@ export class Swap {
         withdrawWrapToNative = true
       }
 
-      const idOut = this.getIdByAddress(step.tokenOut)
-      promises.push(poolContract.populateTransaction.swap(
-        idIn,
-        idOut,
-        CONFIGS[this.chainId].stateCalHelper,
-        this.encodePayload(0, idIn, idOut, step.amountIn, CONFIGS[this.chainId].token),
-        step.tokenIn === CONFIGS[this.chainId].nativeToken ? ZERO_ADDRESS : this.account,
-        this.account
-      ))
+      if (poolIn === poolOut || poolOut === this.CURRENT_POOL.TOKEN_R || poolIn === this.CURRENT_POOL.TOKEN_R) {
+        const poolAddress = isErc1155Address(step.tokenIn) ? poolIn : poolOut
+        metaDatas.push({
+          flags: 0,
+          code: poolAddress,
+          inputs: [{
+            mode: step.tokenIn === CONFIGS[this.chainId].nativeToken ? ALLOWANCE + FROM_ROUTER : PAYMENT,
+            eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
+            token: isErc1155Address(step.tokenIn) ? this.CURRENT_POOL.TOKEN : this.CURRENT_POOL.TOKEN_R,
+            id: isErc1155Address(step.tokenIn) ? packId(idIn.toString(), poolIn) : 0,
+            amountIn: step.amountIn,
+            recipient: poolAddress,
+          }]
+        })
+        promises.push(poolContract.populateTransaction.swap(
+          idIn,
+          idOut,
+          CONFIGS[this.chainId].stateCalHelper,
+          this.encodePayload(0, idIn, idOut, step.amountIn, CONFIGS[this.chainId].token),
+          step.tokenIn === CONFIGS[this.chainId].nativeToken ? ZERO_ADDRESS : this.account,
+          this.account
+        ))
+      } else {
+        metaDatas.push({
+          flags: 0,
+          code: CONFIGS[this.chainId].stateCalHelper,
+          inputs: [{
+            mode: PAYMENT,
+            eip: 1155,
+            token: this.CURRENT_POOL.TOKEN,
+            id: packId(idIn.toString(), poolIn),
+            amountIn: step.amountIn,
+            recipient: poolIn,
+          }]
+        })
+        promises.push(
+          stateCalHelper.populateTransaction.swap({
+            sideIn: idIn,
+            poolIn,
+            sideOut: idOut,
+            poolOut,
+            amountIn: step.amountIn,
+            payer: this.account,
+            recipient: this.account,
+            TOKEN: this.CURRENT_POOL.TOKEN
+          })
+        )
+      }
     })
     const datas: any[] = await Promise.all(promises)
 
     const actions = []
     //@ts-ignore
-    steps.forEach((step, key) => {
-      const poolAddress = isErc1155Address(step.tokenIn)
-        ? this.getAddressByErc1155Address(step.tokenIn)
-        : this.getAddressByErc1155Address(step.tokenOut)
-      actions.push({
-        flags: 0,
-        code: poolAddress,
-        data: datas[key].data,
-        inputs: [{
-          mode: step.tokenIn === CONFIGS[this.chainId].nativeToken ? ALLOWANCE + FROM_ROUTER : PAYMENT,
-          eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
-          token: this.getAddressByErc1155Address(step.tokenIn),
-          id: isErc1155Address(step.tokenIn) ? this.getIdByAddress(step.tokenIn) : 0,
-          amountIn: step.amountIn,
-          recipient: poolAddress,
-        }]
-      })
+    metaDatas.forEach((metaData, key) => {
+      actions.push({...metaData, data: datas[key].data})
     })
 
     if (nativeAmountToWrap.gt(0)) {
@@ -290,7 +321,9 @@ export class Swap {
         params.unshift(this.getDeleverageStep())
       }
 
-      await this.callStaticMultiSwap({ params, value, gasLimit })
+      await this.callStaticMultiSwap({
+        params, value, gasLimit
+      })
       const contract = this.getRouterContract(this.signer)
       const res = await contract.exec(...params,
         {
@@ -332,6 +365,9 @@ export class Swap {
     return new ethers.Contract(CONFIGS[this.chainId].router, UtrAbi, provider)
   }
 
+  getStateCalHelperContract(address: string, provider?: any) {
+    return new ethers.Contract(address, HelperAbi, provider || this.provider)
+  }
   getPoolContract(poolAddress: string, provider?: any) {
     return new ethers.Contract(poolAddress, PoolAbi, provider || this.provider)
   }

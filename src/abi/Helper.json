@@ -1,0 +1,172 @@
+[
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "sideIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "poolIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "sideOut",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "poolOut",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "payer",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "recipient",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "TOKEN",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct Helper.SwapParams",
+        "name": "params",
+        "type": "tuple"
+      }
+    ],
+    "name": "swap",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "amountOut",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "xkA",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "xkB",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct Market",
+        "name": "market",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "R",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "a",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "b",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct State",
+        "name": "state",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "rA",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "rB",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "payload",
+        "type": "bytes"
+      }
+    ],
+    "name": "swapToState",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "R",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "a",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "b",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct State",
+        "name": "state1",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "unpackId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

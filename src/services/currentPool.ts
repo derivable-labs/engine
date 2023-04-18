@@ -30,6 +30,7 @@ export class CurrentPool {
   quoteToken: string
   cToken: string
   TOKEN_R: string
+  TOKEN: string
   dTokens: string[]
   logicAddress?: string
   cTokenPrice: number

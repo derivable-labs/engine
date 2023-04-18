@@ -32,17 +32,17 @@ export const CONFIGS = {
     rpcToGetLogs: 'http://localhost:8545',
     timePerBlock: 3000,
     nativeToken: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
-    token: '0x63568a211803b54892527E0214a4bE8038a0E684',
-    multiCall: '0xDa033Ba5a26ad0DaCa8e9F6240F661629A129D0f',
-    pairsInfo: '0xC98e5978E008f706C8Db1AcB9f4Bc8B885d62D5a',
-    bnA: '0xe83FB30A2624B51D67CC9BE1e0bb07A831Ff25CF',
-    tokensInfo: '0x1e6c1121bbD55CEce2150F6Ce2B016c252cd6Dbc',
-    router: '0x9F6cdf8Ce4f283a1Efecca93D3e9fe847734CA48',
-    wrapToken: '0xD9de0da3adE2a8b2FB27C453c065D46aa01574BA',
-    wrapUsdPair: '0x2B89B4931122EE4Fa474446Fa9B118F2852a8223',
-    poolFactory: "0x2e10024346cDd08E1e9071B16a51d89d46de8003",
-    logic: "0x8f114752F335c474873cC3cB738ebF093Ab85Bf9",
-    stateCalHelper: "0xb5C8f5792EcF6bF6105a2a7ebFa118Fcf6d4636d"
+
+    token: '0xc28A7e46bE1BB74a63aD32784D785A941D1954ab',
+    multiCall: '0xE0b291b76b78b1a73Da8F2Cc2e717267065bF95A',
+    pairsInfo: '0x7094BFd0db1b11Dd677831d4f9eB81bb15348c21',
+    bnA: '0xF258e00021773b7603109887BF2eeb80d5C6f601',
+    tokensInfo: '0xE1550e06C6759b48cD0a6f5851029A30a6Fee735',
+    router: '0x4F1111145AB659CF9BBB45442F54A5D427783DaA',
+    wrapToken: '0xaf9173D7fcd8f18d57Ea7EE2b3DeCF263C25679F',
+    wrapUsdPair: '0xBf4CC059DfF52AeFe7f12516e4CA4Bc691D97474',
+    poolFactory: "0x2B528278eEEf8d30838fCC6297e6f28D4F03b1BD",
+    stateCalHelper: "0x270bf3040041160e309130d6AF61c1a7aBf2497D"
   },
   42161: {
     rpcUrl: 'https://arb1.arbitrum.io/rpc',
