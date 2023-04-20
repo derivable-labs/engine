@@ -5,7 +5,7 @@ import {bn}                                          from "../utils/helper";
 import {POOL_IDS}                                    from "../utils/constant";
 import {CONFIGS}                                     from "../utils/configs";
 import {CurrentPool}                                 from "./currentPool";
-import RouterAbi                                     from "../abi/router.json";
+import RouterAbi                                     from "../abi/Router.json";
 
 type ConfigType = {
   account?: string
