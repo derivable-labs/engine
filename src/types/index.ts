@@ -84,6 +84,7 @@ export type PoolConfig = {
   halfLife: number
   mark: BigNumber
   oracle: string
+  initTime: number
 }
 
 export type PoolGroupType = {

@@ -9,11 +9,11 @@ import UtrAbi from '../abi/UTR.json'
 import WtapAbi from '../abi/Wrap.json'
 
 // utr
-const FROM_ROUTER   = 10;
-const PAYMENT       = 0;
-const TRANSFER      = 1;
-const ALLOWANCE     = 2;
-const CALL_VALUE    = 3;
+const FROM_ROUTER = 10
+const PAYMENT = 0
+const TRANSFER = 1
+const ALLOWANCE = 2
+const CALL_VALUE = 3
 
 type ConfigType = {
   account?: string
@@ -54,13 +54,11 @@ export class CreatePool {
         params.mark,
         params.recipient,
         params.oracle,
-        params.halfLife
+        params.initTime,
+        params.halfLife,
       )
       const poolAddress = await poolFactoryContract.computePoolAddress(
-        newPoolConfigs,
-        {
-          gasLimit: gasLimit || undefined,
-        },
+        newPoolConfigs
       )
       const utr = this.getRouterContract(this.signer)
       const res = await utr.exec(
@@ -114,19 +112,29 @@ export class CreatePool {
     }
   }
 
-  generateConfig(k: number, a: BigNumber, b: BigNumber, mark: BigNumber, recipient: string, oracle: string, halfLife: number) {
+  generateConfig(
+    k: number,
+    a: BigNumber,
+    b: BigNumber,
+    mark: BigNumber,
+    recipient: string,
+    oracle: string,
+    initTime: number,
+    halfLife: number,
+  ) {
     return {
       utr: CONFIGS[this.chainId].router,
       token: CONFIGS[this.chainId].token,
       logic: CONFIGS[this.chainId].logic,
       oracle,
       reserveToken: CONFIGS[this.chainId].wrapToken,
-      recipient: recipient,
+      recipient,
       mark,
       k,
       a,
       b,
-      halfLife
+      initTime,
+      halfLife,
     }
   }
 

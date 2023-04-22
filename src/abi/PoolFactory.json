@@ -34,9 +34,19 @@
             "type": "address"
           },
           {
-            "internalType": "uint224",
+            "internalType": "uint256",
             "name": "mark",
-            "type": "uint224"
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint32",
+            "name": "initTime",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "halfLife",
+            "type": "uint256"
           },
           {
             "internalType": "uint256",
@@ -51,11 +61,6 @@
           {
             "internalType": "uint256",
             "name": "b",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "halfLife",
             "type": "uint256"
           }
         ],
@@ -110,9 +115,19 @@
             "type": "address"
           },
           {
-            "internalType": "uint224",
+            "internalType": "uint256",
             "name": "mark",
-            "type": "uint224"
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint32",
+            "name": "initTime",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "halfLife",
+            "type": "uint256"
           },
           {
             "internalType": "uint256",
@@ -127,11 +142,6 @@
           {
             "internalType": "uint256",
             "name": "b",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "halfLife",
             "type": "uint256"
           }
         ],
@@ -188,9 +198,19 @@
             "type": "address"
           },
           {
-            "internalType": "uint224",
+            "internalType": "uint256",
             "name": "mark",
-            "type": "uint224"
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint32",
+            "name": "initTime",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "halfLife",
+            "type": "uint256"
           },
           {
             "internalType": "uint256",
@@ -205,11 +225,6 @@
           {
             "internalType": "uint256",
             "name": "b",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "halfLife",
             "type": "uint256"
           }
         ],
