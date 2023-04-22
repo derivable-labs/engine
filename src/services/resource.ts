@@ -329,7 +329,7 @@ export class Resource {
     ])
 
     const {tokens: tokensArr, poolsState} = this.parseMultiCallResponse(results, Object.keys(listPools))
-    const tokens = []
+    const tokens: any[] = []
     for (let i = 0; i < tokensArr.length; i++) {
       tokens.push({
         symbol: tokensArr[i][0],
@@ -369,6 +369,8 @@ export class Resource {
         poolGroups[id].quoteToken = pools[i].quoteToken
         poolGroups[id].TOKEN = pools[i].TOKEN
         poolGroups[id].MARK = pools[i].MARK
+        poolGroups[id].INIT_TIME = pools[i].INIT_TIME
+        poolGroups[id].HALF_LIFE = pools[i].HALF_LIFE
         poolGroups[id].ORACLE = pools[i].ORACLE
         poolGroups[id].TOKEN_R = pools[i].TOKEN_R
         poolGroups[id].states = {
@@ -556,7 +558,7 @@ export class Resource {
     return ddlLogs.map((log: any) => {
       try {
         const decodeLog = eventInterface.parseLog(log)
-        let appName = null
+        let appName = ''
         try {
           appName = ethers.utils.parseBytes32String(decodeLog.args.topic1)
         } catch (e) {

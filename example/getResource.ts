@@ -16,7 +16,7 @@ const testLocal = async () => {
   //   bn('0xb469471f80140000')
   // )
 
-    console.log({
+  console.log({
     poolGroups: engine.RESOURCE.poolGroups,
     pools: engine.RESOURCE.pools,
     tokens: engine.RESOURCE.tokens,
