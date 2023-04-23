@@ -20,7 +20,7 @@ const testLocal = async () => {
       amountIn: bn(1233),
       // tokenIn: CONFIGS[1337].nativeToken,
       // tokenIn: Object.values(currentPool.pools)[0].TOKEN_R,
-      tokenIn: Object.values(currentPool.pools)[0].poolAddress + "-" + POOL_IDS.B,
+      tokenIn: Object.values(currentPool.pools)[0].poolAddress + "-" + POOL_IDS.A,
       tokenOut: Object.values(currentPool.pools)[1].poolAddress + "-" + POOL_IDS.A,
       amountOutMin: 0
     }

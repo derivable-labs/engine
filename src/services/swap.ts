@@ -41,8 +41,7 @@ const IN_TX_PAYMENT = 4
 const FROM_ROUTER = 10;
 const PAYMENT = 0;
 const TRANSFER = 1;
-const ALLOWANCE = 2;
-const CALL_VALUE = 3;
+const CALL_VALUE = 2;
 
 const mode = (x: string) => ethers.utils.formatBytes32String(x)
 
@@ -221,29 +220,39 @@ export class Swap {
 
       if (poolIn === poolOut || poolOut === this.CURRENT_POOL.TOKEN_R || poolIn === this.CURRENT_POOL.TOKEN_R) {
         const poolAddress = isErc1155Address(step.tokenIn) ? poolIn : poolOut
-        metaDatas.push({
-          flags: 0,
-          code: poolAddress,
-          inputs: [{
-            mode: step.tokenIn === CONFIGS[this.chainId].nativeToken ? ALLOWANCE + FROM_ROUTER : PAYMENT,
-            eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
-            token: isErc1155Address(step.tokenIn) ? this.CURRENT_POOL.TOKEN : this.CURRENT_POOL.TOKEN_R,
-            id: isErc1155Address(step.tokenIn) ? packId(idIn.toString(), poolIn) : 0,
+        let inputs = [{
+          mode: PAYMENT,
+          eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
+          token: isErc1155Address(step.tokenIn) ? this.CURRENT_POOL.TOKEN : this.CURRENT_POOL.TOKEN_R,
+          id: isErc1155Address(step.tokenIn) ? packId(idIn.toString(), poolIn) : 0,
+          amountIn: step.amountIn,
+          recipient: poolAddress,
+        }]
+        if(step.tokenIn === CONFIGS[this.chainId].nativeToken) {
+          inputs = [{
+            mode: CALL_VALUE,
+            token: ZERO_ADDRESS,
+            eip: 0,
+            id: 0,
             amountIn: step.amountIn,
-            recipient: poolAddress,
+            recipient: ZERO_ADDRESS,
           }]
+        }
+        metaDatas.push({
+          code: CONFIGS[this.chainId].stateCalHelper,
+          inputs
         })
-        promises.push(poolContract.populateTransaction.swap(
-          idIn,
-          idOut,
-          CONFIGS[this.chainId].stateCalHelper,
-          this.encodePayload(0, idIn, idOut, step.amountIn, CONFIGS[this.chainId].token),
-          step.tokenIn === CONFIGS[this.chainId].nativeToken ? ZERO_ADDRESS : this.account,
-          this.account
-        ))
+        promises.push(stateCalHelper.populateTransaction.swap( {
+          sideIn: idIn,
+          poolIn: poolAddress,
+          sideOut: idOut,
+          poolOut: poolAddress,
+          amountIn: step.amountIn,
+          payer: this.account,
+          recipient: this.account
+        }))
       } else {
         metaDatas.push({
-          flags: 0,
           code: CONFIGS[this.chainId].stateCalHelper,
           inputs: [{
             mode: PAYMENT,
@@ -270,31 +279,31 @@ export class Swap {
     })
     const datas: any[] = await Promise.all(promises)
 
-    const actions = []
+    const actions: any[] = []
     //@ts-ignore
     metaDatas.forEach((metaData, key) => {
       actions.push({...metaData, data: datas[key].data})
     })
 
-    if (nativeAmountToWrap.gt(0)) {
-      const poolContract = this.getWrapContract()
-
-      const data = await poolContract.populateTransaction.deposit()
-      actions.unshift({
-        flags: 0,
-        code: CONFIGS[this.chainId].wrapToken,
-        //@ts-ignore
-        data: data.data,
-        inputs: [{
-          mode: CALL_VALUE,
-          eip: 0,
-          token: ZERO_ADDRESS,
-          id: 0,
-          amountIn: nativeAmountToWrap,
-          recipient: ZERO_ADDRESS,
-        }]
-      })
-    }
+    // if (nativeAmountToWrap.gt(0)) {
+    //   const poolContract = this.getWrapContract()
+    //
+    //   const data = await poolContract.populateTransaction.deposit()
+    //   actions.unshift({
+    //     flags: 0,
+    //     code: CONFIGS[this.chainId].wrapToken,
+    //     //@ts-ignore
+    //     data: data.data,
+    //     inputs: [{
+    //       mode: CALL_VALUE,
+    //       eip: 0,
+    //       token: ZERO_ADDRESS,
+    //       id: 0,
+    //       amountIn: nativeAmountToWrap,
+    //       recipient: ZERO_ADDRESS,
+    //     }]
+    //   })
+    // }
 
     return {params: [outputs, actions], value: nativeAmountToWrap}
   }

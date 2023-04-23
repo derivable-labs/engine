@@ -10,7 +10,7 @@ import {TokenType} from "../types";
 import historyProvider from "../historyProvider";
 import PoolAbi from '../abi/Pool.json'
 import {UniV2Pair} from "./uniV2Pair";
-import {FixedPoint, floatToFixed112} from "../utils/number";
+import {FixedPoint, floatToFixed128} from "../utils/number";
 
 const SYNC_EVENT_TOPIC = '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1'
 
@@ -116,16 +116,16 @@ export class Simulate {
     const {mark, k} = this.pool
 
     const xk = (mark.pow(k)).mul(unit).div(price.pow(k)).toNumber() / unit
-    const rV1 = this._r(floatToFixed112(xk), rV, R1)
+    const rV1 = this._r(floatToFixed128(xk), rV, R1)
     const drV = rV1.sub(rV)
     return drV.mul(sV).sub(rV)
   }
 
 
   _r(xk: BigNumber, v: BigNumber, R: BigNumber): BigNumber {
-    let r = v.mul(xk).div(FixedPoint.Q112)
+    let r = v.mul(xk).div(FixedPoint.Q128)
     if (r.lt(R.div(2))) {
-      const denominator = v.mul(xk.div(4)).div(FixedPoint.Q112);
+      const denominator = v.mul(xk.div(4)).div(FixedPoint.Q128);
       const minuend = R.mul(R).div(denominator);
       r = R.sub(minuend);
     }

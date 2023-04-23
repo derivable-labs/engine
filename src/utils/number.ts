@@ -2,7 +2,7 @@ import {BigNumber, ethers} from "ethers";
 import {bn} from "./helper";
 
 export const FixedPoint = {
-  Q112: bn('0x10000000000000000000000000000') // 2**112
+  Q128: bn('0x0100000000000000000000000000000000') // 2**128
 }
 
 const packId = (kind: BigNumber, address: string) => {
@@ -24,10 +24,10 @@ function encodeSqrtX96(reserve1: number, reserve0: number) {
 
 const FLOAT_UNIT = 100000
 
-export const floatToFixed112 = (n: number) => {
-  return bn(n * FLOAT_UNIT).shl(112).div(FLOAT_UNIT)
+export const floatToFixed128 = (n: number) => {
+  return bn(n * FLOAT_UNIT).shl(128).div(FLOAT_UNIT)
 }
 
-export const fixed112ToFloat = (fixed112: BigNumber) => {
-  return bn(fixed112).mul(FLOAT_UNIT).shr(112).toNumber() / FLOAT_UNIT
+export const fixed128ToFloat = (fixed128: BigNumber) => {
+  return bn(fixed128).mul(FLOAT_UNIT).shr(128).toNumber() / FLOAT_UNIT
 }

@@ -20,7 +20,7 @@ import {
   formatMultiCallBignumber,
   getLogicAbi,
   getNormalAddress,
-  numberToWei, parseUq112x112,
+  numberToWei, parseUq128x128,
   weiToNumber
 } from "../utils/helper";
 import {UniV2Pair} from "./uniV2Pair";
@@ -360,7 +360,7 @@ export class Resource {
           spotBase: poolsState[i].spot,
           ...poolsState[i]
         }
-        poolGroups[id].basePrice = parseUq112x112(poolsState[i].spot)
+        poolGroups[id].basePrice = parseUq128x128(poolsState[i].spot)
       }
 
       const rdc = this.getRdc(Object.values(poolGroups[id].pools))
