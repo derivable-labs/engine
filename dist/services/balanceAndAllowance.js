@@ -92,11 +92,12 @@ class BnA {
         }
         const erc1155BalanceInfo = data.erc1155.callsReturnContext[0].returnValues;
         const erc1155ApproveInfo = data.erc1155.callsReturnContext[1].returnValues[0];
+        let index = 0;
         for (let poolAddress in erc1155Tokens) {
-            const approveData = erc1155ApproveInfo;
             for (let i = 0; i < erc1155Tokens[poolAddress].length; i++) {
-                allowances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = approveData ? (0, helper_1.bn)(constant_1.LARGE_VALUE) : (0, helper_1.bn)(0);
-                balances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = (0, helper_1.bn)(erc1155BalanceInfo[i].hex);
+                allowances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = erc1155ApproveInfo ? (0, helper_1.bn)(constant_1.LARGE_VALUE) : (0, helper_1.bn)(0);
+                balances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] = (0, helper_1.bn)(erc1155BalanceInfo[index].hex);
+                index++;
             }
         }
         return {
