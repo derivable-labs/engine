@@ -67,7 +67,8 @@ class BnA {
                 reference: 'erc1155',
                 contractAddress: configs_1.CONFIGS[this.chainId].token,
                 abi: Token_json_1.default,
-                calls: [{
+                calls: [
+                    {
                         reference: 'balanceOfBatch', methodName: 'balanceOfBatch',
                         methodParameters: [accounts, pack]
                     },

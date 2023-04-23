@@ -1,7 +1,7 @@
 import _ from 'lodash'
-import { bn } from './helpers'
 import { BigNumber, ethers } from 'ethers'
 import {parseEther} from "ethers/lib/utils";
+import {bn} from "../utils/helper";
 const { floor, abs } = Math
 
 const BN_0 = bn(0)

@@ -232,6 +232,20 @@ class Resource {
                 tryAggregate: true
             });
             const normalTokens = lodash_1.default.uniq((0, helper_1.getNormalAddress)(listTokens));
+            // const contract = new ethers.Contract('0x96f9f3E323Fa4D9AF56590fB2B99b5208000D6d9')
+            // const contract = new ethers.Contract('0x5a7e263F7344d28Fdb535A0eA4a44f2fe5D45452', PoolOverride.abi, this.getPoolOverridedProvider(Object.keys(listPools)))
+            // const a = await contract.getStates(
+            //   Object.values(listPools)[0].ORACLE,
+            //   Object.values(listPools)[0].MARK,
+            //   Object.values(listPools)[0].TOKEN_R,
+            //   Object.values(listPools)[0].k,
+            //   Object.values(listPools)[0].TOKEN,
+            // )
+            //
+            // const d = Object.values(listPools)[0].MARK
+            // const b = parseUq112x112(Object.values(listPools)[0].MARK)
+            // const c = parseUq112x112(a.spot)
+            // console.log(a, b, c)
             // @ts-ignore
             const context = this.getMultiCallRequest(normalTokens, listPools);
             const [{ results }] = yield Promise.all([
@@ -241,9 +255,6 @@ class Resource {
                 // })
             ]);
             const pairsInfo = {};
-            // const contract = new ethers.Contract('0xDB837256BB6F490B773f1Fc4A02334300400fD70', PoolOverride.abi, this.getPoolOverridedProvider(Object.keys(listPools)))
-            // const a = await contract.getStates('0x800000000000000100000000b8e9111b76b719e5b165cd63a3811c03eb917aff', '0xc28A7e46bE1BB74a63aD32784D785A941D1954ab')
-            // console.log(a)
             const { tokens: tokensArr, poolsState } = this.parseMultiCallResponse(results, Object.keys(listPools));
             const tokens = [];
             for (let i = 0; i < tokensArr.length; i++) {
@@ -266,7 +277,7 @@ class Resource {
                 if (poolGroups[id]) {
                     poolGroups[id].pools[i] = pools[i];
                     const rdc = this.getRdc(Object.values(poolGroups[id].pools));
-                    poolGroups[id].states = Object.assign(Object.assign({}, poolGroups[id].states), rdc);
+                    poolGroups[id].states = Object.assign({}, poolGroups[id].states);
                 }
                 else {
                     poolGroups[id] = { pools: { [i]: pools[i] } };
@@ -275,10 +286,7 @@ class Resource {
                     poolGroups[id].MARK = pools[i].MARK;
                     poolGroups[id].ORACLE = pools[i].ORACLE;
                     poolGroups[id].TOKEN_R = pools[i].TOKEN_R;
-                    poolGroups[id].states = {
-                        twapBase: poolsState[i].twap,
-                        spotBase: poolsState[i].spot
-                    };
+                    poolGroups[id].states = Object.assign({ twapBase: poolsState[i].twap, spotBase: poolsState[i].spot }, poolsState[i]);
                     poolGroups[id].basePrice = (0, helper_1.parseUq112x112)(poolsState[i].spot);
                 }
                 if (poolGroups[id].powers) {
@@ -293,14 +301,16 @@ class Resource {
                 else {
                     poolGroups[id].dTokens = [pools[i].poolAddress + '-' + constant_1.POOL_IDS.A, pools[i].poolAddress + '-' + constant_1.POOL_IDS.B];
                 }
-                // pools[i].basePrice = this.getBasePrice(pairInfo, baseToken)
-                // pools[i].cPrice = bn(poolsState[i].twapLP).mul(LP_PRICE_UNIT).shr(112).toNumber() / LP_PRICE_UNIT
-                // const rentRate = this.getRentRate(rdc, pools[i].rentRate)
-                // pools[i].states = {
-                //   ...poolsState[i],
-                //   ...rdc,
-                //   ...rentRate
-                // }
+                if (poolGroups[id].allTokens) {
+                    poolGroups[id].allTokens.push(pools[i].poolAddress + '-' + constant_1.POOL_IDS.A, pools[i].poolAddress + '-' + constant_1.POOL_IDS.B, pools[i].poolAddress + '-' + constant_1.POOL_IDS.C);
+                }
+                else {
+                    poolGroups[id].allTokens = [
+                        pools[i].poolAddress + '-' + constant_1.POOL_IDS.A,
+                        pools[i].poolAddress + '-' + constant_1.POOL_IDS.B,
+                        pools[i].poolAddress + '-' + constant_1.POOL_IDS.C
+                    ];
+                }
                 const tokenR = tokens.find((t) => t.address === pools[i].TOKEN_R);
                 tokens.push({
                     symbol: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + '^' + k,
@@ -380,7 +390,7 @@ class Resource {
                         reference: i,
                         methodName: 'getStates',
                         // @ts-ignore
-                        methodParameters: [listPools[i].ORACLE, listPools[i].TOKEN]
+                        methodParameters: [listPools[i].ORACLE, listPools[i].MARK, listPools[i].TOKEN_R, listPools[i].k, listPools[i].TOKEN]
                     }]
             });
         }

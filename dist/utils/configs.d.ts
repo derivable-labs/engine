@@ -41,7 +41,7 @@ export declare const CONFIGS: {
         wrapToken: string;
         wrapUsdPair: string;
         poolFactory: string;
-        logic: string;
+        stateCalHelper: string;
     };
     42161: {
         rpcUrl: string;

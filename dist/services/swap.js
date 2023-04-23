@@ -21,6 +21,7 @@ const UTR_json_1 = __importDefault(require("../abi/UTR.json"));
 const Logic_json_1 = __importDefault(require("../abi/Logic.json"));
 const UTROverride_json_1 = __importDefault(require("../abi/UTROverride.json"));
 const Pool_json_1 = __importDefault(require("../abi/Pool.json"));
+const Helper_json_1 = __importDefault(require("../abi/Helper.json"));
 const Wrap_json_1 = __importDefault(require("../abi/Wrap.json"));
 // TODO: don't hardcode these
 const fee10000 = 30;
@@ -33,6 +34,12 @@ const TRANSFER_FROM_SENDER = 0;
 const TRANSFER_FROM_ROUTER = 1;
 const TRANSFER_CALL_VALUE = 2;
 const IN_TX_PAYMENT = 4;
+const FROM_ROUTER = 10;
+const PAYMENT = 0;
+const TRANSFER = 1;
+const ALLOWANCE = 2;
+const CALL_VALUE = 3;
+const mode = (x) => ethers_1.ethers.utils.formatBytes32String(x);
 class Swap {
     constructor(configs) {
         this.account = configs.account;
@@ -152,6 +159,7 @@ class Swap {
     convertStepToActions(steps) {
         return __awaiter(this, void 0, void 0, function* () {
             const poolContract = this.getPoolContract(constant_1.ZERO_ADDRESS);
+            const stateCalHelper = this.getStateCalHelperContract(constant_1.ZERO_ADDRESS);
             const outputs = [];
             // steps.forEach((step) => {
             //   outputs.push({
@@ -163,36 +171,71 @@ class Swap {
             //   })
             // })
             let nativeAmountToWrap = (0, helper_1.bn)(0);
-            const datas = yield Promise.all(steps.map((step) => {
-                if (step.tokenIn === configs_1.CONFIGS[this.chainId].nativeToken &&
+            let withdrawWrapToNative = false;
+            const metaDatas = [];
+            const promises = [];
+            steps.forEach((step) => {
+                if ((step.tokenIn === configs_1.CONFIGS[this.chainId].nativeToken ||
+                    step.tokenOut === configs_1.CONFIGS[this.chainId].nativeToken) &&
                     this.CURRENT_POOL.TOKEN_R !== configs_1.CONFIGS[this.chainId].wrapToken) {
                     throw "This pool do not support swap by native Token";
                 }
+                const poolIn = this.getAddressByErc1155Address(step.tokenIn);
+                const poolOut = this.getAddressByErc1155Address(step.tokenOut);
                 let idIn = this.getIdByAddress(step.tokenIn);
+                const idOut = this.getIdByAddress(step.tokenOut);
                 if (step.tokenIn === configs_1.CONFIGS[this.chainId].nativeToken) {
                     nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn);
                 }
-                return poolContract.populateTransaction.exactIn(idIn, step.amountIn, this.getIdByAddress(step.tokenOut), this.account, this.account);
-            }));
-            const actions = steps.map((step, key) => {
-                const mode = step.tokenIn === configs_1.CONFIGS[this.chainId].nativeToken ? TRANSFER_FROM_ROUTER : TRANSFER_FROM_SENDER;
-                const poolAddress = (0, helper_1.isErc1155Address)(step.tokenIn)
-                    ? this.getAddressByErc1155Address(step.tokenIn)
-                    : this.getAddressByErc1155Address(step.tokenOut);
-                return {
-                    flags: 0,
-                    code: poolAddress,
-                    data: datas[key].data,
-                    inputs: [{
-                            mode: IN_TX_PAYMENT,
-                            recipient: poolAddress,
-                            eip: (0, helper_1.isErc1155Address)(step.tokenIn) ? 1155 : 20,
-                            id: (0, helper_1.isErc1155Address)(step.tokenIn) ? this.getIdByAddress(step.tokenIn) : 0,
-                            token: this.getAddressByErc1155Address(step.tokenIn),
-                            amountInMax: step.amountIn,
-                            amountSource: AMOUNT_EXACT,
-                        }]
-                };
+                if (step.tokenOut === configs_1.CONFIGS[this.chainId].nativeToken) {
+                    withdrawWrapToNative = true;
+                }
+                if (poolIn === poolOut || poolOut === this.CURRENT_POOL.TOKEN_R || poolIn === this.CURRENT_POOL.TOKEN_R) {
+                    const poolAddress = (0, helper_1.isErc1155Address)(step.tokenIn) ? poolIn : poolOut;
+                    metaDatas.push({
+                        flags: 0,
+                        code: poolAddress,
+                        inputs: [{
+                                mode: step.tokenIn === configs_1.CONFIGS[this.chainId].nativeToken ? ALLOWANCE + FROM_ROUTER : PAYMENT,
+                                eip: (0, helper_1.isErc1155Address)(step.tokenIn) ? 1155 : 20,
+                                token: (0, helper_1.isErc1155Address)(step.tokenIn) ? this.CURRENT_POOL.TOKEN : this.CURRENT_POOL.TOKEN_R,
+                                id: (0, helper_1.isErc1155Address)(step.tokenIn) ? (0, helper_1.packId)(idIn.toString(), poolIn) : 0,
+                                amountIn: step.amountIn,
+                                recipient: poolAddress,
+                            }]
+                    });
+                    promises.push(poolContract.populateTransaction.swap(idIn, idOut, configs_1.CONFIGS[this.chainId].stateCalHelper, this.encodePayload(0, idIn, idOut, step.amountIn, configs_1.CONFIGS[this.chainId].token), step.tokenIn === configs_1.CONFIGS[this.chainId].nativeToken ? constant_1.ZERO_ADDRESS : this.account, this.account));
+                }
+                else {
+                    metaDatas.push({
+                        flags: 0,
+                        code: configs_1.CONFIGS[this.chainId].stateCalHelper,
+                        inputs: [{
+                                mode: PAYMENT,
+                                eip: 1155,
+                                token: this.CURRENT_POOL.TOKEN,
+                                id: (0, helper_1.packId)(idIn.toString(), poolIn),
+                                amountIn: step.amountIn,
+                                recipient: poolIn,
+                            }]
+                    });
+                    promises.push(stateCalHelper.populateTransaction.swap({
+                        sideIn: idIn,
+                        poolIn,
+                        sideOut: idOut,
+                        poolOut,
+                        amountIn: step.amountIn,
+                        payer: this.account,
+                        recipient: this.account,
+                        TOKEN: this.CURRENT_POOL.TOKEN
+                    }));
+                }
+            });
+            const datas = yield Promise.all(promises);
+            const actions = [];
+            //@ts-ignore
+            metaDatas.forEach((metaData, key) => {
+                actions.push(Object.assign(Object.assign({}, metaData), { data: datas[key].data }));
             });
             if (nativeAmountToWrap.gt(0)) {
                 const poolContract = this.getWrapContract();
@@ -200,30 +243,16 @@ class Swap {
                 actions.unshift({
                     flags: 0,
                     code: configs_1.CONFIGS[this.chainId].wrapToken,
+                    //@ts-ignore
                     data: data.data,
                     inputs: [{
-                            mode: TRANSFER_CALL_VALUE,
-                            recipient: configs_1.CONFIGS[this.chainId].wrapToken,
+                            mode: CALL_VALUE,
                             eip: 0,
-                            id: 0,
                             token: constant_1.ZERO_ADDRESS,
-                            amountInMax: nativeAmountToWrap,
-                            amountSource: AMOUNT_EXACT,
-                        }]
-                }, {
-                    inputs: [{
-                            mode: TRANSFER_FROM_ROUTER,
-                            eip: 20,
-                            token: configs_1.CONFIGS[this.chainId].wrapToken,
                             id: 0,
-                            amountInMax: nativeAmountToWrap,
-                            amountSource: AMOUNT_ALL,
-                            recipient: this.account,
-                        }],
-                    // ... continue to use WETH in SomeRecipient
-                    flags: 0,
-                    code: constant_1.ZERO_ADDRESS,
-                    data: '0x',
+                            amountIn: nativeAmountToWrap,
+                            recipient: constant_1.ZERO_ADDRESS,
+                        }]
                 });
             }
             return { params: [outputs, actions], value: nativeAmountToWrap };
@@ -250,9 +279,9 @@ class Swap {
                 if (isDeleverage) {
                     params.unshift(this.getDeleverageStep());
                 }
-                // const weth = new ethers.Contract(this.CURRENT_POOL.TOKEN_R, WtapAbi, this.signer)
-                // await weth.approve(CONFIGS[this.chainId].router, LARGE_VALUE)
-                yield this.callStaticMultiSwap({ params, value, gasLimit });
+                yield this.callStaticMultiSwap({
+                    params, value, gasLimit
+                });
                 const contract = this.getRouterContract(this.signer);
                 const res = yield contract.exec(...params, {
                     value,
@@ -291,6 +320,9 @@ class Swap {
     getRouterContract(provider) {
         return new ethers_1.ethers.Contract(configs_1.CONFIGS[this.chainId].router, UTR_json_1.default, provider);
     }
+    getStateCalHelperContract(address, provider) {
+        return new ethers_1.ethers.Contract(address, Helper_json_1.default, provider || this.provider);
+    }
     getPoolContract(poolAddress, provider) {
         return new ethers_1.ethers.Contract(poolAddress, Pool_json_1.default, provider || this.provider);
     }
@@ -299,6 +331,10 @@ class Swap {
     }
     getWrapContract(provider) {
         return new ethers_1.ethers.Contract(configs_1.CONFIGS[this.chainId].wrapToken, Wrap_json_1.default, provider || this.provider);
+    }
+    encodePayload(swapType, sideIn, sideOut, amount, token1155) {
+        const abiCoder = new ethers_1.ethers.utils.AbiCoder();
+        return abiCoder.encode(["uint", "uint", "uint", "uint", "address"], [swapType, sideIn, sideOut, amount, token1155]);
     }
 }
 exports.Swap = Swap;

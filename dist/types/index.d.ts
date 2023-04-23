@@ -102,7 +102,7 @@ export declare type PoolGroupType = {
 export declare type PoolType = {
     UTR: string;
     TOKEN: string;
-    MARK: string;
+    MARK: BigNumber;
     ORACLE: string;
     TOKEN_R: string;
     pool: string;
