@@ -348,11 +348,6 @@ export class Resource {
       const id = [UTR, TOKEN, MARK, ORACLE, TOKEN_R].join('-')
       if (poolGroups[id]) {
         poolGroups[id].pools[i] = pools[i]
-        const rdc = this.getRdc(Object.values(poolGroups[id].pools))
-        poolGroups[id].states = {
-          ...poolGroups[id].states,
-          // ...rdc
-        }
       } else {
         poolGroups[id] = {pools: {[i]: pools[i]}}
         poolGroups[id].UTR = pools[i].UTR
@@ -366,6 +361,12 @@ export class Resource {
           ...poolsState[i]
         }
         poolGroups[id].basePrice = parseUq112x112(poolsState[i].spot)
+      }
+
+      const rdc = this.getRdc(Object.values(poolGroups[id].pools))
+      poolGroups[id].states = {
+        ...poolGroups[id].states,
+        ...rdc
       }
 
       if (poolGroups[id].powers) {

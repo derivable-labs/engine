@@ -276,8 +276,6 @@ class Resource {
                 const id = [UTR, TOKEN, MARK, ORACLE, TOKEN_R].join('-');
                 if (poolGroups[id]) {
                     poolGroups[id].pools[i] = pools[i];
-                    const rdc = this.getRdc(Object.values(poolGroups[id].pools));
-                    poolGroups[id].states = Object.assign({}, poolGroups[id].states);
                 }
                 else {
                     poolGroups[id] = { pools: { [i]: pools[i] } };
@@ -289,6 +287,8 @@ class Resource {
                     poolGroups[id].states = Object.assign({ twapBase: poolsState[i].twap, spotBase: poolsState[i].spot }, poolsState[i]);
                     poolGroups[id].basePrice = (0, helper_1.parseUq112x112)(poolsState[i].spot);
                 }
+                const rdc = this.getRdc(Object.values(poolGroups[id].pools));
+                poolGroups[id].states = Object.assign(Object.assign({}, poolGroups[id].states), rdc);
                 if (poolGroups[id].powers) {
                     poolGroups[id].powers.push(pools[i].powers[0], pools[i].powers[1]);
                 }
