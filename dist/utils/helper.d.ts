@@ -21,4 +21,4 @@ export declare const div: (a: any, b: any) => string;
 export declare const add: (a: any, b: any) => string;
 export declare const detectDecimalFromPrice: (price: number | string) => number;
 export declare const packId: (kind: string, address: string) => BigNumber;
-export declare const parseUq112x112: (value: BigNumber, unit?: number) => number;
+export declare const parseUq128x128: (value: BigNumber, unit?: number) => number;

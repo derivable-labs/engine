@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fixed112ToFloat = exports.floatToFixed112 = exports.FixedPoint = void 0;
+exports.fixed128ToFloat = exports.floatToFixed128 = exports.FixedPoint = void 0;
 const ethers_1 = require("ethers");
 const helper_1 = require("./helper");
 exports.FixedPoint = {
-    Q112: (0, helper_1.bn)('0x10000000000000000000000000000') // 2**112
+    Q128: (0, helper_1.bn)('0x0100000000000000000000000000000000') // 2**128
 };
 const packId = (kind, address) => {
     const k = (0, helper_1.bn)(kind);
@@ -21,12 +21,12 @@ function encodeSqrtX96(reserve1, reserve0) {
         .div(Math.pow(10, 12));
 }
 const FLOAT_UNIT = 100000;
-const floatToFixed112 = (n) => {
-    return (0, helper_1.bn)(n * FLOAT_UNIT).shl(112).div(FLOAT_UNIT);
+const floatToFixed128 = (n) => {
+    return (0, helper_1.bn)(n * FLOAT_UNIT).shl(128).div(FLOAT_UNIT);
 };
-exports.floatToFixed112 = floatToFixed112;
-const fixed112ToFloat = (fixed112) => {
-    return (0, helper_1.bn)(fixed112).mul(FLOAT_UNIT).shr(112).toNumber() / FLOAT_UNIT;
+exports.floatToFixed128 = floatToFixed128;
+const fixed128ToFloat = (fixed128) => {
+    return (0, helper_1.bn)(fixed128).mul(FLOAT_UNIT).shr(128).toNumber() / FLOAT_UNIT;
 };
-exports.fixed112ToFloat = fixed112ToFloat;
+exports.fixed128ToFloat = fixed128ToFloat;
 //# sourceMappingURL=number.js.map

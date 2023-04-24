@@ -78,14 +78,14 @@ class Simulate {
     dsv({ price, R1, rV, sV }) {
         const { mark, k } = this.pool;
         const xk = (mark.pow(k)).mul(unit).div(price.pow(k)).toNumber() / unit;
-        const rV1 = this._r((0, number_1.floatToFixed112)(xk), rV, R1);
+        const rV1 = this._r((0, number_1.floatToFixed128)(xk), rV, R1);
         const drV = rV1.sub(rV);
         return drV.mul(sV).sub(rV);
     }
     _r(xk, v, R) {
-        let r = v.mul(xk).div(number_1.FixedPoint.Q112);
+        let r = v.mul(xk).div(number_1.FixedPoint.Q128);
         if (r.lt(R.div(2))) {
-            const denominator = v.mul(xk.div(4)).div(number_1.FixedPoint.Q112);
+            const denominator = v.mul(xk.div(4)).div(number_1.FixedPoint.Q128);
             const minuend = R.mul(R).div(denominator);
             r = R.sub(minuend);
         }

@@ -37,8 +37,7 @@ const IN_TX_PAYMENT = 4;
 const FROM_ROUTER = 10;
 const PAYMENT = 0;
 const TRANSFER = 1;
-const ALLOWANCE = 2;
-const CALL_VALUE = 3;
+const CALL_VALUE = 2;
 const mode = (x) => ethers_1.ethers.utils.formatBytes32String(x);
 class Swap {
     constructor(configs) {
@@ -158,18 +157,17 @@ class Swap {
     }
     convertStepToActions(steps) {
         return __awaiter(this, void 0, void 0, function* () {
-            const poolContract = this.getPoolContract(constant_1.ZERO_ADDRESS);
             const stateCalHelper = this.getStateCalHelperContract(constant_1.ZERO_ADDRESS);
             const outputs = [];
-            // steps.forEach((step) => {
-            //   outputs.push({
-            //     eip: isErc1155Address(step.tokenOut) ? 1155 : 20,
-            //     token: this.getAddressByErc1155Address(step.tokenOut),
-            //     id: isErc1155Address(step.tokenOut) ? this.getIdByAddress(step.tokenOut) : bn(0),
-            //     amountOutMin: step.amountOutMin,
-            //     recipient: this.account,
-            //   })
-            // })
+            steps.forEach((step) => {
+                outputs.push({
+                    recipient: this.account,
+                    eip: (0, helper_1.isErc1155Address)(step.tokenOut) ? 1155 : 20,
+                    token: this.CURRENT_POOL.TOKEN,
+                    id: (0, helper_1.isErc1155Address)(step.tokenOut) ? (0, helper_1.packId)(this.getIdByAddress(step.tokenOut).toString(), this.getAddressByErc1155Address(step.tokenOut)) : (0, helper_1.bn)(0),
+                    amountOutMin: step.amountOutMin,
+                });
+            });
             let nativeAmountToWrap = (0, helper_1.bn)(0);
             let withdrawWrapToNative = false;
             const metaDatas = [];
@@ -192,23 +190,40 @@ class Swap {
                 }
                 if (poolIn === poolOut || poolOut === this.CURRENT_POOL.TOKEN_R || poolIn === this.CURRENT_POOL.TOKEN_R) {
                     const poolAddress = (0, helper_1.isErc1155Address)(step.tokenIn) ? poolIn : poolOut;
-                    metaDatas.push({
-                        flags: 0,
-                        code: poolAddress,
-                        inputs: [{
-                                mode: step.tokenIn === configs_1.CONFIGS[this.chainId].nativeToken ? ALLOWANCE + FROM_ROUTER : PAYMENT,
-                                eip: (0, helper_1.isErc1155Address)(step.tokenIn) ? 1155 : 20,
-                                token: (0, helper_1.isErc1155Address)(step.tokenIn) ? this.CURRENT_POOL.TOKEN : this.CURRENT_POOL.TOKEN_R,
-                                id: (0, helper_1.isErc1155Address)(step.tokenIn) ? (0, helper_1.packId)(idIn.toString(), poolIn) : 0,
+                    let inputs = [{
+                            mode: PAYMENT,
+                            eip: (0, helper_1.isErc1155Address)(step.tokenIn) ? 1155 : 20,
+                            token: (0, helper_1.isErc1155Address)(step.tokenIn) ? this.CURRENT_POOL.TOKEN : this.CURRENT_POOL.TOKEN_R,
+                            id: (0, helper_1.isErc1155Address)(step.tokenIn) ? (0, helper_1.packId)(idIn.toString(), poolIn) : 0,
+                            amountIn: step.amountIn,
+                            recipient: poolAddress,
+                        }];
+                    if (step.tokenIn === configs_1.CONFIGS[this.chainId].nativeToken) {
+                        inputs = [{
+                                mode: CALL_VALUE,
+                                token: constant_1.ZERO_ADDRESS,
+                                eip: 0,
+                                id: 0,
                                 amountIn: step.amountIn,
-                                recipient: poolAddress,
-                            }]
+                                recipient: constant_1.ZERO_ADDRESS,
+                            }];
+                    }
+                    metaDatas.push({
+                        code: configs_1.CONFIGS[this.chainId].stateCalHelper,
+                        inputs
                     });
-                    promises.push(poolContract.populateTransaction.swap(idIn, idOut, configs_1.CONFIGS[this.chainId].stateCalHelper, this.encodePayload(0, idIn, idOut, step.amountIn, configs_1.CONFIGS[this.chainId].token), step.tokenIn === configs_1.CONFIGS[this.chainId].nativeToken ? constant_1.ZERO_ADDRESS : this.account, this.account));
+                    promises.push(stateCalHelper.populateTransaction.swap({
+                        sideIn: idIn,
+                        poolIn: poolAddress,
+                        sideOut: idOut,
+                        poolOut: poolAddress,
+                        amountIn: step.amountIn,
+                        payer: this.account,
+                        recipient: this.account
+                    }));
                 }
                 else {
                     metaDatas.push({
-                        flags: 0,
                         code: configs_1.CONFIGS[this.chainId].stateCalHelper,
                         inputs: [{
                                 mode: PAYMENT,
@@ -237,24 +252,25 @@ class Swap {
             metaDatas.forEach((metaData, key) => {
                 actions.push(Object.assign(Object.assign({}, metaData), { data: datas[key].data }));
             });
-            if (nativeAmountToWrap.gt(0)) {
-                const poolContract = this.getWrapContract();
-                const data = yield poolContract.populateTransaction.deposit();
-                actions.unshift({
-                    flags: 0,
-                    code: configs_1.CONFIGS[this.chainId].wrapToken,
-                    //@ts-ignore
-                    data: data.data,
-                    inputs: [{
-                            mode: CALL_VALUE,
-                            eip: 0,
-                            token: constant_1.ZERO_ADDRESS,
-                            id: 0,
-                            amountIn: nativeAmountToWrap,
-                            recipient: constant_1.ZERO_ADDRESS,
-                        }]
-                });
-            }
+            // if (nativeAmountToWrap.gt(0)) {
+            //   const poolContract = this.getWrapContract()
+            //
+            //   const data = await poolContract.populateTransaction.deposit()
+            //   actions.unshift({
+            //     flags: 0,
+            //     code: CONFIGS[this.chainId].wrapToken,
+            //     //@ts-ignore
+            //     data: data.data,
+            //     inputs: [{
+            //       mode: CALL_VALUE,
+            //       eip: 0,
+            //       token: ZERO_ADDRESS,
+            //       id: 0,
+            //       amountIn: nativeAmountToWrap,
+            //       recipient: ZERO_ADDRESS,
+            //     }]
+            //   })
+            // }
             return { params: [outputs, actions], value: nativeAmountToWrap };
         });
     }

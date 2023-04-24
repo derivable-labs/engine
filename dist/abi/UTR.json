@@ -106,11 +106,6 @@
                         "type": "tuple[]"
                     },
                     {
-                        "internalType": "uint256",
-                        "name": "flags",
-                        "type": "uint256"
-                    },
-                    {
                         "internalType": "address",
                         "name": "code",
                         "type": "address"

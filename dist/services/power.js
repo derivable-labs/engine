@@ -193,10 +193,10 @@ class PowerState {
         });
     }
     getBasePrice() {
-        return this.states.twapBase.mul(this.unit).shr(112).toNumber() / this.unit;
+        return this.states.twapBase.mul(this.unit).shr(128).toNumber() / this.unit;
     }
     getCPrice() {
-        return this.states.twapLP.mul(this.unit).shr(112).toNumber() / this.unit;
+        return this.states.twapLP.mul(this.unit).shr(128).toNumber() / this.unit;
     }
     getSwapSteps(oldBalances, newExposure, changeAmount, changeToken) {
         var _a, _b, _c, _d;

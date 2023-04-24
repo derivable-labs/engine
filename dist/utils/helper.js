@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseUq112x112 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.getLogicAbi = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
+exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.getLogicAbi = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
 const ethers_1 = require("ethers");
 const Logic_json_1 = __importDefault(require("../abi/56/Logic.json"));
 const Logic_json_2 = __importDefault(require("../abi/97/Logic.json"));
@@ -151,8 +151,8 @@ const packId = (kind, address) => {
     return k.shl(160).add(address);
 };
 exports.packId = packId;
-const parseUq112x112 = (value, unit = 1000) => {
-    return value.mul(unit).shr(112).toNumber() / unit;
+const parseUq128x128 = (value, unit = 1000) => {
+    return value.mul(unit).shr(128).toNumber() / unit;
 };
-exports.parseUq112x112 = parseUq112x112;
+exports.parseUq128x128 = parseUq128x128;
 //# sourceMappingURL=helper.js.map
