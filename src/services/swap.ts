@@ -177,19 +177,18 @@ export class Swap {
   }
 
   async convertStepToActions(steps: SwapStepType[]): Promise<{ params: any, value: BigNumber }> {
-    const poolContract = this.getPoolContract(ZERO_ADDRESS)
     const stateCalHelper = this.getStateCalHelperContract(ZERO_ADDRESS)
 
     const outputs: { eip: number; token: string; id: string | BigNumber; amountOutMin: string | number | BigNumber; recipient: string | undefined; }[] = []
-    // steps.forEach((step) => {
-    //   outputs.push({
-    //     eip: isErc1155Address(step.tokenOut) ? 1155 : 20,
-    //     token: this.getAddressByErc1155Address(step.tokenOut),
-    //     id: isErc1155Address(step.tokenOut) ? this.getIdByAddress(step.tokenOut) : bn(0),
-    //     amountOutMin: step.amountOutMin,
-    //     recipient: this.account,
-    //   })
-    // })
+    steps.forEach((step) => {
+      outputs.push({
+        recipient: this.account,
+        eip: isErc1155Address(step.tokenOut) ? 1155 : 20,
+        token: this.CURRENT_POOL.TOKEN,
+        id: isErc1155Address(step.tokenOut) ? packId(this.getIdByAddress(step.tokenOut).toString(), this.getAddressByErc1155Address(step.tokenOut)) : bn(0),
+        amountOutMin: step.amountOutMin,
+      })
+    })
     let nativeAmountToWrap = bn(0)
     let withdrawWrapToNative = false
 
