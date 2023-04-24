@@ -1,19 +1,10 @@
 import { BigNumber, ethers } from 'ethers'
+import { bn } from '../utils/helper'
 import { UniV2Pair } from './uniV2Pair'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { PoolConfig } from '../types'
 import { CONFIGS } from '../utils/configs'
-import { ZERO_ADDRESS } from '../utils/constant'
-import PoolFactoryAbi from '../abi/PoolFactory.json'
-import UtrAbi from '../abi/UTR.json'
-import WtapAbi from '../abi/Wrap.json'
-
-// utr
-const FROM_ROUTER = 10
-const PAYMENT = 0
-const TRANSFER = 1
-const ALLOWANCE = 2
-const CALL_VALUE = 3
+import HelperAbi from '../abi/Helper.json'
 
 type ConfigType = {
   account?: string
@@ -43,10 +34,17 @@ export class CreatePool {
     this.signer = configs.signer
   }
 
+  async callStaticCreatePool({ params, value, gasLimit }: any) {
+    const helper = this.getStateCalHelperContract(this.signer)
+    return await helper.callStatic.createPool(
+      params,
+      CONFIGS[this.chainId].poolFactory,
+      { value: value || bn(0), gasLimit: gasLimit || undefined },
+    )
+  }
+
   async createPool(params: PoolConfig, gasLimit?: BigNumber) {
     try {
-      const poolFactoryContract = this.getPoolFactoryContract(this.signer)
-      const wrapToken = this.getWrapTokenContract(this.signer)
       const newPoolConfigs = this.generateConfig(
         params.k,
         params.a,
@@ -57,48 +55,15 @@ export class CreatePool {
         params.initTime,
         params.halfLife,
       )
-      const poolAddress = await poolFactoryContract.computePoolAddress(
-        newPoolConfigs
-      )
-      const utr = this.getRouterContract(this.signer)
-      const res = await utr.exec(
-        [],
-        [
-          {
-            inputs: [
-              {
-                mode: CALL_VALUE,
-                eip: 0,
-                token: ZERO_ADDRESS,
-                id: 0,
-                amountIn: params.amountInit,
-                recipient: ZERO_ADDRESS,
-              },
-            ],
-            flags: 0,
-            code: CONFIGS[this.chainId].wrapToken,
-            data: (await wrapToken.populateTransaction.deposit()).data,
-          },
-          {
-            inputs: [
-              {
-                mode: TRANSFER + FROM_ROUTER,
-                eip: 20,
-                token: CONFIGS[this.chainId].wrapToken,
-                id: 0,
-                amountIn: 0,
-                recipient: poolAddress,
-              },
-            ],
-            flags: 0,
-            code: CONFIGS[this.chainId].poolFactory,
-            data: (
-              await poolFactoryContract.populateTransaction.createPool(
-                newPoolConfigs,
-              )
-            ).data,
-          },
-        ],
+      await this.callStaticCreatePool({
+        params: newPoolConfigs,
+        value: params.amountInit,
+        gasLimit
+      })
+      const helper = this.getStateCalHelperContract(this.signer)
+      const res = await helper.createPool(
+        newPoolConfigs,
+        CONFIGS[this.chainId].poolFactory,
         {
           value: params.amountInit,
           gasLimit: gasLimit || undefined,
@@ -138,21 +103,11 @@ export class CreatePool {
     }
   }
 
-  getRouterContract(provider: any) {
-    return new ethers.Contract(CONFIGS[this.chainId].router, UtrAbi, provider)
-  }
-  getWrapTokenContract(provider: any) {
+  getStateCalHelperContract(provider?: any) {
     return new ethers.Contract(
-      CONFIGS[this.chainId].wrapToken,
-      WtapAbi,
-      provider,
-    )
-  }
-  getPoolFactoryContract(provider: any) {
-    return new ethers.Contract(
-      CONFIGS[this.chainId].poolFactory,
-      PoolFactoryAbi,
-      provider,
+      CONFIGS[this.chainId].stateCalHelper,
+      HelperAbi,
+      provider || this.provider,
     )
   }
 }
