@@ -8,7 +8,7 @@ const testLocal = async () => {
   const engine = new Engine(getTestConfigs(1337))
   await engine.RESOURCE.fetchResourceData('0xbC52C688c34A480c6785A38715c693Bb22863DE1')
 
-  const test = bn(1000).shl(112)
+  const test = bn(1000).shl(128)
 
   // const rA = _r(
   //   bn('0x02ab'),
@@ -25,9 +25,9 @@ const testLocal = async () => {
 }
 
 const _r = (xk: BigNumber, v: BigNumber, R: BigNumber): BigNumber => {
-  let r = v.mul(xk).div(FixedPoint.Q112)
+  let r = v.mul(xk).div(FixedPoint.Q128)
   if (r.lt(R.div(2))) {
-    const denominator = v.mul(xk.div(4)).div(FixedPoint.Q112);
+    const denominator = v.mul(xk.div(4)).div(FixedPoint.Q128);
     const minuend = R.mul(R).div(denominator);
     r = R.sub(minuend);
   }

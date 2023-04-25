@@ -10,8 +10,8 @@ const testLocal = async () => {
 
   const powers = [3, -3, 9, -9];
   const priceToleranceRatio = bn(0);
-  const rentRate = bn(10).shl(112).div(100).div(SECONDS_PER_YEAR);
-  const deleverageRate = bn(95).shl(112).div(100)
+  const rentRate = bn(10).shl(128).div(100).div(SECONDS_PER_YEAR);
+  const deleverageRate = bn(95).shl(128).div(100)
   const params = {
     priceToleranceRatio,
     rentRate,

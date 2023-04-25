@@ -314,7 +314,7 @@ export class Swap {
         address === CONFIGS[this.chainId].nativeToken &&
         this.CURRENT_POOL.TOKEN_R === CONFIGS[this.chainId].wrapToken
       ) {
-        return bn(POOL_IDS.R)
+        return bn(POOL_IDS.native)
       }
       return bn(address.split('-')[1])
     } catch (e) {
