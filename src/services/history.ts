@@ -5,6 +5,7 @@ import _ from "lodash";
 import {PowerState} from 'powerLib/dist/powerLib'
 import {LogType, StatesType} from "../types";
 import {CurrentPool} from "./currentPool";
+import {EventDataAbis, NATIVE_ADDRESS, POOL_IDS} from "../utils/constant";
 
 type ConfigType = {
   account?: string
@@ -21,11 +22,11 @@ export class History {
   }
 
   formatSwapHistory({
-    logs,
-    poolAddress,
-    states,
-    powers
-  }: {
+                      logs,
+                      poolAddress,
+                      states,
+                      powers
+                    }: {
     logs: LogType[],
     poolAddress: string,
     states: StatesType
@@ -36,82 +37,40 @@ export class History {
         return []
       }
 
-      const logGrouped: any = Object.values(_.groupBy(logs, (log) => log.transactionHash))
-                                    .filter((order) => {
-                                      return order.find((log) => ['TransferSingle', 'TransferBatch'].includes(log.args.name))
-                                    })
-      const orders = logGrouped.slice().sort((a: { blockNumber: number; }[], b: { blockNumber: number; }[]) => a[0].blockNumber - b[0].blockNumber)
-      // const swapLogs = logs.slice().sort((a: { timeStamp: number; }, b: { timeStamp: number; }) => a.timeStamp - b.timeStamp)
-
-      const p = new PowerState({ powers: [...powers] })
-      p.loadStates(states)
-
-      //@ts-ignore
-      const result = []
-      const balances: { [key: number]: BigNumber } = {}
-
-      orders.forEach((txs: LogType[]) => {
-        const cAmount = bn(0)
-        const cp = bn(0)
-        const oldBalances = _.cloneDeep(balances)
-        const oldLeverage = this.calculateLeverage(p, oldBalances, powers)
-        //
-        for (const tx of txs) {
-          if (tx.args.name === 'Transfer') {
-            const encodeData = ethers.utils.defaultAbiCoder.encode(
-              ["address", "address", "uint256"], tx.args.args
-            )
-            const formatedData = ethers.utils.defaultAbiCoder.decode(
-              ["address from", "address to", "uint256 value"],
-              encodeData
-            )
-            const id = this.CURRENT_POOL.getIdByAddress(tx.address)?.toNumber()
-            if (!id) continue
-            if (formatedData.from === this.account) {
-              balances[id] = balances[id] ? balances[id].sub(formatedData.value) : bn(0).sub(formatedData.value)
-            } else if (formatedData.to === this.account) {
-              balances[id] = balances[id] ? balances[id].add(formatedData.value) : bn(0).add(formatedData.value)
-            }
-            continue
-          }
-
-          if (tx.args.name === 'TransferSingle') {
-            const encodeData = ethers.utils.defaultAbiCoder.encode(
-              ["address", "address", "address", "uint256", "uint256"], tx.args.args
-            )
-            const formatedData = ethers.utils.defaultAbiCoder.decode(
-              ["address operator", "address from", "address to", "uint256 id", "uint256 value"],
-              encodeData
-            )
-
-            const id = formatedData.id.toNumber()
-
-            if (formatedData.from === this.account) {
-              balances[id] = balances[id] ? balances[id].sub(formatedData.value) : bn(0).sub(formatedData.value)
-            }
-            if (formatedData.to === this.account) {
-              balances[id] = balances[id] ? balances[id].add(formatedData.value) : bn(0).add(formatedData.value)
-            }
-          }
+      const swapLogs = logs.map((log) => {
+        const formatedData = {
+          sideIn: bn(log.args.sideIn.hex),
+          sideOut: bn(log.args.sideOut.hex),
+          amountIn: bn(log.args.amountIn.hex),
+          amountOut: bn(log.args.amountOut.hex),
+          payer: log.args.payer,
+          recipient: log.args.recipient
         }
 
-        const newLeverage = this.calculateLeverage(p, balances, powers)
+        const poolIn = log.topics[2].slice(0, 42)
+        const poolOut = log.topics[3].slice(0, 42)
 
-        result.push({
-          transactionHash: txs[0].transactionHash,
-          timeStamp: txs[0].timeStamp,
-          blockNumber: txs[0].blockNumber,
-          cp,
-          oldBalances,
-          newBalances: _.cloneDeep(balances),
-          cAmount,
-          newLeverage,
-          oldLeverage
-        })
+        const tokenIn = formatedData.sideIn.eq(POOL_IDS.native)
+          ? NATIVE_ADDRESS
+          : poolIn + '-' + formatedData.sideIn.toString()
+
+        const tokenOut = formatedData.sideOut.eq(POOL_IDS.native)
+          ? NATIVE_ADDRESS
+          : poolIn + '-' + formatedData.sideOut.toString()
+
+        return {
+          transactionHash: log.transactionHash,
+          timeStamp: log.timeStamp,
+          poolIn,
+          poolOut,
+          tokenIn,
+          tokenOut,
+          ...formatedData
+        }
       })
 
       //@ts-ignore
-      return result.sort((a, b) => (b.blockNumber - a.blockNumber))
+      return swapLogs.sort((a, b) => (b.blockNumber - a.blockNumber))
     } catch (e) {
       throw e
     }

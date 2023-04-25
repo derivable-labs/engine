@@ -195,17 +195,18 @@ export class Resource {
       const ddlLogs = logs.filter((log: any) => {
         return log.address && [topics.LogicCreated, topics.PoolCreated, topics.Derivable].includes(log.topics[0])
       })
-      const swapLogs = logs.filter((log: any) => {
-        return log.address && [topics.Transfer, topics.TransferSingle, topics.TransferBatch, topics.Deposit].includes(log.topics[0])
-      })
+
       this.cacheDdlLog({
         ddlLogs,
-        swapLogs,
+        swapLogs: [],
         headBlock,
         account
       })
+      const parsedLogs = this.parseDdlLogs(ddlLogs);
+      const swapParsedLogs = parsedLogs.filter((l: any) => l.name === 'Swap')
+      const ddlParsedLogs = parsedLogs.filter((l: any) => l.name !== 'Swap')
 
-      return [this.parseDdlLogs(ddlLogs), []]
+      return [ddlParsedLogs, swapParsedLogs]
     }).then(async ([ddlLogs, swapLogs]: any) => {
       const result: ResourceData = {pools: {}, tokens: [], swapLogs: [], poolGroups: {}}
       if (swapLogs && swapLogs.length > 0) {
@@ -322,8 +323,6 @@ export class Resource {
       // })
     ])
     const pairsInfo = {}
-
-
 
     const {tokens: tokensArr, poolsState} = this.parseMultiCallResponse(results, Object.keys(listPools))
     const tokens = []

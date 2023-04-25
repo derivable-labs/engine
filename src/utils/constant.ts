@@ -1,6 +1,7 @@
 export const LARGE_VALUE =
   '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+export const NATIVE_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 export const fee10000 = 30
 export const MINI_SECOND_PER_DAY = 86400000
 export const LP_PRICE_UNIT = 10000
@@ -44,5 +45,13 @@ export const EventDataAbis = {
     'address TOKEN_R',
     'uint224 MARK',
     'uint256 k'
+  ],
+  Swap: [
+    'uint sideIn',
+    'uint sideOut',
+    'uint amountIn',
+    'uint amountOut',
+    'address payer',
+    'address recipient'
   ]
 }
