@@ -394,26 +394,33 @@ export class Resource {
       const tokenR: any = tokens.find((t) => t.address === pools[i].TOKEN_R)
 
       tokens.push({
-        symbol: tokenR?.symbol + '^' + k,
-        name: tokenR?.symbol + '^' + k,
+        symbol: tokenR?.symbol + '^' + (1 + k / 2),
+        name: tokenR?.symbol + '^' + (1 + k / 2),
         decimal: 18,
         totalSupply: 0,
         address: pools[i].poolAddress + '-' + POOL_IDS.A
       })
       tokens.push({
-        symbol: tokenR?.symbol + '^-' + k,
-        name: tokenR?.symbol + '^-' + k,
+        symbol: tokenR?.symbol + '^' + (1 - k /2),
+        name: tokenR?.symbol + '^' + (1 - k / 2),
         decimal: 18,
         totalSupply: 0,
         address: pools[i].poolAddress + '-' + POOL_IDS.B
       })
       tokens.push({
-        symbol: tokenR?.symbol + ' CP',
-        name: tokenR?.symbol + ' CP',
+        symbol: tokenR?.symbol + ' R',
+        name: tokenR?.symbol + ' Reserve',
         decimal: 18,
         totalSupply: 0,
         address: pools[i].poolAddress + '-' + POOL_IDS.C
       })
+      // tokens.push({
+      //   symbol: tokenR?.symbol + ' CP',
+      //   name: tokenR?.symbol + ' CP',
+      //   decimal: 18,
+      //   totalSupply: 0,
+      //   address: pools[i].poolAddress + '-' + POOL_IDS.C
+      // })
     }
 
     return {tokens, pools, poolGroups}

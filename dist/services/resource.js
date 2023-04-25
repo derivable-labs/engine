@@ -140,16 +140,16 @@ class Resource {
                 const ddlLogs = logs.filter((log) => {
                     return log.address && [topics.LogicCreated, topics.PoolCreated, topics.Derivable].includes(log.topics[0]);
                 });
-                const swapLogs = logs.filter((log) => {
-                    return log.address && [topics.Transfer, topics.TransferSingle, topics.TransferBatch, topics.Deposit].includes(log.topics[0]);
-                });
                 this.cacheDdlLog({
                     ddlLogs,
-                    swapLogs,
+                    swapLogs: [],
                     headBlock,
                     account
                 });
-                return [this.parseDdlLogs(ddlLogs), []];
+                const parsedLogs = this.parseDdlLogs(ddlLogs);
+                const swapParsedLogs = parsedLogs.filter((l) => l.name === 'Swap');
+                const ddlParsedLogs = parsedLogs.filter((l) => l.name !== 'Swap');
+                return [ddlParsedLogs, swapParsedLogs];
             }).then(([ddlLogs, swapLogs]) => __awaiter(this, void 0, void 0, function* () {
                 const result = { pools: {}, tokens: [], swapLogs: [], poolGroups: {} };
                 if (swapLogs && swapLogs.length > 0) {
@@ -313,26 +313,33 @@ class Resource {
                 }
                 const tokenR = tokens.find((t) => t.address === pools[i].TOKEN_R);
                 tokens.push({
-                    symbol: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + '^' + k,
-                    name: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + '^' + k,
+                    symbol: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + '^' + (1 + k / 2),
+                    name: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + '^' + (1 + k / 2),
                     decimal: 18,
                     totalSupply: 0,
                     address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.A
                 });
                 tokens.push({
-                    symbol: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + '^-' + k,
-                    name: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + '^-' + k,
+                    symbol: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + '^' + (1 - k / 2),
+                    name: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + '^' + (1 - k / 2),
                     decimal: 18,
                     totalSupply: 0,
                     address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.B
                 });
                 tokens.push({
-                    symbol: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + ' CP',
-                    name: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + ' CP',
+                    symbol: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + ' R',
+                    name: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + ' Reserve',
                     decimal: 18,
                     totalSupply: 0,
                     address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.C
                 });
+                // tokens.push({
+                //   symbol: tokenR?.symbol + ' CP',
+                //   name: tokenR?.symbol + ' CP',
+                //   decimal: 18,
+                //   totalSupply: 0,
+                //   address: pools[i].poolAddress + '-' + POOL_IDS.C
+                // })
             }
             return { tokens, pools, poolGroups };
         });

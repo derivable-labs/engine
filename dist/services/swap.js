@@ -280,7 +280,7 @@ class Swap {
                 return (0, helper_1.bn)(constant_1.POOL_IDS.R);
             if (address === configs_1.CONFIGS[this.chainId].nativeToken &&
                 this.CURRENT_POOL.TOKEN_R === configs_1.CONFIGS[this.chainId].wrapToken) {
-                return (0, helper_1.bn)(constant_1.POOL_IDS.R);
+                return (0, helper_1.bn)(constant_1.POOL_IDS.native);
             }
             return (0, helper_1.bn)(address.split('-')[1]);
         }

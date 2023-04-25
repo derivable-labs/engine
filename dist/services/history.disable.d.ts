@@ -1,4 +1,3 @@
-import { BigNumber } from "ethers";
 import { PowerState } from 'powerLib/dist/powerLib';
 import { LogType, StatesType } from "../types";
 import { CurrentPool } from "./currentPool";
@@ -15,20 +14,7 @@ export declare class History {
         poolAddress: string;
         states: StatesType;
         powers: number[];
-    }): {
-        sideIn: BigNumber;
-        sideOut: BigNumber;
-        amountIn: BigNumber;
-        amountOut: BigNumber;
-        payer: any;
-        recipient: any;
-        transactionHash: string;
-        timeStamp: number;
-        poolIn: string;
-        poolOut: string;
-        tokenIn: string;
-        tokenOut: string;
-    }[];
+    }): any[];
     calculateLeverage(powerState: PowerState, balances: any, powers: number[]): number;
 }
 export {};

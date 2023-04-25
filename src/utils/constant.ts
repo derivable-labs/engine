@@ -43,7 +43,9 @@ export const EventDataAbis = {
     'address LOGIC',
     'bytes32 ORACLE',
     'address TOKEN_R',
-    'uint224 MARK',
+    'uint256 MARK',
+    'uint256 INIT_TIME',
+    'uint256 HALF_LIFE',
     'uint256 k'
   ],
   Swap: [

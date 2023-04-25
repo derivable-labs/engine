@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EventDataAbis = exports.POOL_IDS = exports.ddlGenesisBlock = exports.LOCALSTORAGE_KEY = exports.CHART_API_ENDPOINT = exports.TIME_TO_REFRESH_STATE = exports.LP_PRICE_UNIT = exports.MINI_SECOND_PER_DAY = exports.fee10000 = exports.ZERO_ADDRESS = exports.LARGE_VALUE = void 0;
+exports.EventDataAbis = exports.POOL_IDS = exports.ddlGenesisBlock = exports.LOCALSTORAGE_KEY = exports.CHART_API_ENDPOINT = exports.TIME_TO_REFRESH_STATE = exports.LP_PRICE_UNIT = exports.MINI_SECOND_PER_DAY = exports.fee10000 = exports.NATIVE_ADDRESS = exports.ZERO_ADDRESS = exports.LARGE_VALUE = void 0;
 exports.LARGE_VALUE = '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF';
 exports.ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+exports.NATIVE_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 exports.fee10000 = 30;
 exports.MINI_SECOND_PER_DAY = 86400000;
 exports.LP_PRICE_UNIT = 10000;
@@ -40,8 +41,18 @@ exports.EventDataAbis = {
         'address LOGIC',
         'bytes32 ORACLE',
         'address TOKEN_R',
-        'uint224 MARK',
+        'uint256 MARK',
+        'uint256 INIT_TIME',
+        'uint256 HALF_LIFE',
         'uint256 k'
+    ],
+    Swap: [
+        'uint sideIn',
+        'uint sideOut',
+        'uint amountIn',
+        'uint amountOut',
+        'address payer',
+        'address recipient'
     ]
 };
 //# sourceMappingURL=constant.js.map
