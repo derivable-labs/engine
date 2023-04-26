@@ -9,6 +9,7 @@ import {Swap}                  from "./services/swap";
 import {CurrentPool, PoolData} from "./services/currentPool";
 import {CreatePool}            from "./services/createPool";
 import {JsonRpcProvider} from "@ethersproject/providers";
+import {UniV3Pair} from "./services/uniV3Pair";
 
 type ConfigType = {
   chainId: number
@@ -35,6 +36,7 @@ export class Engine {
   RESOURCE: Resource
   BNA: BnA
   UNIV2PAIR: UniV2Pair
+  UNIV3PAIR: UniV3Pair
   HISTORY: History
   SWAP: Swap
   CURRENT_POOL: CurrentPool
@@ -60,6 +62,11 @@ export class Engine {
       scanApi: this.scanApi,
       provider: this.provider
     })
+    this.UNIV3PAIR = new UniV3Pair({
+      chainId: this.chainId,
+      scanApi: this.scanApi,
+      provider: this.provider
+    })
     this.BNA = new BnA({
       account: this.account,
       chainId: this.chainId,
@@ -73,6 +80,7 @@ export class Engine {
       provider: this.provider,
       providerToGetLog: this.providerToGetLog,
       UNIV2PAIR: this.UNIV2PAIR,
+      UNIV3PAIR: this.UNIV3PAIR,
       overrideProvider: this.overrideProvider,
     })
 

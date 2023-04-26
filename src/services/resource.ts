@@ -28,6 +28,7 @@ import {JsonRpcProvider} from "@ethersproject/providers";
 import PoolOverride from "../abi/PoolOverride.json";
 import {PowerState} from 'powerLib/dist/powerLib';
 import _ from "lodash";
+import {UniV3Pair} from "./uniV3Pair";
 
 const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
@@ -42,6 +43,7 @@ type ConfigType = {
   providerToGetLog: ethers.providers.Provider
   overrideProvider: JsonRpcProvider
   UNIV2PAIR: UniV2Pair
+  UNIV3PAIR: UniV3Pair
 }
 
 type ResourceData = {
@@ -64,6 +66,7 @@ export class Resource {
   providerToGetLog: ethers.providers.Provider
   overrideProvider: JsonRpcProvider
   UNIV2PAIR: UniV2Pair
+  UNIV3PAIR: UniV3Pair
 
   constructor(configs: ConfigType) {
     this.chainId = configs.chainId
@@ -74,6 +77,7 @@ export class Resource {
     this.providerToGetLog = configs.providerToGetLog
     this.provider = configs.provider
     this.UNIV2PAIR = configs.UNIV2PAIR
+    this.UNIV3PAIR = configs.UNIV3PAIR
     this.overrideProvider = configs.overrideProvider
   }
 
@@ -276,7 +280,9 @@ export class Resource {
           powers,
           cToken: data.TOKEN_R
         }
-        // allUniPools.push(data.pairToken)
+        const pair = ethers.utils.getAddress('0x' + data.ORACLE.slice(-40))
+
+        allUniPools.push(pair)
         allTokens.push(data.TOKEN_R)
       }
     })
@@ -316,13 +322,12 @@ export class Resource {
 
     // @ts-ignore
     const context: ContractCallContext[] = this.getMultiCallRequest(normalTokens, listPools)
-    const [{results}] = await Promise.all([
+    const [{results}, pairsInfo] = await Promise.all([
       multicall.call(context),
-      // this.UNIV2PAIR.getPairsInfo({
-      //   pairAddresses: uniPools
-      // })
+      this.UNIV3PAIR.getPairsInfo({
+        pairAddresses: _.uniq(uniPools)
+      })
     ])
-    const pairsInfo = {}
 
     const {tokens: tokensArr, poolsState} = this.parseMultiCallResponse(results, Object.keys(listPools))
     const tokens = []
@@ -348,8 +353,10 @@ export class Resource {
       if (poolGroups[id]) {
         poolGroups[id].pools[i] = pools[i]
       } else {
+        const pair = ethers.utils.getAddress('0x' + ORACLE.slice(-40))
         poolGroups[id] = {pools: {[i]: pools[i]}}
         poolGroups[id].UTR = pools[i].UTR
+        poolGroups[id].pair = pairsInfo[pair]
         poolGroups[id].TOKEN = pools[i].TOKEN
         poolGroups[id].MARK = pools[i].MARK
         poolGroups[id].ORACLE = pools[i].ORACLE
@@ -408,8 +415,8 @@ export class Resource {
         address: pools[i].poolAddress + '-' + POOL_IDS.B
       })
       tokens.push({
-        symbol: tokenR?.symbol + ' R',
-        name: tokenR?.symbol + ' Reserve',
+        symbol: `${tokenR?.symbol} (${poolGroups[id].pair.token1.symbol}/${poolGroups[id].pair.token0.symbol}) ^ ${k / 2}`,
+        name: `${tokenR?.symbol} (${poolGroups[id].pair.token1.symbol}/${poolGroups[id].pair.token0.symbol}) ^ ${k / 2}`,
         decimal: 18,
         totalSupply: 0,
         address: pools[i].poolAddress + '-' + POOL_IDS.C
