@@ -3,8 +3,7 @@ import PairV3DetailAbi from "../abi/PairV3Detail.json";
 import {CONFIGS}     from "../utils/configs";
 import {JsonRpcProvider} from "@ethersproject/providers";
 
-const FLAG = '0x00001100000000000000000000000000000000000000000000000001111'
-// const FLAG = '0x10000000000000000000000000000000000000000000000000000000000'
+const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111'
 type ConfigType = {
   chainId: number
   scanApi: string
