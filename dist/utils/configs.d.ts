@@ -35,6 +35,7 @@ export declare const CONFIGS: {
         token: string;
         multiCall: string;
         pairsInfo: string;
+        pairsV3Info: string;
         bnA: string;
         tokensInfo: string;
         router: string;

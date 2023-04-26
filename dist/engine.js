@@ -10,6 +10,7 @@ const swap_1 = require("./services/swap");
 const currentPool_1 = require("./services/currentPool");
 const createPool_1 = require("./services/createPool");
 const providers_1 = require("@ethersproject/providers");
+const uniV3Pair_1 = require("./services/uniV3Pair");
 class Engine {
     constructor(configs) {
         this.chainId = configs.chainId;
@@ -29,6 +30,11 @@ class Engine {
             scanApi: this.scanApi,
             provider: this.provider
         });
+        this.UNIV3PAIR = new uniV3Pair_1.UniV3Pair({
+            chainId: this.chainId,
+            scanApi: this.scanApi,
+            provider: this.provider
+        });
         this.BNA = new balanceAndAllowance_1.BnA({
             account: this.account,
             chainId: this.chainId,
@@ -42,6 +48,7 @@ class Engine {
             provider: this.provider,
             providerToGetLog: this.providerToGetLog,
             UNIV2PAIR: this.UNIV2PAIR,
+            UNIV3PAIR: this.UNIV3PAIR,
             overrideProvider: this.overrideProvider,
         });
         this.PRICE = new price_1.Price({

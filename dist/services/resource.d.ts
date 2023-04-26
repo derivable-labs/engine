@@ -2,6 +2,7 @@ import { BigNumber, ethers } from "ethers";
 import { LogType, ParseLogType, PoolGroupsType, PoolsType, PoolType, Storage, TokenType } from "../types";
 import { UniV2Pair } from "./uniV2Pair";
 import { JsonRpcProvider } from "@ethersproject/providers";
+import { UniV3Pair } from "./uniV3Pair";
 declare type ConfigType = {
     chainId: number;
     scanApi: string;
@@ -11,6 +12,7 @@ declare type ConfigType = {
     providerToGetLog: ethers.providers.Provider;
     overrideProvider: JsonRpcProvider;
     UNIV2PAIR: UniV2Pair;
+    UNIV3PAIR: UniV3Pair;
 };
 declare type ResourceData = {
     pools: PoolsType;
@@ -31,6 +33,7 @@ export declare class Resource {
     providerToGetLog: ethers.providers.Provider;
     overrideProvider: JsonRpcProvider;
     UNIV2PAIR: UniV2Pair;
+    UNIV3PAIR: UniV3Pair;
     constructor(configs: ConfigType);
     fetchResourceData(account: string): Promise<any>;
     getLastBlockCached(account: string): any;

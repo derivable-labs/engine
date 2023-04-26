@@ -39,6 +39,7 @@ class Resource {
         this.providerToGetLog = configs.providerToGetLog;
         this.provider = configs.provider;
         this.UNIV2PAIR = configs.UNIV2PAIR;
+        this.UNIV3PAIR = configs.UNIV3PAIR;
         this.overrideProvider = configs.overrideProvider;
     }
     fetchResourceData(account) {
@@ -211,7 +212,8 @@ class Resource {
                 poolData[log.address] = Object.assign(Object.assign({}, data), { poolAddress: log.address, logic,
                     factory,
                     powers, cToken: data.TOKEN_R });
-                // allUniPools.push(data.pairToken)
+                const pair = ethers_1.ethers.utils.getAddress('0x' + data.ORACLE.slice(-40));
+                allUniPools.push(pair);
                 allTokens.push(data.TOKEN_R);
             }
         });
@@ -248,13 +250,12 @@ class Resource {
             // console.log(a, b, c)
             // @ts-ignore
             const context = this.getMultiCallRequest(normalTokens, listPools);
-            const [{ results }] = yield Promise.all([
+            const [{ results }, pairsInfo] = yield Promise.all([
                 multicall.call(context),
-                // this.UNIV2PAIR.getPairsInfo({
-                //   pairAddresses: uniPools
-                // })
+                this.UNIV3PAIR.getPairsInfo({
+                    pairAddresses: lodash_1.default.uniq(uniPools)
+                })
             ]);
-            const pairsInfo = {};
             const { tokens: tokensArr, poolsState } = this.parseMultiCallResponse(results, Object.keys(listPools));
             const tokens = [];
             for (let i = 0; i < tokensArr.length; i++) {
@@ -278,8 +279,10 @@ class Resource {
                     poolGroups[id].pools[i] = pools[i];
                 }
                 else {
+                    const pair = ethers_1.ethers.utils.getAddress('0x' + ORACLE.slice(-40));
                     poolGroups[id] = { pools: { [i]: pools[i] } };
                     poolGroups[id].UTR = pools[i].UTR;
+                    poolGroups[id].pair = pairsInfo[pair];
                     poolGroups[id].TOKEN = pools[i].TOKEN;
                     poolGroups[id].MARK = pools[i].MARK;
                     poolGroups[id].ORACLE = pools[i].ORACLE;
@@ -327,8 +330,8 @@ class Resource {
                     address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.B
                 });
                 tokens.push({
-                    symbol: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + ' R',
-                    name: (tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol) + ' Reserve',
+                    symbol: `${tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol} (${poolGroups[id].pair.token1.symbol}/${poolGroups[id].pair.token0.symbol}) ^ ${k / 2}`,
+                    name: `${tokenR === null || tokenR === void 0 ? void 0 : tokenR.symbol} (${poolGroups[id].pair.token1.symbol}/${poolGroups[id].pair.token0.symbol}) ^ ${k / 2}`,
                     decimal: 18,
                     totalSupply: 0,
                     address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.C

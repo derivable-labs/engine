@@ -9,6 +9,7 @@ import { Swap } from "./services/swap";
 import { CurrentPool } from "./services/currentPool";
 import { CreatePool } from "./services/createPool";
 import { JsonRpcProvider } from "@ethersproject/providers";
+import { UniV3Pair } from "./services/uniV3Pair";
 declare type ConfigType = {
     chainId: number;
     scanApi: string;
@@ -33,6 +34,7 @@ export declare class Engine {
     RESOURCE: Resource;
     BNA: BnA;
     UNIV2PAIR: UniV2Pair;
+    UNIV3PAIR: UniV3Pair;
     HISTORY: History;
     SWAP: Swap;
     CURRENT_POOL: CurrentPool;
