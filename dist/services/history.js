@@ -8,17 +8,18 @@ class History {
         this.account = configs.account;
         this.CURRENT_POOL = configs.CURRENT_POOL;
     }
-    formatSwapHistory({ logs, poolAddress, states, powers }) {
+    formatSwapHistory({ logs, }) {
         try {
-            if (!logs || logs.length === 0 || !poolAddress) {
+            if (!logs || logs.length === 0) {
                 return [];
             }
             const swapLogs = logs.map((log) => {
+                var _a, _b, _c, _d;
                 const formatedData = {
-                    sideIn: (0, helper_1.bn)(log.args.sideIn.hex),
-                    sideOut: (0, helper_1.bn)(log.args.sideOut.hex),
-                    amountIn: (0, helper_1.bn)(log.args.amountIn.hex),
-                    amountOut: (0, helper_1.bn)(log.args.amountOut.hex),
+                    sideIn: ((_a = log.args.sideIn) === null || _a === void 0 ? void 0 : _a.hex) ? (0, helper_1.bn)(log.args.sideIn.hex) : (0, helper_1.bn)(log.args.sideIn),
+                    sideOut: ((_b = log.args.sideOut) === null || _b === void 0 ? void 0 : _b.hex) ? (0, helper_1.bn)(log.args.sideOut.hex) : (0, helper_1.bn)(log.args.sideOut),
+                    amountIn: ((_c = log.args.amountIn) === null || _c === void 0 ? void 0 : _c.hex) ? (0, helper_1.bn)(log.args.amountIn.hex) : (0, helper_1.bn)(log.args.amountIn),
+                    amountOut: ((_d = log.args.amountOut) === null || _d === void 0 ? void 0 : _d.hex) ? (0, helper_1.bn)(log.args.amountOut.hex) : (0, helper_1.bn)(log.args.amountOut),
                     payer: log.args.payer,
                     recipient: log.args.recipient
                 };

@@ -1,6 +1,6 @@
 import { BigNumber } from "ethers";
 import { PowerState } from 'powerLib/dist/powerLib';
-import { LogType, StatesType } from "../types";
+import { LogType } from "../types";
 import { CurrentPool } from "./currentPool";
 declare type ConfigType = {
     account?: string;
@@ -10,11 +10,8 @@ export declare class History {
     account?: string;
     CURRENT_POOL: CurrentPool;
     constructor(configs: ConfigType);
-    formatSwapHistory({ logs, poolAddress, states, powers }: {
+    formatSwapHistory({ logs, }: {
         logs: LogType[];
-        poolAddress: string;
-        states: StatesType;
-        powers: number[];
     }): {
         sideIn: BigNumber;
         sideOut: BigNumber;
