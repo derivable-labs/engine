@@ -23,26 +23,20 @@ export class History {
 
   formatSwapHistory({
                       logs,
-                      poolAddress,
-                      states,
-                      powers
                     }: {
     logs: LogType[],
-    poolAddress: string,
-    states: StatesType
-    powers: number[]
   }) {
     try {
-      if (!logs || logs.length === 0 || !poolAddress) {
+      if (!logs || logs.length === 0) {
         return []
       }
 
       const swapLogs = logs.map((log) => {
         const formatedData = {
-          sideIn: bn(log.args.sideIn.hex),
-          sideOut: bn(log.args.sideOut.hex),
-          amountIn: bn(log.args.amountIn.hex),
-          amountOut: bn(log.args.amountOut.hex),
+          sideIn: log.args.sideIn?.hex ? bn(log.args.sideIn.hex): bn(log.args.sideIn),
+          sideOut: log.args.sideOut?.hex ? bn(log.args.sideOut.hex): bn(log.args.sideOut),
+          amountIn: log.args.amountIn?.hex ? bn(log.args.amountIn.hex): bn(log.args.amountIn),
+          amountOut: log.args.amountOut?.hex ? bn(log.args.amountOut.hex): bn(log.args.amountOut),
           payer: log.args.payer,
           recipient: log.args.recipient
         }

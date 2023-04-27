@@ -20,10 +20,7 @@ const testLocal = async () => {
   })
 
   const swapTxs = engine?.HISTORY.formatSwapHistory({
-    logs:  JSON.parse(JSON.stringify(engine.RESOURCE.swapLogs)),
-    poolAddress: currentPool.poolAddress,
-    states: currentPool.states,
-    powers: currentPool.powers
+    logs: engine.RESOURCE.swapLogs,
   })
 
   console.log(swapTxs)
