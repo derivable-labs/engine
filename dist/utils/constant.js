@@ -47,12 +47,14 @@ exports.EventDataAbis = {
         'uint256 k'
     ],
     Swap: [
+        'address payer',
+        'address poolIn',
+        'address poolOut',
+        'address recipient',
         'uint sideIn',
         'uint sideOut',
         'uint amountIn',
-        'uint amountOut',
-        'address payer',
-        'address recipient'
+        'uint amountOut'
     ]
 };
 //# sourceMappingURL=constant.js.map

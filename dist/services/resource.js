@@ -139,18 +139,18 @@ class Resource {
                 const headBlock = (_a = logs[logs.length - 1]) === null || _a === void 0 ? void 0 : _a.blockNumber;
                 const topics = this.getTopics();
                 const ddlLogs = logs.filter((log) => {
-                    return log.address && [topics.LogicCreated, topics.PoolCreated, topics.Derivable].includes(log.topics[0]);
+                    return log.address && [topics.Derivable].includes(log.topics[0]);
+                });
+                const swapLogs = logs.filter((log) => {
+                    return log.address && [topics.Swap].includes(log.topics[0]);
                 });
                 this.cacheDdlLog({
                     ddlLogs,
-                    swapLogs: [],
+                    swapLogs,
                     headBlock,
                     account
                 });
-                const parsedLogs = this.parseDdlLogs(ddlLogs);
-                const swapParsedLogs = parsedLogs.filter((l) => l.name === 'Swap');
-                const ddlParsedLogs = parsedLogs.filter((l) => l.name !== 'Swap');
-                return [ddlParsedLogs, swapParsedLogs];
+                return [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs)];
             }).then(([ddlLogs, swapLogs]) => __awaiter(this, void 0, void 0, function* () {
                 const result = { pools: {}, tokens: [], swapLogs: [], poolGroups: {} };
                 if (swapLogs && swapLogs.length > 0) {
