@@ -1,9 +1,7 @@
 // @ts-nocheck
-import {BigNumber, ethers} from "ethers";
-import {bn} from "../utils/helper";
-import _ from "lodash";
+import {ethers} from "ethers";
 import {PowerState} from 'powerLib/dist/powerLib'
-import {LogType, StatesType} from "../types";
+import {LogType} from "../types";
 import {CurrentPool} from "./currentPool";
 import {EventDataAbis, NATIVE_ADDRESS, POOL_IDS} from "../utils/constant";
 
@@ -32,17 +30,15 @@ export class History {
       }
 
       const swapLogs = logs.map((log) => {
-        const formatedData = {
-          sideIn: log.args.sideIn?.hex ? bn(log.args.sideIn.hex): bn(log.args.sideIn),
-          sideOut: log.args.sideOut?.hex ? bn(log.args.sideOut.hex): bn(log.args.sideOut),
-          amountIn: log.args.amountIn?.hex ? bn(log.args.amountIn.hex): bn(log.args.amountIn),
-          amountOut: log.args.amountOut?.hex ? bn(log.args.amountOut.hex): bn(log.args.amountOut),
-          payer: log.args.payer,
-          recipient: log.args.recipient
-        }
+        const encodeData = ethers.utils.defaultAbiCoder.encode(
+          EventDataAbis.Swap, log.args.args
+        )
+        const formatedData = ethers.utils.defaultAbiCoder.decode(
+          EventDataAbis.Swap,
+          encodeData
+        )
 
-        const poolIn = log.topics[2].slice(0, 42)
-        const poolOut = log.topics[3].slice(0, 42)
+        const {poolIn, poolOut} = formatedData
 
         const tokenIn = formatedData.sideIn.eq(POOL_IDS.native)
           ? NATIVE_ADDRESS
@@ -55,6 +51,7 @@ export class History {
         return {
           transactionHash: log.transactionHash,
           timeStamp: log.timeStamp,
+          blockNumber: log.blockNumber,
           poolIn,
           poolOut,
           tokenIn,

@@ -197,20 +197,19 @@ export class Resource {
       const headBlock = logs[logs.length - 1]?.blockNumber
       const topics = this.getTopics()
       const ddlLogs = logs.filter((log: any) => {
-        return log.address && [topics.LogicCreated, topics.PoolCreated, topics.Derivable].includes(log.topics[0])
+        return log.address && [topics.Derivable].includes(log.topics[0])
       })
-
+      const swapLogs = logs.filter((log: any) => {
+        return log.address && [topics.Swap].includes(log.topics[0])
+      })
       this.cacheDdlLog({
         ddlLogs,
-        swapLogs: [],
+        swapLogs,
         headBlock,
         account
       })
-      const parsedLogs = this.parseDdlLogs(ddlLogs);
-      const swapParsedLogs = parsedLogs.filter((l: any) => l.name === 'Swap')
-      const ddlParsedLogs = parsedLogs.filter((l: any) => l.name !== 'Swap')
 
-      return [ddlParsedLogs, swapParsedLogs]
+      return [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs)]
     }).then(async ([ddlLogs, swapLogs]: any) => {
       const result: ResourceData = {pools: {}, tokens: [], swapLogs: [], poolGroups: {}}
       if (swapLogs && swapLogs.length > 0) {
