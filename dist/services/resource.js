@@ -234,20 +234,6 @@ class Resource {
                 tryAggregate: true
             });
             const normalTokens = lodash_1.default.uniq((0, helper_1.getNormalAddress)(listTokens));
-            // const contract = new ethers.Contract('0x96f9f3E323Fa4D9AF56590fB2B99b5208000D6d9')
-            // const contract = new ethers.Contract('0x5a7e263F7344d28Fdb535A0eA4a44f2fe5D45452', PoolOverride.abi, this.getPoolOverridedProvider(Object.keys(listPools)))
-            // const a = await contract.getStates(
-            //   Object.values(listPools)[0].ORACLE,
-            //   Object.values(listPools)[0].MARK,
-            //   Object.values(listPools)[0].TOKEN_R,
-            //   Object.values(listPools)[0].k,
-            //   Object.values(listPools)[0].TOKEN,
-            // )
-            //
-            // const d = Object.values(listPools)[0].MARK
-            // const b = parseUq112x112(Object.values(listPools)[0].MARK)
-            // const c = parseUq112x112(a.spot)
-            // console.log(a, b, c)
             // @ts-ignore
             const context = this.getMultiCallRequest(normalTokens, listPools);
             const [{ results }, pairsInfo] = yield Promise.all([

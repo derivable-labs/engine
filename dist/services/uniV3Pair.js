@@ -16,17 +16,26 @@ exports.UniV3Pair = void 0;
 const ethers_1 = require("ethers");
 const PairV3Detail_json_1 = __importDefault(require("../abi/PairV3Detail.json"));
 const configs_1 = require("../utils/configs");
+const providers_1 = require("@ethersproject/providers");
 const FLAG = '0x00001100000000000000000000000000000000000000000000000001111';
 class UniV3Pair {
     constructor(configs) {
         this.chainId = configs.chainId;
         this.scanApi = configs.scanApi;
         this.provider = configs.provider;
+        this.rpcUrl = configs.rpcUrl;
     }
     getPairInfo({ pairAddress, flag = FLAG }) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const pairDetailContract = new ethers_1.ethers.Contract(configs_1.CONFIGS[this.chainId].pairsInfo, PairV3Detail_json_1.default, this.provider);
+                const provider = new providers_1.JsonRpcProvider(this.rpcUrl);
+                // @ts-ignore
+                provider.setStateOverride({
+                    [configs_1.CONFIGS[this.chainId].pairsV3Info]: {
+                        code: PairV3Detail_json_1.default.deployedBytecode
+                    }
+                });
+                const pairDetailContract = new ethers_1.ethers.Contract(configs_1.CONFIGS[this.chainId].pairsV3Info, PairV3Detail_json_1.default.abi, provider);
                 const res = yield pairDetailContract.functions.query([pairAddress], flag);
                 return res.details[0];
             }
@@ -38,7 +47,14 @@ class UniV3Pair {
     getPairsInfo({ pairAddresses, flag = FLAG }) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const pairDetailContract = new ethers_1.ethers.Contract(configs_1.CONFIGS[this.chainId].pairsV3Info, PairV3Detail_json_1.default, this.provider);
+                const provider = new providers_1.JsonRpcProvider(this.rpcUrl);
+                // @ts-ignore
+                provider.setStateOverride({
+                    [configs_1.CONFIGS[this.chainId].pairsV3Info]: {
+                        code: PairV3Detail_json_1.default.deployedBytecode
+                    }
+                });
+                const pairDetailContract = new ethers_1.ethers.Contract(configs_1.CONFIGS[this.chainId].pairsV3Info, PairV3Detail_json_1.default.abi, provider);
                 const { details } = yield pairDetailContract.functions.query(pairAddresses, flag);
                 const result = {};
                 for (let i = 0; i < pairAddresses.length; i++) {

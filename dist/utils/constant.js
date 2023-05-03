@@ -18,7 +18,7 @@ exports.LOCALSTORAGE_KEY = {
 exports.ddlGenesisBlock = {
     56: 23917200,
     31337: 0,
-    42161: 70615018,
+    42161: 84499330,
 };
 exports.POOL_IDS = {
     cToken: 0x20000,

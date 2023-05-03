@@ -33,7 +33,8 @@ class Engine {
         this.UNIV3PAIR = new uniV3Pair_1.UniV3Pair({
             chainId: this.chainId,
             scanApi: this.scanApi,
-            provider: this.provider
+            provider: this.provider,
+            rpcUrl: this.rpcUrl
         });
         this.BNA = new balanceAndAllowance_1.BnA({
             account: this.account,

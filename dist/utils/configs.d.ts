@@ -3,29 +3,17 @@ export declare const CONFIGS: {
         rpcUrl: string;
         rpcToGetLogs: string;
         timePerBlock: number;
-        nativeToken: string;
-        multiCall: string;
-        pairsInfo: string;
-        bnA: string;
-        tokensInfo: string;
-        router: string;
-        wrapToken: string;
-        wrapUsdPair: string;
-    };
-    31337: {
-        rpcUrl: string;
-        rpcToGetLogs: string;
-        timePerBlock: number;
-        nativeToken: string;
         token: string;
         multiCall: string;
         pairsInfo: string;
+        pairsV3Info: string;
         bnA: string;
         tokensInfo: string;
         router: string;
-        overrideRouter: string;
         wrapToken: string;
         wrapUsdPair: string;
+        poolFactory: string;
+        stateCalHelper: string;
     };
     1337: {
         rpcUrl: string;
@@ -48,9 +36,12 @@ export declare const CONFIGS: {
         rpcUrl: string;
         rpcToGetLogs: string;
         timePerBlock: number;
+        token: string;
+        stateCalHelper: string;
         nativeToken: string;
         multiCall: string;
         pairsInfo: string;
+        pairsV3Info: string;
         bnA: string;
         tokensInfo: string;
         router: string;
