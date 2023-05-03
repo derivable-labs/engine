@@ -97,7 +97,8 @@ export class Swap {
           amountIn: step.amountIn,
           tokenIn: step.tokenIn === NATIVE_ADDRESS && this.CURRENT_POOL.TOKEN_R === CONFIGS[this.chainId].wrapToken ? this.CURRENT_POOL.TOKEN_R : step.tokenIn,
           tokenOut: step.tokenOut === NATIVE_ADDRESS && this.CURRENT_POOL.TOKEN_R === CONFIGS[this.chainId].wrapToken ? this.CURRENT_POOL.TOKEN_R : step.tokenOut,
-          amountOutMin: 0}
+          amountOutMin: 0
+        }
       })
       const {params, value} = await this.convertStepToActions(stepsToSwap)
       if (isDeleverage) {
@@ -185,13 +186,15 @@ export class Swap {
 
     const outputs: { eip: number; token: string; id: string | BigNumber; amountOutMin: string | number | BigNumber; recipient: string | undefined; }[] = []
     steps.forEach((step) => {
-      outputs.push({
-        recipient: this.account,
-        eip: isErc1155Address(step.tokenOut) ? 1155 : 20,
-        token: isErc1155Address(step.tokenOut) ? this.CURRENT_POOL.TOKEN : step.tokenOut,
-        id: isErc1155Address(step.tokenOut) ? packId(this.getIdByAddress(step.tokenOut).toString(), this.getAddressByErc1155Address(step.tokenOut)) : bn(0),
-        amountOutMin: step.amountOutMin,
-      })
+      if (step.tokenOut !== NATIVE_ADDRESS) {
+        outputs.push({
+          recipient: this.account,
+          eip: isErc1155Address(step.tokenOut) ? 1155 : 20,
+          token: isErc1155Address(step.tokenOut) ? this.CURRENT_POOL.TOKEN : step.tokenOut,
+          id: isErc1155Address(step.tokenOut) ? packId(this.getIdByAddress(step.tokenOut).toString(), this.getAddressByErc1155Address(step.tokenOut)) : bn(0),
+          amountOutMin: step.amountOutMin,
+        })
+      }
     })
     let nativeAmountToWrap = bn(0)
     let withdrawWrapToNative = false
@@ -231,7 +234,7 @@ export class Swap {
           amountIn: step.amountIn,
           recipient: poolAddress,
         }]
-        if(step.tokenIn === CONFIGS[this.chainId].nativeToken) {
+        if (step.tokenIn === CONFIGS[this.chainId].nativeToken) {
           inputs = [{
             mode: CALL_VALUE,
             token: ZERO_ADDRESS,
@@ -245,7 +248,7 @@ export class Swap {
           code: CONFIGS[this.chainId].stateCalHelper,
           inputs
         })
-        promises.push(stateCalHelper.populateTransaction.swap( {
+        promises.push(stateCalHelper.populateTransaction.swap({
           sideIn: idIn,
           poolIn: poolAddress,
           sideOut: idOut,
@@ -380,6 +383,7 @@ export class Swap {
   getStateCalHelperContract(address: string, provider?: any) {
     return new ethers.Contract(address, HelperAbi, provider || this.provider)
   }
+
   getPoolContract(poolAddress: string, provider?: any) {
     return new ethers.Contract(poolAddress, PoolAbi, provider || this.provider)
   }
