@@ -2,7 +2,7 @@ import {BigNumber, ethers} from "ethers";
 import {UniV2Pair} from "./uniV2Pair";
 import {PoolErc1155StepType, StepType, SwapStepType} from "../types";
 import {bn, isErc1155Address, numberToWei, packId, weiToNumber} from "../utils/helper";
-import {LARGE_VALUE, POOL_IDS, ZERO_ADDRESS} from "../utils/constant";
+import {LARGE_VALUE, NATIVE_ADDRESS, POOL_IDS, ZERO_ADDRESS} from "../utils/constant";
 import {CONFIGS} from "../utils/configs";
 import {CurrentPool} from "./currentPool";
 import UtrAbi from "../abi/UTR.json";
@@ -93,7 +93,11 @@ export class Swap {
     if (!this.signer) return [[bn(0)], bn(0)]
     try {
       const stepsToSwap: SwapStepType[] = [...steps].map((step) => {
-        return {...step, amountOutMin: 0}
+        return {
+          amountIn: step.amountIn,
+          tokenIn: step.tokenIn === NATIVE_ADDRESS && this.CURRENT_POOL.TOKEN_R === CONFIGS[this.chainId].wrapToken ? this.CURRENT_POOL.TOKEN_R : step.tokenIn,
+          tokenOut: step.tokenOut === NATIVE_ADDRESS && this.CURRENT_POOL.TOKEN_R === CONFIGS[this.chainId].wrapToken ? this.CURRENT_POOL.TOKEN_R : step.tokenOut,
+          amountOutMin: 0}
       })
       const {params, value} = await this.convertStepToActions(stepsToSwap)
       if (isDeleverage) {
@@ -184,7 +188,7 @@ export class Swap {
       outputs.push({
         recipient: this.account,
         eip: isErc1155Address(step.tokenOut) ? 1155 : 20,
-        token: this.CURRENT_POOL.TOKEN,
+        token: isErc1155Address(step.tokenOut) ? this.CURRENT_POOL.TOKEN : step.tokenOut,
         id: isErc1155Address(step.tokenOut) ? packId(this.getIdByAddress(step.tokenOut).toString(), this.getAddressByErc1155Address(step.tokenOut)) : bn(0),
         amountOutMin: step.amountOutMin,
       })
