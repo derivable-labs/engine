@@ -8,7 +8,7 @@ exports.fee10000 = 30;
 exports.MINI_SECOND_PER_DAY = 86400000;
 exports.LP_PRICE_UNIT = 10000;
 exports.TIME_TO_REFRESH_STATE = 30000;
-exports.CHART_API_ENDPOINT = 'https://api.lz.finance/{chainId}/chart/';
+exports.CHART_API_ENDPOINT = "http://18.142.162.9/";
 exports.LOCALSTORAGE_KEY = {
     DDL_LOGS: 'ddl-log-v1.0',
     LAST_BLOCK_DDL_LOGS: 'last-block-ddl-log-v1.0',
