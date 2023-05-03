@@ -79,7 +79,12 @@ class Swap {
                 return [[(0, helper_1.bn)(0)], (0, helper_1.bn)(0)];
             try {
                 const stepsToSwap = [...steps].map((step) => {
-                    return Object.assign(Object.assign({}, step), { amountOutMin: 0 });
+                    return {
+                        amountIn: step.amountIn,
+                        tokenIn: step.tokenIn === constant_1.NATIVE_ADDRESS && this.CURRENT_POOL.TOKEN_R === configs_1.CONFIGS[this.chainId].wrapToken ? this.CURRENT_POOL.TOKEN_R : step.tokenIn,
+                        tokenOut: step.tokenOut === constant_1.NATIVE_ADDRESS && this.CURRENT_POOL.TOKEN_R === configs_1.CONFIGS[this.chainId].wrapToken ? this.CURRENT_POOL.TOKEN_R : step.tokenOut,
+                        amountOutMin: 0
+                    };
                 });
                 const { params, value } = yield this.convertStepToActions(stepsToSwap);
                 if (isDeleverage) {
@@ -163,7 +168,7 @@ class Swap {
                 outputs.push({
                     recipient: this.account,
                     eip: (0, helper_1.isErc1155Address)(step.tokenOut) ? 1155 : 20,
-                    token: this.CURRENT_POOL.TOKEN,
+                    token: (0, helper_1.isErc1155Address)(step.tokenOut) ? this.CURRENT_POOL.TOKEN : step.tokenOut,
                     id: (0, helper_1.isErc1155Address)(step.tokenOut) ? (0, helper_1.packId)(this.getIdByAddress(step.tokenOut).toString(), this.getAddressByErc1155Address(step.tokenOut)) : (0, helper_1.bn)(0),
                     amountOutMin: step.amountOutMin,
                 });
