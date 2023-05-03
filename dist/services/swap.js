@@ -165,13 +165,15 @@ class Swap {
             const stateCalHelper = this.getStateCalHelperContract(constant_1.ZERO_ADDRESS);
             const outputs = [];
             steps.forEach((step) => {
-                outputs.push({
-                    recipient: this.account,
-                    eip: (0, helper_1.isErc1155Address)(step.tokenOut) ? 1155 : 20,
-                    token: (0, helper_1.isErc1155Address)(step.tokenOut) ? this.CURRENT_POOL.TOKEN : step.tokenOut,
-                    id: (0, helper_1.isErc1155Address)(step.tokenOut) ? (0, helper_1.packId)(this.getIdByAddress(step.tokenOut).toString(), this.getAddressByErc1155Address(step.tokenOut)) : (0, helper_1.bn)(0),
-                    amountOutMin: step.amountOutMin,
-                });
+                if (step.tokenOut !== constant_1.NATIVE_ADDRESS) {
+                    outputs.push({
+                        recipient: this.account,
+                        eip: (0, helper_1.isErc1155Address)(step.tokenOut) ? 1155 : 20,
+                        token: (0, helper_1.isErc1155Address)(step.tokenOut) ? this.CURRENT_POOL.TOKEN : step.tokenOut,
+                        id: (0, helper_1.isErc1155Address)(step.tokenOut) ? (0, helper_1.packId)(this.getIdByAddress(step.tokenOut).toString(), this.getAddressByErc1155Address(step.tokenOut)) : (0, helper_1.bn)(0),
+                        amountOutMin: step.amountOutMin,
+                    });
+                }
             });
             let nativeAmountToWrap = (0, helper_1.bn)(0);
             let withdrawWrapToNative = false;
