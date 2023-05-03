@@ -65,7 +65,8 @@ export class Engine {
     this.UNIV3PAIR = new UniV3Pair({
       chainId: this.chainId,
       scanApi: this.scanApi,
-      provider: this.provider
+      provider: this.provider,
+      rpcUrl: this.rpcUrl
     })
     this.BNA = new BnA({
       account: this.account,

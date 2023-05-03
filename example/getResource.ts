@@ -5,7 +5,7 @@ import {FixedPoint} from "../src/utils/number";
 import {bn} from "../dist/utils/helper";
 
 const testLocal = async () => {
-  const engine = new Engine(getTestConfigs(1337))
+  const engine = new Engine(getTestConfigs(42161))
   await engine.RESOURCE.fetchResourceData('0xbC52C688c34A480c6785A38715c693Bb22863DE1')
 
   const test = bn(1000).shl(128)

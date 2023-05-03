@@ -33,6 +33,15 @@ const TestConfigs = {
     provider: new ethers.providers.JsonRpcProvider('https://bsc-dataseed.binance.org/'),
     providerToGetLog: new ethers.providers.JsonRpcProvider('https://bscrpc.com'),
     signer: wallet
+  },
+  [42161]: {
+    chainId: 42161,
+    scanApi: 'https://api.arbiscan.io/api',
+    rpcUrl: 'https://arb1.arbitrum.io/rpc',
+    account,
+    provider: new ethers.providers.JsonRpcProvider('https://arb1.arbitrum.io/rpc'),
+    providerToGetLog: new ethers.providers.JsonRpcProvider('https://arb1.arbitrum.io/rpc'),
+    signer: wallet
   }
 }
 
