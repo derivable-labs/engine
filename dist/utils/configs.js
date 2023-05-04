@@ -40,7 +40,7 @@ exports.CONFIGS = {
         rpcToGetLogs: 'https://arb1.arbitrum.io/rpc',
         timePerBlock: 1000,
         token: "0x2c57087D69f1Bf5974CA21ADb50b9dBEF8CF51CC",
-        stateCalHelper: "0x24C9C1Db9f7C33dd027cEA47FdF6f8fD7765ED9b",
+        stateCalHelper: "0x185808A2e2819840d2A0BcF8c90D815Fb9da2054",
         nativeToken: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
         multiCall: '0xcA11bde05977b3631167028862bE2a173976CA11',
         pairsInfo: '0x81C8f6bC2a602B9Ad403116ab4c0EC1a0e5B49B1',
