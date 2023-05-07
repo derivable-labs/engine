@@ -303,7 +303,15 @@ export class Resource {
    * @param uniPools
    */
   //@ts-ignore
-  async loadStatesData(listTokens: string[], listPools: { [key: string]: PoolType }, uniPools: string[]) {
+  async loadStatesData(
+    listTokens: string[],
+    listPools: { [key: string]: PoolType },
+    uniPools: string[]
+  ): Promise<{
+    tokens: TokenType[],
+    pools: any,
+    poolGroups: any
+  }> {
     const multicall = new Multicall({
       multicallCustomContractAddress: CONFIGS[this.chainId].multiCall,
       ethersProvider: this.getPoolOverridedProvider(Object.keys(listPools)),
@@ -397,36 +405,35 @@ export class Resource {
       }
 
       tokens.push({
-        symbol: poolGroups[id].baseToken.symbol + '^' + (1 + k / 2),
-        name: poolGroups[id].baseToken.symbol + '^' + (1 + k / 2),
-        decimal: 18,
-        totalSupply: 0,
-        address: pools[i].poolAddress + '-' + POOL_IDS.A
-      })
-      tokens.push({
-        symbol: poolGroups[id].baseToken.symbol + '^' + (1 - k /2),
-        name: poolGroups[id].baseToken.symbol + '^' + (1 - k / 2),
-        decimal: 18,
-        totalSupply: 0,
-        address: pools[i].poolAddress + '-' + POOL_IDS.B
-      })
-      tokens.push({
-        symbol: `DLP-${poolGroups[id].baseToken.symbol}-${k / 2}`,
-        name: `DLP-${poolGroups[id].baseToken.symbol}-${k / 2}`,
-        decimal: 18,
-        totalSupply: 0,
-        address: pools[i].poolAddress + '-' + POOL_IDS.C
-      })
-      // tokens.push({
-      //   symbol: tokenR?.symbol + ' CP',
-      //   name: tokenR?.symbol + ' CP',
-      //   decimal: 18,
-      //   totalSupply: 0,
-      //   address: pools[i].poolAddress + '-' + POOL_IDS.C
-      // })
+          symbol: poolGroups[id].baseToken.symbol + '^' + (1 + k / 2),
+          name: poolGroups[id].baseToken.symbol + '^' + (1 + k / 2),
+          decimal: 18,
+          totalSupply: 0,
+          address: pools[i].poolAddress + '-' + POOL_IDS.A
+        }, {
+          symbol: poolGroups[id].baseToken.symbol + '^' + (1 - k / 2),
+          name: poolGroups[id].baseToken.symbol + '^' + (1 - k / 2),
+          decimal: 18,
+          totalSupply: 0,
+          address: pools[i].poolAddress + '-' + POOL_IDS.B
+        }, {
+          symbol: `DLP-${poolGroups[id].baseToken.symbol}-${k / 2}`,
+          name: `DLP-${poolGroups[id].baseToken.symbol}-${k / 2}`,
+          decimal: 18,
+          totalSupply: 0,
+          address: pools[i].poolAddress + '-' + POOL_IDS.C
+        },
+        pools[i].baseToken,
+        pools[i].quoteToken,
+      )
     }
 
-    return {tokens, pools, poolGroups}
+    return {
+      // @ts-ignore
+      tokens: _.uniqBy(tokens, 'address'),
+      pools,
+      poolGroups
+    }
   }
 
   getRentRate({rDcLong, rDcShort, R}: { R: BigNumber, rDcLong: BigNumber, rDcShort: BigNumber }, rentRate: BigNumber) {

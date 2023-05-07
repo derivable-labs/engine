@@ -77,7 +77,20 @@ export class UniV3Pair {
       )
       const result = {}
       for (let i = 0; i < pairAddresses.length; i++) {
-        result[pairAddresses[i]] = details[i]
+        result[pairAddresses[i]] = {
+          token0: {
+            address: details[i].token0.adr,
+            name: details[i].token0.name,
+            symbol: details[i].token0.symbol,
+            decimal: details[i].token0.decimals,
+          },
+          token1: {
+            address: details[i].token1.adr,
+            name: details[i].token1.name,
+            symbol: details[i].token1.symbol,
+            decimal: details[i].token1.decimals,
+          }
+        }
       }
       return result
     } catch (e) {
