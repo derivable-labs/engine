@@ -82,13 +82,13 @@ export class UniV3Pair {
             address: details[i].token0.adr,
             name: details[i].token0.name,
             symbol: details[i].token0.symbol,
-            decimal: details[i].token0.decimals,
+            decimal: details[i].token0.decimals.toNumber(),
           },
           token1: {
             address: details[i].token1.adr,
             name: details[i].token1.name,
             symbol: details[i].token1.symbol,
-            decimal: details[i].token1.decimals,
+            decimal: details[i].token1.decimals.toNumber(),
           }
         }
       }
