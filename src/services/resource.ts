@@ -1,5 +1,10 @@
 import {BigNumber, ethers} from "ethers";
-import {ddlGenesisBlock, EventDataAbis, LOCALSTORAGE_KEY, LP_PRICE_UNIT, POOL_IDS} from "../utils/constant";
+import {
+  ddlGenesisBlock,
+  EventDataAbis,
+  LOCALSTORAGE_KEY,
+  POOL_IDS,
+} from "../utils/constant";
 import EventsAbi from '../abi/Events.json'
 import {Multicall} from "ethereum-multicall";
 import {CONFIGS} from "../utils/configs";
@@ -333,16 +338,23 @@ export class Resource {
     for (const i in pools) {
       pools[i].states = poolsState[i]
       const {UTR, TOKEN, MARK: _MARK, ORACLE, TOKEN_R, powers, k: _k} = pools[i]
+
+      const quoteTokenIndex = bn(ORACLE.slice(0, 3)).gt(0) ? 1 : 0
+      const pair = ethers.utils.getAddress('0x' + ORACLE.slice(-40))
+      pools[i].baseToken = quoteTokenIndex === 0 ? pairsInfo[pair].token1 : pairsInfo[pair].token0
+      pools[i].quoteToken = quoteTokenIndex === 0 ? pairsInfo[pair].token0 : pairsInfo[pair].token1
+
       const MARK = _MARK.toString()
       const k = _k.toNumber()
       const id = [UTR, TOKEN, MARK, ORACLE, TOKEN_R].join('-')
       if (poolGroups[id]) {
         poolGroups[id].pools[i] = pools[i]
       } else {
-        const pair = ethers.utils.getAddress('0x' + ORACLE.slice(-40))
         poolGroups[id] = {pools: {[i]: pools[i]}}
         poolGroups[id].UTR = pools[i].UTR
         poolGroups[id].pair = pairsInfo[pair]
+        poolGroups[id].baseToken = pools[i].baseToken
+        poolGroups[id].quoteToken = pools[i].quoteToken
         poolGroups[id].TOKEN = pools[i].TOKEN
         poolGroups[id].MARK = pools[i].MARK
         poolGroups[id].ORACLE = pools[i].ORACLE
@@ -384,25 +396,23 @@ export class Resource {
           pools[i].poolAddress + '-' + POOL_IDS.C]
       }
 
-      const tokenR: any = tokens.find((t) => t.address === pools[i].TOKEN_R)
-
       tokens.push({
-        symbol: tokenR?.symbol + '^' + (1 + k / 2),
-        name: tokenR?.symbol + '^' + (1 + k / 2),
+        symbol: poolGroups[id].baseToken.symbol + '^' + (1 + k / 2),
+        name: poolGroups[id].baseToken.symbol + '^' + (1 + k / 2),
         decimal: 18,
         totalSupply: 0,
         address: pools[i].poolAddress + '-' + POOL_IDS.A
       })
       tokens.push({
-        symbol: tokenR?.symbol + '^' + (1 - k /2),
-        name: tokenR?.symbol + '^' + (1 - k / 2),
+        symbol: poolGroups[id].baseToken.symbol + '^' + (1 - k /2),
+        name: poolGroups[id].baseToken.symbol + '^' + (1 - k / 2),
         decimal: 18,
         totalSupply: 0,
         address: pools[i].poolAddress + '-' + POOL_IDS.B
       })
       tokens.push({
-        symbol: `${tokenR?.symbol} (${poolGroups[id].pair.token1.symbol}/${poolGroups[id].pair.token0.symbol}) ^ ${k / 2}`,
-        name: `${tokenR?.symbol} (${poolGroups[id].pair.token1.symbol}/${poolGroups[id].pair.token0.symbol}) ^ ${k / 2}`,
+        symbol: `DLP-${poolGroups[id].baseToken.symbol}-${k / 2}`,
+        name: `DLP-${poolGroups[id].baseToken.symbol}-${k / 2}`,
         decimal: 18,
         totalSupply: 0,
         address: pools[i].poolAddress + '-' + POOL_IDS.C
