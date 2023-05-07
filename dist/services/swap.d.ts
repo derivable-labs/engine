@@ -23,8 +23,7 @@ export declare class Swap {
     UNIV2PAIR: UniV2Pair;
     CURRENT_POOL: CurrentPool;
     constructor(configs: ConfigType);
-    getDeleverageStep(): Promise<any>;
-    calculateAmountOuts(steps: StepType[], isDeleverage?: boolean): Promise<(BigNumber | BigNumber[])[] | (BigNumber | {
+    calculateAmountOuts(steps: StepType[]): Promise<(BigNumber | BigNumber[])[] | (BigNumber | {
         amountOut: any;
         tokenIn: string;
         tokenOut: string;
@@ -41,8 +40,8 @@ export declare class Swap {
         value: BigNumber;
     }>;
     getIdByAddress(address: string): BigNumber;
-    multiSwap(steps: SwapStepType[], gasLimit?: BigNumber, isDeleverage?: boolean): Promise<any>;
-    updateLeverageAndSize(rawStep: StepType[], gasLimit?: BigNumber, isDeleverage?: boolean): Promise<any>;
+    multiSwap(steps: SwapStepType[], gasLimit?: BigNumber): Promise<any>;
+    updateLeverageAndSize(rawStep: StepType[], gasLimit?: BigNumber): Promise<any>;
     getAddressByErc1155Address(address: string): any;
     getRouterContract(provider: any): ethers.Contract;
     getStateCalHelperContract(address: string, provider?: any): ethers.Contract;

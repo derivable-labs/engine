@@ -49,47 +49,16 @@ class Swap {
         this.signer = configs.signer;
         this.CURRENT_POOL = configs.CURRENT_POOL;
     }
-    getDeleverageStep() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const { priceScaleLong, twapBase } = this.CURRENT_POOL.states;
-            const [start, end] = twapBase.lt(priceScaleLong) ?
-                [twapBase, priceScaleLong] : [priceScaleLong, twapBase];
-            const logicContract = this.getLogicContract();
-            const data = (yield logicContract.populateTransaction.deleverage(start.div(2), end.mul(2))).data;
-            return {
-                flags: 0,
-                code: this.CURRENT_POOL.logicAddress,
-                data: data,
-                inputs: [{
-                        mode: 2,
-                        recipient: this.CURRENT_POOL.poolAddress,
-                        eip: 0,
-                        id: 0,
-                        token: constant_1.ZERO_ADDRESS,
-                        amountInMax: 0,
-                        amountSource: 0,
-                    }]
-            };
-        });
-    }
     //@ts-ignore
-    calculateAmountOuts(steps, isDeleverage = false) {
+    calculateAmountOuts(steps) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.signer)
                 return [[(0, helper_1.bn)(0)], (0, helper_1.bn)(0)];
             try {
                 const stepsToSwap = [...steps].map((step) => {
-                    return {
-                        amountIn: step.amountIn,
-                        tokenIn: step.tokenIn === constant_1.NATIVE_ADDRESS && this.CURRENT_POOL.TOKEN_R === configs_1.CONFIGS[this.chainId].wrapToken ? this.CURRENT_POOL.TOKEN_R : step.tokenIn,
-                        tokenOut: step.tokenOut === constant_1.NATIVE_ADDRESS && this.CURRENT_POOL.TOKEN_R === configs_1.CONFIGS[this.chainId].wrapToken ? this.CURRENT_POOL.TOKEN_R : step.tokenOut,
-                        amountOutMin: 0
-                    };
+                    return Object.assign(Object.assign({}, step), { amountOutMin: 0 });
                 });
                 const { params, value } = yield this.convertStepToActions(stepsToSwap);
-                if (isDeleverage) {
-                    params[1].unshift(yield this.getDeleverageStep());
-                }
                 const router = configs_1.CONFIGS[this.chainId].router;
                 // @ts-ignore
                 this.overrideProvider.setStateOverride({
@@ -110,7 +79,7 @@ class Swap {
                 return [result, (0, helper_1.bn)(gasLimit).sub(res.gasLeft)];
             }
             catch (e) {
-                console.log(e);
+                console.error(e);
                 return [[(0, helper_1.bn)(0)], (0, helper_1.bn)(0)];
             }
         });
@@ -163,17 +132,18 @@ class Swap {
     convertStepToActions(steps) {
         return __awaiter(this, void 0, void 0, function* () {
             const stateCalHelper = this.getStateCalHelperContract(constant_1.ZERO_ADDRESS);
-            const outputs = [];
+            let outputs = [];
             steps.forEach((step) => {
-                if (step.tokenOut !== constant_1.NATIVE_ADDRESS) {
-                    outputs.push({
-                        recipient: this.account,
-                        eip: (0, helper_1.isErc1155Address)(step.tokenOut) ? 1155 : 20,
-                        token: (0, helper_1.isErc1155Address)(step.tokenOut) ? this.CURRENT_POOL.TOKEN : step.tokenOut,
-                        id: (0, helper_1.isErc1155Address)(step.tokenOut) ? (0, helper_1.packId)(this.getIdByAddress(step.tokenOut).toString(), this.getAddressByErc1155Address(step.tokenOut)) : (0, helper_1.bn)(0),
-                        amountOutMin: step.amountOutMin,
-                    });
-                }
+                outputs.push({
+                    recipient: this.account,
+                    eip: (0, helper_1.isErc1155Address)(step.tokenOut)
+                        ? 1155
+                        : step.tokenOut === constant_1.NATIVE_ADDRESS
+                            ? 0 : 20,
+                    token: (0, helper_1.isErc1155Address)(step.tokenOut) ? this.CURRENT_POOL.TOKEN : step.tokenOut,
+                    id: (0, helper_1.isErc1155Address)(step.tokenOut) ? (0, helper_1.packId)(this.getIdByAddress(step.tokenOut).toString(), this.getAddressByErc1155Address(step.tokenOut)) : (0, helper_1.bn)(0),
+                    amountOutMin: step.amountOutMin,
+                });
             });
             let nativeAmountToWrap = (0, helper_1.bn)(0);
             let withdrawWrapToNative = false;
@@ -295,13 +265,10 @@ class Swap {
             throw new Error('Token id not found');
         }
     }
-    multiSwap(steps, gasLimit, isDeleverage = false) {
+    multiSwap(steps, gasLimit) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { params, value } = yield this.convertStepToActions([...steps]);
-                if (isDeleverage) {
-                    params.unshift(this.getDeleverageStep());
-                }
                 yield this.callStaticMultiSwap({
                     params, value, gasLimit
                 });
@@ -319,11 +286,11 @@ class Swap {
             }
         });
     }
-    updateLeverageAndSize(rawStep, gasLimit, isDeleverage = false) {
+    updateLeverageAndSize(rawStep, gasLimit) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const steps = this.formatSwapSteps(rawStep);
-                return yield this.multiSwap(steps, gasLimit, isDeleverage);
+                return yield this.multiSwap(steps, gasLimit);
             }
             catch (e) {
                 throw e;
