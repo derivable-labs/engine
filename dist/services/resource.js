@@ -311,30 +311,26 @@ class Resource {
                     decimal: 18,
                     totalSupply: 0,
                     address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.A
-                });
-                tokens.push({
+                }, {
                     symbol: poolGroups[id].baseToken.symbol + '^' + (1 - k / 2),
                     name: poolGroups[id].baseToken.symbol + '^' + (1 - k / 2),
                     decimal: 18,
                     totalSupply: 0,
                     address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.B
-                });
-                tokens.push({
+                }, {
                     symbol: `DLP-${poolGroups[id].baseToken.symbol}-${k / 2}`,
                     name: `DLP-${poolGroups[id].baseToken.symbol}-${k / 2}`,
                     decimal: 18,
                     totalSupply: 0,
                     address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.C
-                });
-                // tokens.push({
-                //   symbol: tokenR?.symbol + ' CP',
-                //   name: tokenR?.symbol + ' CP',
-                //   decimal: 18,
-                //   totalSupply: 0,
-                //   address: pools[i].poolAddress + '-' + POOL_IDS.C
-                // })
+                }, pools[i].baseToken, pools[i].quoteToken);
             }
-            return { tokens, pools, poolGroups };
+            return {
+                // @ts-ignore
+                tokens: lodash_1.default.uniqBy(tokens, 'address'),
+                pools,
+                poolGroups
+            };
         });
     }
     getRentRate({ rDcLong, rDcShort, R }, rentRate) {

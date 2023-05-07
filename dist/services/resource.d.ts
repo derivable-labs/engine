@@ -50,17 +50,9 @@ export declare class Resource {
      * @param logs
      */
     generatePoolData(logs: ParseLogType[]): Promise<{
-        tokens: {
-            symbol: any;
-            name: any;
-            decimal: any;
-            totalSupply: any;
-            address: string;
-        }[];
-        pools: {
-            [x: string]: PoolType;
-        };
-        poolGroups: {};
+        tokens: TokenType[];
+        pools: any;
+        poolGroups: any;
     }>;
     /**
      * load Token detail, poolstate data and then dispatch to Store
@@ -71,17 +63,9 @@ export declare class Resource {
     loadStatesData(listTokens: string[], listPools: {
         [key: string]: PoolType;
     }, uniPools: string[]): Promise<{
-        tokens: {
-            symbol: any;
-            name: any;
-            decimal: any;
-            totalSupply: any;
-            address: string;
-        }[];
-        pools: {
-            [x: string]: PoolType;
-        };
-        poolGroups: {};
+        tokens: TokenType[];
+        pools: any;
+        poolGroups: any;
     }>;
     getRentRate({ rDcLong, rDcShort, R }: {
         R: BigNumber;
