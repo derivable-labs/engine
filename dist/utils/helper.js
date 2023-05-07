@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.getLogicAbi = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
+exports.parseSqrtSpotX96 = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.getLogicAbi = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
 const ethers_1 = require("ethers");
 const Logic_json_1 = __importDefault(require("../abi/56/Logic.json"));
 const Logic_json_2 = __importDefault(require("../abi/97/Logic.json"));
@@ -155,4 +155,18 @@ const parseUq128x128 = (value, unit = 1000) => {
     return value.mul(unit).shr(128).toNumber() / unit;
 };
 exports.parseUq128x128 = parseUq128x128;
+const parseSqrtSpotX96 = (value, token0, token1, quoteTokenIndex) => {
+    value = (0, exports.bn)('3460663242738747649206486');
+    // const buyOneOfToken0 = (sqrtPriceX96 * sqrtPriceX96 * (10**Decimal0) / (10**Decimal1) / JSBI.BigInt(2) ** (JSBI.BigInt(192))).toFixed(Decimal1);
+    let price = (0, exports.weiToNumber)(value
+        .mul(value)
+        .mul((0, exports.numberToWei)(1, token0.decimal))
+        .shr(96 * 2), token1.decimal);
+    if (quoteTokenIndex === 0) {
+        price = (0, exports.weiToNumber)((0, exports.bn)((0, exports.numberToWei)(1, 36))
+            .div((0, exports.bn)((0, exports.numberToWei)(price))));
+    }
+    return (0, exports.formatFloat)(price, 5);
+};
+exports.parseSqrtSpotX96 = parseSqrtSpotX96;
 //# sourceMappingURL=helper.js.map

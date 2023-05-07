@@ -4,3 +4,4 @@ export declare const FixedPoint: {
 };
 export declare const floatToFixed128: (n: number) => BigNumber;
 export declare const fixed128ToFloat: (fixed128: BigNumber) => number;
+export declare const formatFloat: (number: number | string, decimal?: number) => number;

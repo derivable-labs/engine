@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fixed128ToFloat = exports.floatToFixed128 = exports.FixedPoint = void 0;
+exports.formatFloat = exports.fixed128ToFloat = exports.floatToFixed128 = exports.FixedPoint = void 0;
 const ethers_1 = require("ethers");
 const helper_1 = require("./helper");
 exports.FixedPoint = {
@@ -29,4 +29,13 @@ const fixed128ToFloat = (fixed128) => {
     return (0, helper_1.bn)(fixed128).mul(FLOAT_UNIT).shr(128).toNumber() / FLOAT_UNIT;
 };
 exports.fixed128ToFloat = fixed128ToFloat;
+const formatFloat = (number, decimal = 4) => {
+    number = number.toString();
+    const arr = number.split('.');
+    if (arr.length > 1) {
+        arr[1] = arr[1].slice(0, decimal);
+    }
+    return Number(arr.join('.'));
+};
+exports.formatFloat = formatFloat;
 //# sourceMappingURL=number.js.map

@@ -279,7 +279,7 @@ class Resource {
                     poolGroups[id].ORACLE = pools[i].ORACLE;
                     poolGroups[id].TOKEN_R = pools[i].TOKEN_R;
                     poolGroups[id].states = Object.assign({ twapBase: poolsState[i].twap, spotBase: poolsState[i].spot }, poolsState[i]);
-                    poolGroups[id].basePrice = (0, helper_1.parseUq128x128)(poolsState[i].spot);
+                    poolGroups[id].basePrice = (0, helper_1.parseSqrtSpotX96)(poolsState[i].spot, pairsInfo[pair].token0, pairsInfo[pair].token1, quoteTokenIndex);
                 }
                 const rdc = this.getRdc(Object.values(poolGroups[id].pools));
                 poolGroups[id].states = Object.assign(Object.assign({}, poolGroups[id].states), rdc);
