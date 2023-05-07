@@ -260,8 +260,10 @@ class Resource {
                 const { UTR, TOKEN, MARK: _MARK, ORACLE, TOKEN_R, powers, k: _k } = pools[i];
                 const quoteTokenIndex = (0, helper_1.bn)(ORACLE.slice(0, 3)).gt(0) ? 1 : 0;
                 const pair = ethers_1.ethers.utils.getAddress('0x' + ORACLE.slice(-40));
-                pools[i].baseToken = quoteTokenIndex === 0 ? pairsInfo[pair].token1 : pairsInfo[pair].token0;
-                pools[i].quoteToken = quoteTokenIndex === 0 ? pairsInfo[pair].token0 : pairsInfo[pair].token1;
+                const baseToken = quoteTokenIndex === 0 ? pairsInfo[pair].token1 : pairsInfo[pair].token0;
+                const quoteToken = quoteTokenIndex === 0 ? pairsInfo[pair].token0 : pairsInfo[pair].token1;
+                pools[i].baseToken = baseToken.address;
+                pools[i].quoteToken = quoteToken.address;
                 const MARK = _MARK.toString();
                 const k = _k.toNumber();
                 const id = [UTR, TOKEN, MARK, ORACLE, TOKEN_R].join('-');
@@ -306,24 +308,24 @@ class Resource {
                     ];
                 }
                 tokens.push({
-                    symbol: poolGroups[id].baseToken.symbol + '^' + (1 + k / 2),
-                    name: poolGroups[id].baseToken.symbol + '^' + (1 + k / 2),
+                    symbol: baseToken.symbol + '^' + (1 + k / 2),
+                    name: baseToken.symbol + '^' + (1 + k / 2),
                     decimal: 18,
                     totalSupply: 0,
                     address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.A
                 }, {
-                    symbol: poolGroups[id].baseToken.symbol + '^' + (1 - k / 2),
-                    name: poolGroups[id].baseToken.symbol + '^' + (1 - k / 2),
+                    symbol: baseToken.symbol + '^' + (1 - k / 2),
+                    name: baseToken.symbol + '^' + (1 - k / 2),
                     decimal: 18,
                     totalSupply: 0,
                     address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.B
                 }, {
-                    symbol: `DLP-${poolGroups[id].baseToken.symbol}-${k / 2}`,
-                    name: `DLP-${poolGroups[id].baseToken.symbol}-${k / 2}`,
+                    symbol: `DLP-${baseToken.symbol}-${k / 2}`,
+                    name: `DLP-${baseToken.symbol}-${k / 2}`,
                     decimal: 18,
                     totalSupply: 0,
                     address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.C
-                }, pools[i].baseToken, pools[i].quoteToken);
+                }, baseToken, quoteToken);
             }
             return {
                 // @ts-ignore
