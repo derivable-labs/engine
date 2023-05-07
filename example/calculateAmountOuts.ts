@@ -17,7 +17,7 @@ const testLocal = async () => {
   const steps = [
     {
       amountIn: bn(numberToWei(0.1)),
-      tokenIn: Object.values(currentPool.pools)[0].poolAddress + "-" + POOL_IDS.A,
+      tokenIn: Object.values(currentPool.pools)[0].poolAddress + "-" + POOL_IDS.C,
       tokenOut: CONFIGS[1337].nativeToken,
       amountOutMin: 0
     }

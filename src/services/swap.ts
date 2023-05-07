@@ -65,45 +65,14 @@ export class Swap {
     this.CURRENT_POOL = configs.CURRENT_POOL
   }
 
-  async getDeleverageStep(): Promise<any> {
-    const {priceScaleLong, twapBase} = this.CURRENT_POOL.states
-    const [start, end] = twapBase.lt(priceScaleLong) ?
-      [twapBase, priceScaleLong] : [priceScaleLong, twapBase]
-    const logicContract = this.getLogicContract()
-    const data = (await logicContract.populateTransaction.deleverage(start.div(2), end.mul(2))).data
-
-    return {
-      flags: 0,
-      code: this.CURRENT_POOL.logicAddress,
-      data: data,
-      inputs: [{
-        mode: 2,
-        recipient: this.CURRENT_POOL.poolAddress,
-        eip: 0,
-        id: 0,
-        token: ZERO_ADDRESS,
-        amountInMax: 0,
-        amountSource: 0,
-      }]
-    }
-  }
-
   //@ts-ignore
-  async calculateAmountOuts(steps: StepType[], isDeleverage: boolean = false) {
+  async calculateAmountOuts(steps: StepType[]) {
     if (!this.signer) return [[bn(0)], bn(0)]
     try {
       const stepsToSwap: SwapStepType[] = [...steps].map((step) => {
-        return {
-          amountIn: step.amountIn,
-          tokenIn: step.tokenIn === NATIVE_ADDRESS && this.CURRENT_POOL.TOKEN_R === CONFIGS[this.chainId].wrapToken ? this.CURRENT_POOL.TOKEN_R : step.tokenIn,
-          tokenOut: step.tokenOut === NATIVE_ADDRESS && this.CURRENT_POOL.TOKEN_R === CONFIGS[this.chainId].wrapToken ? this.CURRENT_POOL.TOKEN_R : step.tokenOut,
-          amountOutMin: 0
-        }
+        return {...step, amountOutMin: 0}
       })
       const {params, value} = await this.convertStepToActions(stepsToSwap)
-      if (isDeleverage) {
-        params[1].unshift(await this.getDeleverageStep())
-      }
 
       const router = CONFIGS[this.chainId].router
       // @ts-ignore
@@ -124,7 +93,7 @@ export class Swap {
       }
       return [result, bn(gasLimit).sub(res.gasLeft)]
     } catch (e) {
-      console.log(e)
+      console.error(e)
       return [[bn(0)], bn(0)]
     }
   }
@@ -184,17 +153,18 @@ export class Swap {
   async convertStepToActions(steps: SwapStepType[]): Promise<{ params: any, value: BigNumber }> {
     const stateCalHelper = this.getStateCalHelperContract(ZERO_ADDRESS)
 
-    const outputs: { eip: number; token: string; id: string | BigNumber; amountOutMin: string | number | BigNumber; recipient: string | undefined; }[] = []
+    let outputs: { eip: number; token: string; id: string | BigNumber; amountOutMin: string | number | BigNumber; recipient: string | undefined; }[] = []
     steps.forEach((step) => {
-      if (step.tokenOut !== NATIVE_ADDRESS) {
-        outputs.push({
-          recipient: this.account,
-          eip: isErc1155Address(step.tokenOut) ? 1155 : 20,
-          token: isErc1155Address(step.tokenOut) ? this.CURRENT_POOL.TOKEN : step.tokenOut,
-          id: isErc1155Address(step.tokenOut) ? packId(this.getIdByAddress(step.tokenOut).toString(), this.getAddressByErc1155Address(step.tokenOut)) : bn(0),
-          amountOutMin: step.amountOutMin,
-        })
-      }
+      outputs.push({
+        recipient: this.account,
+        eip: isErc1155Address(step.tokenOut)
+          ? 1155
+          : step.tokenOut === NATIVE_ADDRESS
+            ? 0 : 20,
+        token: isErc1155Address(step.tokenOut) ? this.CURRENT_POOL.TOKEN : step.tokenOut,
+        id: isErc1155Address(step.tokenOut) ? packId(this.getIdByAddress(step.tokenOut).toString(), this.getAddressByErc1155Address(step.tokenOut)) : bn(0),
+        amountOutMin: step.amountOutMin,
+      })
     })
     let nativeAmountToWrap = bn(0)
     let withdrawWrapToNative = false
@@ -329,12 +299,9 @@ export class Swap {
     }
   }
 
-  async multiSwap(steps: SwapStepType[], gasLimit?: BigNumber, isDeleverage = false) {
+  async multiSwap(steps: SwapStepType[], gasLimit?: BigNumber) {
     try {
       const {params, value} = await this.convertStepToActions([...steps])
-      if (isDeleverage) {
-        params.unshift(this.getDeleverageStep())
-      }
 
       await this.callStaticMultiSwap({
         params, value, gasLimit
@@ -354,10 +321,10 @@ export class Swap {
     }
   }
 
-  async updateLeverageAndSize(rawStep: StepType[], gasLimit?: BigNumber, isDeleverage = false) {
+  async updateLeverageAndSize(rawStep: StepType[], gasLimit?: BigNumber) {
     try {
       const steps = this.formatSwapSteps(rawStep)
-      return await this.multiSwap(steps, gasLimit, isDeleverage)
+      return await this.multiSwap(steps, gasLimit)
     } catch (e) {
       throw e
     }
