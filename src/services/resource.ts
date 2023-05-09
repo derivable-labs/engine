@@ -7,7 +7,7 @@ import {
 } from "../utils/constant";
 import EventsAbi from '../abi/Events.json'
 import {Multicall} from "ethereum-multicall";
-import {CONFIGS} from "../utils/configs";
+import { DEFAULT_CONFIG} from "../utils/configs";
 import TokensInfoAbi from "../abi/TokensInfo.json";
 import {
   LogType,
@@ -21,7 +21,8 @@ import {
   TokenType
 } from "../types";
 import {
-  bn, decodePowers,
+  bn,
+  decodePowers,
   formatMultiCallBignumber,
   getLogicAbi,
   getNormalAddress,
@@ -36,22 +37,23 @@ import {PowerState} from 'powerLib/dist/powerLib';
 import _ from "lodash";
 import {UniV3Pair} from "./uniV3Pair";
 import PairV3DetailAbi from "../abi/PairV3Detail.json";
+import { Derivable } from "../../example/setConfig";
 
 const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
 const TOPIC_APP = ethers.utils.formatBytes32String('DDL')
 
-type ConfigType = {
-  chainId: number
-  scanApi: string
-  account?: string
-  storage?: Storage
-  provider: ethers.providers.Provider
-  providerToGetLog: ethers.providers.Provider
-  overrideProvider: JsonRpcProvider
-  UNIV2PAIR: UniV2Pair
-  UNIV3PAIR: UniV3Pair
-}
+// type ConfigType = {
+//   chainId: number
+//   scanApi: string
+//   account?: string
+//   storage?: Storage
+//   provider: ethers.providers.Provider
+//   providerToGetLog: ethers.providers.Provider
+//   overrideProvider: JsonRpcProvider
+//   UNIV2PAIR: UniV2Pair
+//   UNIV3PAIR: UniV3Pair
+// }
 
 type ResourceData = {
   pools: PoolsType
@@ -66,7 +68,7 @@ export class Resource {
   tokens: TokenType[] = []
   swapLogs: LogType[] = []
   chainId: number
-  scanApi: string
+  scanApi?: string
   account?: string
   storage?: Storage
   provider: ethers.providers.Provider
@@ -74,18 +76,40 @@ export class Resource {
   overrideProvider: JsonRpcProvider
   UNIV2PAIR: UniV2Pair
   UNIV3PAIR: UniV3Pair
+  multiCall: string
+  tokensInfo: string
 
-  constructor(configs: ConfigType) {
-    this.chainId = configs.chainId
-    this.scanApi = configs.scanApi
-    this.account = configs.account
-    this.storage = configs.storage
-    this.account = configs.account
-    this.providerToGetLog = configs.providerToGetLog
-    this.provider = configs.provider
-    this.UNIV2PAIR = configs.UNIV2PAIR
-    this.UNIV3PAIR = configs.UNIV3PAIR
-    this.overrideProvider = configs.overrideProvider
+  constructor(account: string, config = DEFAULT_CONFIG) {
+    if (
+      !config.chainId ||
+      !config.scanApi ||
+      !config.storage ||
+      !config.rpcToGetLogs
+    ) {
+      throw new Error(
+        `required chainId scanApi storage rpcToGetLogs to be defined!`,
+      )
+    }
+
+    if (!config.addresses.multiCall || !config.addresses.tokensInfo) {
+      throw new Error(`required multiCall tokensInfo to be defined!`)
+    }
+
+    const { chainId, scanApi, storage, providerToGetLog, provider, UNIV2PAIR, UNIV3PAIR, overrideProvider} =
+      Derivable.loadConfig(account, config)
+    const { multiCall, tokensInfo } = Derivable.loadContract(config)
+
+    this.chainId = chainId
+    this.scanApi = scanApi
+    this.account = account
+    this.storage = storage
+    this.providerToGetLog = providerToGetLog
+    this.provider = provider
+    this.UNIV2PAIR = UNIV2PAIR
+    this.UNIV3PAIR = UNIV3PAIR
+    this.overrideProvider = overrideProvider
+    this.multiCall = multiCall
+    this.tokensInfo = tokensInfo
   }
 
   async fetchResourceData(account: string) {
@@ -93,7 +117,7 @@ export class Resource {
     if (!this.chainId) return result;
     const [resultCached, newResource] = await Promise.all([
       this.getResourceCached(account),
-      this.getNewResource(account)
+      this.getNewResource(account),
     ])
     this.poolGroups = {...resultCached.poolGroups, ...newResource.poolGroups}
     this.pools = {...resultCached.pools, ...newResource.pools}
@@ -140,17 +164,33 @@ export class Resource {
         ))
       })
 
-      this.storage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account, headBlock.toString())
-      this.storage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account, JSON.stringify(newCacheSwapLogs))
+      this.storage.setItem(
+        this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account,
+        headBlock.toString(),
+      )
+      this.storage.setItem(
+        this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account,
+        JSON.stringify(newCacheSwapLogs),
+      )
     }
   }
 
   async getResourceCached(account: string): Promise<ResourceData> {
     const results: ResourceData = {pools: {}, tokens: [], swapLogs: [], poolGroups: {}}
     if (!this.storage) return results
-    const ddlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) || '[]')
-    const swapLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account) || '[]')
-    const [ddlLogsParsed, swapLogsParsed] = [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs)]
+    const ddlLogs = JSON.parse(
+      this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) ||
+        '[]',
+    )
+    const swapLogs = JSON.parse(
+      this.storage.getItem(
+        this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account,
+      ) || '[]',
+    )
+    const [ddlLogsParsed, swapLogsParsed] = [
+      this.parseDdlLogs(ddlLogs),
+      this.parseDdlLogs(swapLogs),
+    ]
 
     if (ddlLogsParsed && ddlLogsParsed.length > 0) {
       const {tokens, pools, poolGroups} = await this.generatePoolData(ddlLogsParsed)
@@ -166,18 +206,20 @@ export class Resource {
   }
 
   async getNewResource(account: string): Promise<ResourceData> {
-    const etherscanConfig = this.scanApi ? {
-      url: this.scanApi,
-      maxResults: 1000,
-      rangeThreshold: 0,
-      rateLimitCount: 1,
-      rateLimitDuration: 5000,
-      apiKeys: ['']
-    } : undefined
+    const etherscanConfig = this.scanApi
+      ? {
+          url: this.scanApi,
+          maxResults: 1000,
+          rangeThreshold: 0,
+          rateLimitCount: 1,
+          rateLimitDuration: 5000,
+          apiKeys: [''],
+        }
+      : undefined
 
     const provider = new AssistedJsonRpcProvider(
       this.providerToGetLog,
-      etherscanConfig
+      etherscanConfig,
     )
     const lastHeadBlockCached = this.getLastBlockCached(account)
     const accTopic = account ? '0x' + '0'.repeat(24) + account.slice(2) : null
@@ -215,6 +257,27 @@ export class Resource {
         headBlock,
         account
       })
+      .then((logs: any) => {
+        if (!logs?.length) {
+          return [[], []]
+        }
+        const headBlock = logs[logs.length - 1]?.blockNumber
+        const topics = this.getTopics()
+        const ddlLogs = logs.filter((log: any) => {
+          return (
+            log.address &&
+            [topics.LogicCreated, topics.PoolCreated].includes(log.topics[0])
+          )
+        })
+        const swapLogs = logs.filter((log: any) => {
+          return log.address && log.topics[0] === topics.MultiSwap
+        })
+        this.cacheDdlLog({
+          ddlLogs,
+          swapLogs,
+          headBlock,
+          account,
+        })
 
       return [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs)]
     }).then(async ([ddlLogs, swapLogs]: any) => {
@@ -260,7 +323,7 @@ export class Resource {
           priceToleranceRatio: log.args.priceToleranceRatio,
           rentRate: log.args.rentRate,
           deleverageRate: log.args.deleverageRate,
-          powers
+          powers,
         }
       }
     })
@@ -275,8 +338,9 @@ export class Resource {
           return {power: value, index: key}
         })
 
-        data.dTokens = (data.dTokens as { index: number, power: number }[])
-          .map((data) => `${log.address}-${data.index}`)
+        data.dTokens = (data.dTokens as { index: number; power: number }[]).map(
+          (data) => `${log.address}-${data.index}`,
+        )
 
         poolData[log.address] = {
           ...data,
@@ -313,7 +377,7 @@ export class Resource {
     poolGroups: any
   }> {
     const multicall = new Multicall({
-      multicallCustomContractAddress: CONFIGS[this.chainId].multiCall,
+      multicallCustomContractAddress: this.multiCall,
       ethersProvider: this.getPoolOverridedProvider(Object.keys(listPools)),
       tryAggregate: true
     })
@@ -336,7 +400,7 @@ export class Resource {
         name: tokensArr[i][1],
         decimal: tokensArr[i][2],
         totalSupply: tokensArr[i][3],
-        address: normalTokens[i]
+        address: normalTokens[i],
       })
     }
 
@@ -482,7 +546,7 @@ export class Resource {
     const request = [
       {
         reference: 'tokens',
-        contractAddress: CONFIGS[this.chainId].tokensInfo,
+        contractAddress: this.tokensInfo,
         abi: TokensInfoAbi,
         calls: [{reference: 'tokenInfos', methodName: 'getTokenInfo', methodParameters: [normalTokens]}]
       }
@@ -517,7 +581,10 @@ export class Resource {
       const poolStateData = multiCallData['pools-' + poolAddress].callsReturnContext
       const data = formatMultiCallBignumber(poolStateData[0].returnValues)
       const encodeData = abiInterface.encodeFunctionResult('getStates', [data])
-      const formatedData = abiInterface.decodeFunctionResult('getStates', encodeData)
+      const formatedData = abiInterface.decodeFunctionResult(
+        'getStates',
+        encodeData,
+      )
 
       pools[poolStateData[0].reference] = {
         // twapBase: formatedData.states.twap.base._x,
@@ -601,4 +668,3 @@ export class Resource {
     return topics
   }
 }
-

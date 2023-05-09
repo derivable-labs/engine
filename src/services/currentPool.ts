@@ -1,14 +1,15 @@
-import {Resource} from "./resource";
-import {CONFIGS}  from "../utils/configs";
-import {bn} from "../utils/helper";
-import {POOL_IDS} from "../utils/constant";
-import {BigNumber} from "ethers";
+import { Resource } from './resource'
+import { DEFAULT_CONFIG } from '../utils/configs'
+import { bn } from '../utils/helper'
+import { POOL_IDS } from '../utils/constant'
+import { BigNumber } from 'ethers'
+import { Derivable } from '../../example/setConfig'
 
-type ConfigType = {
-  resource: Resource
-  poolAddress: string
-  chainId: number
-}
+// type ConfigType = {
+//   resource: Resource
+//   poolAddress: string
+//   chainId: number
+// }
 export type PoolData = {
   baseToken: string
   quoteToken: string
@@ -18,7 +19,7 @@ export type PoolData = {
   states: any
   powers: number[]
   basePrice: string
-  poolAddress: string
+  poolAddress?: string
   baseId: number
   quoteId: number
   logic: string
@@ -37,16 +38,20 @@ export class CurrentPool {
   states: any
   powers: number[]
   basePrice: string
-  poolAddress: string
+  poolAddress?: string
   baseId: number
   quoteId: number
   chainId: number
-
-  constructor(configs: ConfigType) {
-    this.resource = configs.resource
-    this.poolAddress = configs.poolAddress
-
-    this.chainId = configs.chainId
+  nativeToken?: string
+  constructor(account: string, config = DEFAULT_CONFIG) {
+    const { chainId, poolAddress, nativeToken } = Derivable.loadConfig(
+      account,
+      config,
+    )
+    this.resource = new Resource(account, config)
+    this.poolAddress = poolAddress
+    this.chainId = chainId
+    this.nativeToken = nativeToken
     // this.loadState(configs.poolAddress)
   }
 
@@ -81,15 +86,16 @@ export class CurrentPool {
     // this.quoteId = poolData.quoteId;
   }
 
-  getTokenByPower(power: number | string){
+  getTokenByPower(power: number | string) {
     if (power === 'C') {
       return this.cToken
     } else if (power === 'B') {
       return this.baseToken
     } else if (power === 'Q') {
       return this.quoteToken
-    } else if (power === 'N') { // native token
-      return CONFIGS[this.chainId].nativeToken
+    } else if (power === 'N') {
+      // native token
+      return this.nativeToken
     }
     const index = this.powers.findIndex((p) => p === Number(power))
     return this.dTokens[index]
@@ -99,7 +105,7 @@ export class CurrentPool {
     try {
       if (address === this.baseToken) return bn(this.baseId)
       if (address === this.quoteToken) return bn(this.quoteId)
-      if (address === CONFIGS[this.chainId].nativeToken) return bn(POOL_IDS.native)
+      if (address === this.nativeToken) return bn(POOL_IDS.native)
       if (address === this.cToken) return bn(POOL_IDS.cToken)
       return bn(address.split('-')[1])
     } catch (e) {

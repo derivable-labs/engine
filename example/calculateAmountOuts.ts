@@ -1,26 +1,28 @@
-import {Engine} from "../src/engine";
-import {bn, numberToWei} from "../src/utils/helper";
-import {getTestConfigs} from "./shared/testConfigs";
-import {POOL_IDS} from "../src/utils/constant";
-import {CONFIGS} from "../dist/utils/configs";
+import { Engine } from '../src/engine'
+import { bn, numberToWei } from '../src/utils/helper'
+import { getTestConfigs } from './shared/testConfigs'
+import { POOL_IDS } from '../src/utils/constant'
+import { CONFIGS } from '../dist/utils/configs'
 
 const testLocal = async () => {
   const engine = new Engine(getTestConfigs(1337))
-  await engine.RESOURCE.fetchResourceData('0xbC52C688c34A480c6785A38715c693Bb22863DE1')
+  await engine.RESOURCE.fetchResourceData(
+    '0xbC52C688c34A480c6785A38715c693Bb22863DE1',
+  )
 
   const currentPool = Object.values(engine.RESOURCE.poolGroups)[0]
   engine.setCurrentPool({
     ...currentPool,
   })
 
-
   const steps = [
     {
       amountIn: bn(numberToWei(0.1)),
-      tokenIn: Object.values(currentPool.pools)[0].poolAddress + "-" + POOL_IDS.C,
+      tokenIn:
+        Object.values(currentPool.pools)[0].poolAddress + '-' + POOL_IDS.C,
       tokenOut: CONFIGS[1337].nativeToken,
-      amountOutMin: 0
-    }
+      amountOutMin: 0,
+    },
   ]
 
   // const steps = [
