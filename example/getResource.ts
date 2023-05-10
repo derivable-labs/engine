@@ -3,9 +3,10 @@ import { getTestConfigs } from './shared/testConfigs'
 import { BigNumber } from 'ethers'
 import { FixedPoint } from '../src/utils/number'
 import { bn } from '../src/utils/helper'
+import {ZERO_ADDRESS} from "../dist/utils/constant";
 
 const testLocal = async () => {
-  const engine = new Engine(getTestConfigs(42161))
+  const engine = new Engine(ZERO_ADDRESS, getTestConfigs(42161))
   await engine.RESOURCE.fetchResourceData(
     '0xbC52C688c34A480c6785A38715c693Bb22863DE1',
   )

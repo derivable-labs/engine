@@ -1,4 +1,4 @@
-import {Storage} from '../types'
+import { Storage } from '../types'
 
 export interface config {
   chainId: number
