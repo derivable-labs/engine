@@ -1,8 +1,9 @@
-import {ethers}      from "ethers";
-import PairDetailAbi from "../abi/PairDetail.json";
-import {CONFIGS}     from "../utils/configs";
+import { ethers } from 'ethers'
+import PairDetailAbi from '../abi/PairDetail.json'
+import { CONFIGS } from '../utils/configs'
 
-const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111'
+const FLAG =
+  '0x0000110000000000000000000000000000000000000000000000000000000111'
 type ConfigType = {
   chainId: number
   scanApi: string
@@ -22,13 +23,17 @@ export class UniV2Pair {
 
   async getPairInfo({
     pairAddress,
-    flag = FLAG
+    flag = FLAG,
   }: {
     pairAddress: string
     flag?: string
   }) {
     try {
-      const pairDetailContract = new ethers.Contract(CONFIGS[this.chainId].pairsInfo, PairDetailAbi, this.provider)
+      const pairDetailContract = new ethers.Contract(
+        CONFIGS[this.chainId].pairsInfo,
+        PairDetailAbi,
+        this.provider,
+      )
 
       const res = await pairDetailContract.functions.query([pairAddress], flag)
       return res.details[0]
@@ -37,20 +42,23 @@ export class UniV2Pair {
     }
   }
 
-  async getPairsInfo(
-    {
-      pairAddresses,
-      flag = FLAG
-    }: {
-      flag?: string
-      pairAddresses: string[]
-    }) {
+  async getPairsInfo({
+    pairAddresses,
+    flag = FLAG,
+  }: {
+    flag?: string
+    pairAddresses: string[]
+  }) {
     try {
-      const pairDetailContract = new ethers.Contract(CONFIGS[this.chainId].pairsInfo, PairDetailAbi, this.provider)
+      const pairDetailContract = new ethers.Contract(
+        CONFIGS[this.chainId].pairsInfo,
+        PairDetailAbi,
+        this.provider,
+      )
 
       const { details } = await pairDetailContract.functions.query(
         pairAddresses,
-        flag
+        flag,
       )
       const result = {}
       for (let i = 0; i < pairAddresses.length; i++) {

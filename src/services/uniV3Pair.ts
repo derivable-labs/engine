@@ -1,9 +1,10 @@
-import {ethers}      from "ethers";
-import PairV3DetailAbi from "../abi/PairV3Detail.json";
-import {CONFIGS}     from "../utils/configs";
-import {JsonRpcProvider} from "@ethersproject/providers";
+import { ethers } from 'ethers'
+import PairV3DetailAbi from '../abi/PairV3Detail.json'
+import { CONFIGS } from '../utils/configs'
+import { JsonRpcProvider } from '@ethersproject/providers'
 
-const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111'
+const FLAG =
+  '0x0000110000000000000000000000000000000000000000000000000000000111'
 type ConfigType = {
   chainId: number
   scanApi: string
@@ -17,8 +18,6 @@ export class UniV3Pair {
   provider: ethers.providers.Provider
   rpcUrl: string
 
-
-
   constructor(configs: ConfigType) {
     this.chainId = configs.chainId
     this.scanApi = configs.scanApi
@@ -28,7 +27,7 @@ export class UniV3Pair {
 
   async getPairInfo({
     pairAddress,
-    flag = FLAG
+    flag = FLAG,
   }: {
     pairAddress: string
     flag?: string
@@ -38,11 +37,15 @@ export class UniV3Pair {
       // @ts-ignore
       provider.setStateOverride({
         [CONFIGS[this.chainId].pairsV3Info]: {
-          code: PairV3DetailAbi.deployedBytecode
-        }
+          code: PairV3DetailAbi.deployedBytecode,
+        },
       })
 
-      const pairDetailContract = new ethers.Contract(CONFIGS[this.chainId].pairsV3Info, PairV3DetailAbi.abi, provider)
+      const pairDetailContract = new ethers.Contract(
+        CONFIGS[this.chainId].pairsV3Info,
+        PairV3DetailAbi.abi,
+        provider,
+      )
 
       const res = await pairDetailContract.functions.query([pairAddress], flag)
       return res.details[0]
@@ -51,28 +54,31 @@ export class UniV3Pair {
     }
   }
 
-  async getPairsInfo(
-    {
-      pairAddresses,
-      flag = FLAG
-    }: {
-      flag?: string
-      pairAddresses: string[]
-    }) {
+  async getPairsInfo({
+    pairAddresses,
+    flag = FLAG,
+  }: {
+    flag?: string
+    pairAddresses: string[]
+  }) {
     try {
       const provider = new JsonRpcProvider(this.rpcUrl)
       // @ts-ignore
       provider.setStateOverride({
         [CONFIGS[this.chainId].pairsV3Info]: {
-          code: PairV3DetailAbi.deployedBytecode
-        }
+          code: PairV3DetailAbi.deployedBytecode,
+        },
       })
 
-      const pairDetailContract = new ethers.Contract(CONFIGS[this.chainId].pairsV3Info, PairV3DetailAbi.abi, provider)
+      const pairDetailContract = new ethers.Contract(
+        CONFIGS[this.chainId].pairsV3Info,
+        PairV3DetailAbi.abi,
+        provider,
+      )
 
       const { details } = await pairDetailContract.functions.query(
         pairAddresses,
-        flag
+        flag,
       )
       const result = {}
       for (let i = 0; i < pairAddresses.length; i++) {
@@ -88,7 +94,7 @@ export class UniV3Pair {
             name: details[i].token1.name,
             symbol: details[i].token1.symbol,
             decimal: details[i].token1.decimals.toNumber(),
-          }
+          },
         }
       }
       return result

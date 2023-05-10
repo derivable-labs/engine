@@ -1,9 +1,9 @@
 // @ts-nocheck
-import {ethers} from "ethers";
-import {PowerState} from 'powerLib/dist/powerLib'
-import {LogType} from "../types";
-import {CurrentPool} from "./currentPool";
-import {EventDataAbis, NATIVE_ADDRESS, POOL_IDS} from "../utils/constant";
+import { ethers } from 'ethers'
+import { PowerState } from 'powerLib/dist/powerLib'
+import { LogType } from '../types'
+import { CurrentPool } from './currentPool'
+import { EventDataAbis, NATIVE_ADDRESS, POOL_IDS } from '../utils/constant'
 
 type ConfigType = {
   account?: string
@@ -19,11 +19,7 @@ export class History {
     this.CURRENT_POOL = configs.CURRENT_POOL
   }
 
-  formatSwapHistory({
-                      logs,
-                    }: {
-    logs: LogType[],
-  }) {
+  formatSwapHistory({ logs }: { logs: LogType[] }) {
     try {
       if (!logs || logs.length === 0) {
         return []
@@ -31,14 +27,15 @@ export class History {
 
       const swapLogs = logs.map((log) => {
         const encodeData = ethers.utils.defaultAbiCoder.encode(
-          EventDataAbis.Swap, log.args.args
+          EventDataAbis.Swap,
+          log.args.args,
         )
         const formatedData = ethers.utils.defaultAbiCoder.decode(
           EventDataAbis.Swap,
-          encodeData
+          encodeData,
         )
 
-        const {poolIn, poolOut} = formatedData
+        const { poolIn, poolOut } = formatedData
 
         const tokenIn = formatedData.sideIn.eq(POOL_IDS.native)
           ? NATIVE_ADDRESS
@@ -56,12 +53,12 @@ export class History {
           poolOut,
           tokenIn,
           tokenOut,
-          ...formatedData
+          ...formatedData,
         }
       })
 
       //@ts-ignore
-      return swapLogs.sort((a, b) => (b.blockNumber - a.blockNumber))
+      return swapLogs.sort((a, b) => b.blockNumber - a.blockNumber)
     } catch (e) {
       throw e
     }
