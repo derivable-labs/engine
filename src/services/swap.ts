@@ -14,7 +14,6 @@ import {
   POOL_IDS,
   ZERO_ADDRESS,
 } from '../utils/constant'
-import { CONFIGS } from '../utils/configs'
 import { CurrentPool } from './currentPool'
 import UtrAbi from '../abi/UTR.json'
 import LogicsAbi from '../abi/Logic.json'
@@ -24,17 +23,18 @@ import HelperAbi from '../abi/Helper.json'
 import Erc20Abi from '../abi/ERC20.json'
 import WtapAbi from '../abi/Wrap.json'
 import { JsonRpcProvider } from '@ethersproject/providers'
+import { ConfigType } from './setConfig'
 
-type ConfigType = {
-  account?: string
-  chainId: number
-  scanApi: string
-  provider: ethers.providers.Provider
-  overrideProvider: JsonRpcProvider
-  signer?: ethers.providers.JsonRpcSigner
-  UNIV2PAIR: UniV2Pair
-  CURRENT_POOL: CurrentPool
-}
+// type ConfigType = {
+//   account?: string
+//   chainId: number
+//   scanApi: string
+//   provider: ethers.providers.Provider
+//   overrideProvider: JsonRpcProvider
+//   signer?: ethers.providers.JsonRpcSigner
+//   UNIV2PAIR: UniV2Pair
+//   CURRENT_POOL: CurrentPool
+// }
 
 // TODO: don't hardcode these
 const fee10000 = 30
@@ -59,21 +59,22 @@ const mode = (x: string) => ethers.utils.formatBytes32String(x)
 export class Swap {
   account?: string
   chainId: number
-  scanApi: string
+  scanApi?: string
   provider: ethers.providers.Provider
   overrideProvider: JsonRpcProvider
   signer?: ethers.providers.JsonRpcSigner
   UNIV2PAIR: UniV2Pair
   CURRENT_POOL: CurrentPool
-
-  constructor(configs: ConfigType) {
-    this.account = configs.account
-    this.chainId = configs.chainId
-    this.scanApi = configs.scanApi
-    this.provider = configs.provider
-    this.overrideProvider = configs.overrideProvider
-    this.signer = configs.signer
-    this.CURRENT_POOL = configs.CURRENT_POOL
+  config: ConfigType
+  constructor(config: ConfigType) {
+    this.config = config
+    this.account = config.account
+    this.chainId = config.chainId
+    this.scanApi = config.scanApi
+    this.provider = config.provider
+    this.overrideProvider = config.overrideProvider
+    this.signer = config.signer
+    this.CURRENT_POOL = new CurrentPool(config)
   }
 
   //@ts-ignore
@@ -85,7 +86,7 @@ export class Swap {
       })
       const { params, value } = await this.convertStepToActions(stepsToSwap)
 
-      const router = CONFIGS[this.chainId].router
+      const router = this.config.addresses.router as string
       // @ts-ignore
       this.overrideProvider.setStateOverride({
         [router]: {
@@ -149,7 +150,7 @@ export class Swap {
   } {
     let value = bn(0)
     steps.forEach((step) => {
-      if (step.tokenIn === CONFIGS[this.chainId].nativeToken) {
+      if (step.tokenIn === this.config.nativeToken) {
         value = value.add(step.amountIn)
       }
     })
@@ -205,9 +206,9 @@ export class Swap {
     const promises: any = []
     steps.forEach((step) => {
       if (
-        (step.tokenIn === CONFIGS[this.chainId].nativeToken ||
-          step.tokenOut === CONFIGS[this.chainId].nativeToken) &&
-        this.CURRENT_POOL.TOKEN_R !== CONFIGS[this.chainId].wrapToken
+        (step.tokenIn === this.config.nativeToken ||
+          step.tokenOut === this.config.nativeToken) &&
+        this.CURRENT_POOL.TOKEN_R !== this.config.addresses.wrapToken
       ) {
         throw 'This pool do not support swap by native Token'
       }
@@ -217,11 +218,11 @@ export class Swap {
 
       let idIn = this.getIdByAddress(step.tokenIn)
       const idOut = this.getIdByAddress(step.tokenOut)
-      if (step.tokenIn === CONFIGS[this.chainId].nativeToken) {
+      if (step.tokenIn === this.config.nativeToken) {
         nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn)
       }
 
-      if (step.tokenOut === CONFIGS[this.chainId].nativeToken) {
+      if (step.tokenOut === this.config.nativeToken) {
         withdrawWrapToNative = true
       }
 
@@ -245,7 +246,7 @@ export class Swap {
             recipient: poolAddress,
           },
         ]
-        if (step.tokenIn === CONFIGS[this.chainId].nativeToken) {
+        if (step.tokenIn === this.config.nativeToken) {
           inputs = [
             {
               mode: CALL_VALUE,
@@ -258,7 +259,7 @@ export class Swap {
           ]
         }
         metaDatas.push({
-          code: CONFIGS[this.chainId].stateCalHelper,
+          code: this.config.addresses.stateCalHelper,
           inputs,
         })
         promises.push(
@@ -274,7 +275,7 @@ export class Swap {
         )
       } else {
         metaDatas.push({
-          code: CONFIGS[this.chainId].stateCalHelper,
+          code: this.config.addresses.stateCalHelper,
           inputs: [
             {
               mode: PAYMENT,
@@ -314,7 +315,7 @@ export class Swap {
     //   const data = await poolContract.populateTransaction.deposit()
     //   actions.unshift({
     //     flags: 0,
-    //     code: CONFIGS[this.chainId].wrapToken,
+    //     code: this.config.wrapToken,
     //     //@ts-ignore
     //     data: data.data,
     //     inputs: [{
@@ -335,8 +336,8 @@ export class Swap {
     try {
       if (address === this.CURRENT_POOL.TOKEN_R) return bn(POOL_IDS.R)
       if (
-        address === CONFIGS[this.chainId].nativeToken &&
-        this.CURRENT_POOL.TOKEN_R === CONFIGS[this.chainId].wrapToken
+        address === this.config.nativeToken &&
+        this.CURRENT_POOL.TOKEN_R === this.config.addresses.wrapToken
       ) {
         return bn(POOL_IDS.native)
       }
@@ -382,17 +383,17 @@ export class Swap {
       return address.split('-')[0]
     }
     if (
-      address === CONFIGS[this.chainId].nativeToken &&
-      this.CURRENT_POOL.TOKEN_R === CONFIGS[this.chainId].wrapToken
+      address === this.config.nativeToken &&
+      this.CURRENT_POOL.TOKEN_R === this.config.addresses.wrapToken
     ) {
-      return CONFIGS[this.chainId].wrapToken
+      return this.config.addresses.wrapToken
     }
 
     return address
   }
 
   getRouterContract(provider: any) {
-    return new ethers.Contract(CONFIGS[this.chainId].router, UtrAbi, provider)
+    return new ethers.Contract(this.config.addresses.router as string, UtrAbi, provider)
   }
 
   getStateCalHelperContract(address: string, provider?: any) {
@@ -413,7 +414,7 @@ export class Swap {
 
   getWrapContract(provider?: any) {
     return new ethers.Contract(
-      CONFIGS[this.chainId].wrapToken,
+      this.config.addresses.wrapToken as string,
       WtapAbi,
       provider || this.provider,
     )

@@ -4,19 +4,20 @@ import { PowerState } from 'powerLib/dist/powerLib'
 import { LogType } from '../types'
 import { CurrentPool } from './currentPool'
 import { EventDataAbis, NATIVE_ADDRESS, POOL_IDS } from '../utils/constant'
+import { ConfigType } from './setConfig'
 
-type ConfigType = {
-  account?: string
-  CURRENT_POOL: CurrentPool
-}
+// type ConfigType = {
+//   account?: string
+//   CURRENT_POOL: CurrentPool
+// }
 
 export class History {
   account?: string
   CURRENT_POOL: CurrentPool
 
-  constructor(configs: ConfigType) {
-    this.account = configs.account
-    this.CURRENT_POOL = configs.CURRENT_POOL
+  constructor(config: ConfigType) {
+    this.account = config.account
+    this.CURRENT_POOL = new CurrentPool(config)
   }
 
   formatSwapHistory({ logs }: { logs: LogType[] }) {

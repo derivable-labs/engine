@@ -1,36 +1,38 @@
 import { bn, getErc1155Token, getNormalAddress, packId } from '../utils/helper'
 import { ethers } from 'ethers'
 import { Multicall } from 'ethereum-multicall'
-import { CONFIGS } from '../utils/configs'
 import { LARGE_VALUE } from '../utils/constant'
 import BnAAbi from '../abi/BnA.json'
 import TokenAbi from '../abi/Token.json'
 import PoolAbi from '../abi/Pool.json'
 import { AllowancesType, BalancesType } from '../types'
+import { ConfigType } from './setConfig'
+import { DerivableContractAddress } from '../utils/configs'
 
 type BnAReturnType = { balances: BalancesType; allowances: AllowancesType }
 
-type ConfigType = {
-  chainId: number
-  account?: string
-  provider: ethers.providers.Provider
-}
+// type ConfigType = {
+//   chainId: number
+//   account?: string
+//   provider: ethers.providers.Provider
+// }
 
 export class BnA {
   chainId: number
   account?: string
   provider: ethers.providers.Provider
-
-  constructor(configs: ConfigType) {
-    this.chainId = configs.chainId
-    this.account = configs.account
-    this.provider = configs.provider
+  contractAddresses: Partial<DerivableContractAddress>
+  constructor(config: ConfigType) {
+    this.chainId = config.chainId
+    this.account = config.account
+    this.provider = config.provider
+    this.contractAddresses = config.addresses
   }
 
   async getBalanceAndAllowance({ tokens }: any): Promise<BnAReturnType> {
     if (this.account) {
       const multicall = new Multicall({
-        multicallCustomContractAddress: CONFIGS[this.chainId].multiCall,
+        multicallCustomContractAddress: this.contractAddresses.multiCall,
         ethersProvider: this.provider,
         tryAggregate: true,
       })
@@ -66,7 +68,7 @@ export class BnA {
     const request: any = [
       {
         reference: 'erc20',
-        contractAddress: CONFIGS[this.chainId].bnA,
+        contractAddress: this.contractAddresses.bnA,
         abi: BnAAbi,
         calls: [
           {
@@ -75,14 +77,14 @@ export class BnA {
             methodParameters: [
               erc20Tokens,
               [this.account],
-              [CONFIGS[this.chainId].router],
+              [this.contractAddresses.router],
             ],
           },
         ],
       },
       {
         reference: 'erc1155',
-        contractAddress: CONFIGS[this.chainId].token,
+        contractAddress: this.contractAddresses.token,
         abi: TokenAbi,
         calls: [
           {
@@ -93,7 +95,7 @@ export class BnA {
           {
             reference: 'isApprovedForAll',
             methodName: 'isApprovedForAll',
-            methodParameters: [this.account, CONFIGS[this.chainId].router],
+            methodParameters: [this.account, this.contractAddresses.router],
           },
         ],
       },
