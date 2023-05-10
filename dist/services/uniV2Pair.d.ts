@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-declare type ConfigType = {
+type ConfigType = {
     chainId: number;
     scanApi: string;
     provider: ethers.providers.Provider;

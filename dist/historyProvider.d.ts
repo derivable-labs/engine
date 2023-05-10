@@ -6,7 +6,7 @@ export declare const resolutionToPeriod: {
     240: string;
     '1D': string;
 };
-export declare type CandleType = {
+export type CandleType = {
     low: number;
     open: number;
     time: number;
@@ -14,7 +14,7 @@ export declare type CandleType = {
     high: number;
     volume: number;
 };
-export declare type CandleFromApiType = {
+export type CandleFromApiType = {
     s: string;
     t: number[];
     o: string[];

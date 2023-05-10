@@ -3,7 +3,7 @@ import { UniV2Pair } from "./uniV2Pair";
 import { PoolErc1155StepType, StepType, SwapStepType } from "../types";
 import { CurrentPool } from "./currentPool";
 import { JsonRpcProvider } from "@ethersproject/providers";
-declare type ConfigType = {
+type ConfigType = {
     account?: string;
     chainId: number;
     scanApi: string;

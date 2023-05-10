@@ -10,7 +10,7 @@ import { CurrentPool } from "./services/currentPool";
 import { CreatePool } from "./services/createPool";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { UniV3Pair } from "./services/uniV3Pair";
-declare type ConfigType = {
+type ConfigType = {
     chainId: number;
     scanApi: string;
     rpcUrl: string;

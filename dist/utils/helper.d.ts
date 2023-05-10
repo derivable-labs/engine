@@ -14,7 +14,7 @@ export declare const getErc1155Token: (addresses: string[]) => {};
  */
 export declare const isErc1155Address: (address: string) => boolean;
 export declare const getNormalAddress: (addresses: string[]) => string[];
-export declare const formatFloat: (number: number | string, decimal?: number | undefined) => number;
+export declare const formatFloat: (number: number | string, decimal?: number) => number;
 export declare const formatPercent: (floatNumber: any, decimal?: number) => number;
 export declare const mul: (a: any, b: any) => string;
 export declare const sub: (a: any, b: any) => string;

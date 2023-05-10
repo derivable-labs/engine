@@ -76,10 +76,15 @@ export type StatesType = {
 }
 
 export type PoolConfig = {
-  priceToleranceRatio: BigNumber
-  rentRate: BigNumber
-  deleverageRate: BigNumber
-  powers: number[]
+  amountInit: BigNumber
+  recipient: string
+  k: number
+  a: BigNumber
+  b: BigNumber
+  halfLife: number
+  mark: BigNumber
+  oracle: string
+  initTime: number
 }
 
 export type PoolGroupType = {
@@ -104,6 +109,8 @@ export type PoolType = {
   UTR: string
   TOKEN: string
   MARK: BigNumber
+  INIT_TIME: BigNumber
+  HALF_LIFE: BigNumber
   ORACLE: string
   TOKEN_R: string
   pool: string

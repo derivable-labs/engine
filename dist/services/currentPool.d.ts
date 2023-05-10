@@ -1,11 +1,11 @@
 import { Resource } from "./resource";
 import { BigNumber } from "ethers";
-declare type ConfigType = {
+type ConfigType = {
     resource: Resource;
     poolAddress: string;
     chainId: number;
 };
-export declare type PoolData = {
+export type PoolData = {
     baseToken: string;
     quoteToken: string;
     cToken: string;

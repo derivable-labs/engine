@@ -8,6 +8,7 @@
     "example:getResource": "npx ts-node --files ./example/getResource.ts",
     "example:getBnA": "npx ts-node --files ./example/getBalanceAndAllowance.ts",
     "example:getPairDetail": "npx ts-node --files ./example/getPairDetail.ts",
+    "example:getPairDetailV3": "npx ts-node --files ./example/getPairDetailV3.ts",
     "example:price": "npx ts-node --files ./example/priceExample.ts",
     "example:swap": "npx ts-node --files ./example/swap.ts",
     "example:createPool": "npx ts-node --files ./example/createPool.ts",
@@ -23,7 +24,8 @@
     "ethereum-multicall": "^2.15.0",
     "ethers": "^5.5.4",
     "lodash": "^4.17.21",
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.6.7",
+    "canonical-weth": "^1.4.0"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.179",

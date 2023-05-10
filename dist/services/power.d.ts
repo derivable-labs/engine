@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers';
-export declare type StepType = {
+export type StepType = {
     tokenIn: string;
     tokenOut: string;
     amountIn: BigNumber;
@@ -59,5 +59,5 @@ export declare class PowerState {
     };
 }
 export declare const encodePowers: (powers: number[]) => string;
-export declare const decodePowers: (powersBytes: string) => number[];
+export declare const decodePowers: (powersBytes: string) => any;
 export default PowerState;

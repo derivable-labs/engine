@@ -1,62 +1,67 @@
 [
   {
-    "inputs": [],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
     "inputs": [
       {
         "components": [
+          {
+            "internalType": "address",
+            "name": "utr",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
           {
             "internalType": "address",
             "name": "logic",
             "type": "address"
           },
           {
+            "internalType": "bytes32",
+            "name": "oracle",
+            "type": "bytes32"
+          },
+          {
             "internalType": "address",
-            "name": "pairToken",
+            "name": "reserveToken",
             "type": "address"
           },
           {
             "internalType": "address",
-            "name": "baseToken",
-            "type": "address"
-          },
-          {
-            "internalType": "uint224",
-            "name": "priceToleranceRatio",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint224",
-            "name": "rentRate",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint224",
-            "name": "deleverageRate",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint256",
-            "name": "powers",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "feeRecipient",
+            "name": "recipient",
             "type": "address"
           },
           {
             "internalType": "uint256",
-            "name": "feeDenominator",
+            "name": "mark",
             "type": "uint256"
           },
           {
-            "internalType": "address",
-            "name": "UTR",
-            "type": "address"
+            "internalType": "uint32",
+            "name": "initTime",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "halfLife",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "k",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "a",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "b",
+            "type": "uint256"
           }
         ],
         "internalType": "struct Params",
@@ -81,53 +86,63 @@
         "components": [
           {
             "internalType": "address",
+            "name": "utr",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
             "name": "logic",
             "type": "address"
           },
           {
+            "internalType": "bytes32",
+            "name": "oracle",
+            "type": "bytes32"
+          },
+          {
             "internalType": "address",
-            "name": "pairToken",
+            "name": "reserveToken",
             "type": "address"
           },
           {
             "internalType": "address",
-            "name": "baseToken",
-            "type": "address"
-          },
-          {
-            "internalType": "uint224",
-            "name": "priceToleranceRatio",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint224",
-            "name": "rentRate",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint224",
-            "name": "deleverageRate",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint256",
-            "name": "powers",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "feeRecipient",
+            "name": "recipient",
             "type": "address"
           },
           {
             "internalType": "uint256",
-            "name": "feeDenominator",
+            "name": "mark",
             "type": "uint256"
           },
           {
-            "internalType": "address",
-            "name": "UTR",
-            "type": "address"
+            "internalType": "uint32",
+            "name": "initTime",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "halfLife",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "k",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "a",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "b",
+            "type": "uint256"
           }
         ],
         "internalType": "struct Params",
@@ -154,53 +169,63 @@
         "components": [
           {
             "internalType": "address",
+            "name": "utr",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
             "name": "logic",
             "type": "address"
           },
           {
+            "internalType": "bytes32",
+            "name": "oracle",
+            "type": "bytes32"
+          },
+          {
             "internalType": "address",
-            "name": "pairToken",
+            "name": "reserveToken",
             "type": "address"
           },
           {
             "internalType": "address",
-            "name": "baseToken",
-            "type": "address"
-          },
-          {
-            "internalType": "uint224",
-            "name": "priceToleranceRatio",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint224",
-            "name": "rentRate",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint224",
-            "name": "deleverageRate",
-            "type": "uint224"
-          },
-          {
-            "internalType": "uint256",
-            "name": "powers",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "feeRecipient",
+            "name": "recipient",
             "type": "address"
           },
           {
             "internalType": "uint256",
-            "name": "feeDenominator",
+            "name": "mark",
             "type": "uint256"
           },
           {
-            "internalType": "address",
-            "name": "UTR",
-            "type": "address"
+            "internalType": "uint32",
+            "name": "initTime",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "halfLife",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "k",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "a",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "b",
+            "type": "uint256"
           }
         ],
         "internalType": "struct Params",

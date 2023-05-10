@@ -3,7 +3,7 @@ import { LogType, ParseLogType, PoolGroupsType, PoolsType, PoolType, Storage, To
 import { UniV2Pair } from "./uniV2Pair";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { UniV3Pair } from "./uniV3Pair";
-declare type ConfigType = {
+type ConfigType = {
     chainId: number;
     scanApi: string;
     account?: string;
@@ -14,7 +14,7 @@ declare type ConfigType = {
     UNIV2PAIR: UniV2Pair;
     UNIV3PAIR: UniV3Pair;
 };
-declare type ResourceData = {
+type ResourceData = {
     pools: PoolsType;
     tokens: TokenType[];
     swapLogs: LogType[];

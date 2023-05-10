@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { TokenType } from "../types";
 import { UniV2Pair } from "./uniV2Pair";
-declare type ConfigType = {
+type ConfigType = {
     chainId: number;
     scanApi: string;
     provider: ethers.providers.Provider;

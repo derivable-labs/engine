@@ -17,7 +17,7 @@ const ethers_1 = require("ethers");
 const PairV3Detail_json_1 = __importDefault(require("../abi/PairV3Detail.json"));
 const configs_1 = require("../utils/configs");
 const providers_1 = require("@ethersproject/providers");
-const FLAG = '0x00001100000000000000000000000000000000000000000000000001111';
+const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111';
 class UniV3Pair {
     constructor(configs) {
         this.chainId = configs.chainId;

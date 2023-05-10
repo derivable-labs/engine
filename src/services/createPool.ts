@@ -1,9 +1,10 @@
-import {BigNumber, ethers} from "ethers";
-import {UniV2Pair} from "./uniV2Pair";
-import {JsonRpcProvider} from "@ethersproject/providers";
-import {PoolConfig} from "../types";
-import {CONFIGS} from "../utils/configs";
-import PoolFactoryAbi from "../abi/PoolFactory.json"
+import { BigNumber, ethers } from 'ethers'
+import { bn } from '../utils/helper'
+import { UniV2Pair } from './uniV2Pair'
+import { JsonRpcProvider } from '@ethersproject/providers'
+import { PoolConfig } from '../types'
+import { CONFIGS } from '../utils/configs'
+import HelperAbi from '../abi/Helper.json'
 
 type ConfigType = {
   account?: string
@@ -33,38 +34,40 @@ export class CreatePool {
     this.signer = configs.signer
   }
 
-  encodePowers(powers: any) {
-    let powersBytes = []
-    for (let i = powers.length-1; i >= 0; --i) {
-        let power = powers[i]
-        if (power < 0) {
-            power = 0x8000 - power
-        }
-        powersBytes.push(...ethers.utils.zeroPad(power, 2))
-    }
-    const encoded = ethers.utils.hexZeroPad(powers.length, 2) + ethers.utils.hexZeroPad(powersBytes, 30).slice(2)
-    return encoded
+  async callStaticCreatePool({ params, value, gasLimit }: any) {
+    const helper = this.getStateCalHelperContract(this.signer)
+    return await helper.callStatic.createPool(
+      params,
+      CONFIGS[this.chainId].poolFactory,
+      { value: value || bn(0), gasLimit: gasLimit || undefined },
+    )
   }
 
   async createPool(params: PoolConfig, gasLimit?: BigNumber) {
     try {
-      const poolFactoryContract = new ethers.Contract(CONFIGS[this.chainId].poolFactory, PoolFactoryAbi, this.signer)
-      const newPoolConfigs = {
-        UTR: CONFIGS[this.chainId].router,
-        logic: CONFIGS[this.chainId].logic,
-        pairToken: CONFIGS[this.chainId].wrapUsdPair,
-        baseToken: CONFIGS[this.chainId].wrapToken,
-        priceToleranceRatio: params.priceToleranceRatio,
-        rentRate: params.rentRate,
-        deleverageRate: params.deleverageRate,
-        powers: this.encodePowers(params.powers),
-        feeRecipient: this.account,
-        feeDenominator: 33,
-      }
-      const res = await poolFactoryContract.createPool(newPoolConfigs,
+      const newPoolConfigs = this.generateConfig(
+        params.k,
+        params.a,
+        params.b,
+        params.mark,
+        params.recipient,
+        params.oracle,
+        params.initTime,
+        params.halfLife,
+      )
+      await this.callStaticCreatePool({
+        params: newPoolConfigs,
+        value: params.amountInit,
+        gasLimit
+      })
+      const helper = this.getStateCalHelperContract(this.signer)
+      const res = await helper.createPool(
+        newPoolConfigs,
+        CONFIGS[this.chainId].poolFactory,
         {
-          gasLimit: gasLimit || undefined
-        }
+          value: params.amountInit,
+          gasLimit: gasLimit || undefined,
+        },
       )
       const tx = await res.wait(1)
       console.log('tx', tx)
@@ -72,5 +75,39 @@ export class CreatePool {
     } catch (e) {
       throw e
     }
+  }
+
+  generateConfig(
+    k: number,
+    a: BigNumber,
+    b: BigNumber,
+    mark: BigNumber,
+    recipient: string,
+    oracle: string,
+    initTime: number,
+    halfLife: number,
+  ) {
+    return {
+      utr: CONFIGS[this.chainId].router,
+      token: CONFIGS[this.chainId].token,
+      logic: CONFIGS[this.chainId].logic,
+      oracle,
+      reserveToken: CONFIGS[this.chainId].wrapToken,
+      recipient,
+      mark,
+      k,
+      a,
+      b,
+      initTime,
+      halfLife,
+    }
+  }
+
+  getStateCalHelperContract(provider?: any) {
+    return new ethers.Contract(
+      CONFIGS[this.chainId].stateCalHelper,
+      HelperAbi,
+      provider || this.provider,
+    )
   }
 }

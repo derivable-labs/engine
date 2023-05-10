@@ -278,6 +278,8 @@ class Resource {
                     poolGroups[id].quoteToken = pools[i].quoteToken;
                     poolGroups[id].TOKEN = pools[i].TOKEN;
                     poolGroups[id].MARK = pools[i].MARK;
+                    poolGroups[id].INIT_TIME = pools[i].INIT_TIME;
+                    poolGroups[id].HALF_LIFE = pools[i].HALF_LIFE;
                     poolGroups[id].ORACLE = pools[i].ORACLE;
                     poolGroups[id].TOKEN_R = pools[i].TOKEN_R;
                     poolGroups[id].states = Object.assign({ twapBase: poolsState[i].twap, spotBase: poolsState[i].spot }, poolsState[i]);
@@ -429,7 +431,7 @@ class Resource {
         return ddlLogs.map((log) => {
             try {
                 const decodeLog = eventInterface.parseLog(log);
-                let appName = null;
+                let appName = '';
                 try {
                     appName = ethers_1.ethers.utils.parseBytes32String(decodeLog.args.topic1);
                 }

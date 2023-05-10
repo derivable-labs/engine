@@ -1,7 +1,7 @@
 import { PowerState } from 'powerLib/dist/powerLib';
 import { LogType, StatesType } from "../types";
 import { CurrentPool } from "./currentPool";
-declare type ConfigType = {
+type ConfigType = {
     account?: string;
     CURRENT_POOL: CurrentPool;
 };

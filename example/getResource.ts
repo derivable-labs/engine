@@ -2,7 +2,7 @@ import {Engine} from "../src/engine";
 import {getTestConfigs} from "./shared/testConfigs";
 import {BigNumber} from "ethers";
 import {FixedPoint} from "../src/utils/number";
-import {bn} from "../dist/utils/helper";
+import {bn} from "../src/utils/helper";
 
 const testLocal = async () => {
   const engine = new Engine(getTestConfigs(42161))
@@ -16,7 +16,7 @@ const testLocal = async () => {
   //   bn('0xb469471f80140000')
   // )
 
-    console.log({
+  console.log({
     poolGroups: engine.RESOURCE.poolGroups,
     pools: engine.RESOURCE.pools,
     tokens: engine.RESOURCE.tokens,

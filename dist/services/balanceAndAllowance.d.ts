@@ -1,10 +1,10 @@
 import { ethers } from 'ethers';
 import { AllowancesType, BalancesType } from '../types';
-declare type BnAReturnType = {
+type BnAReturnType = {
     balances: BalancesType;
     allowances: AllowancesType;
 };
-declare type ConfigType = {
+type ConfigType = {
     chainId: number;
     account?: string;
     provider: ethers.providers.Provider;
