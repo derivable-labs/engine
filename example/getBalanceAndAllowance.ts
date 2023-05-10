@@ -4,7 +4,8 @@ import { getTestConfigs } from './shared/testConfigs'
 import { weiToNumber } from '../dist/utils/helper'
 
 const test = async () => {
-  const engine = new Engine(getTestConfigs(1337))
+  const configs = getTestConfigs(1337)
+  const engine = new Engine(configs.account, configs)
   await engine.RESOURCE.fetchResourceData(
     '0xbC52C688c34A480c6785A38715c693Bb22863DE1',
   )

@@ -1,25 +1,19 @@
 import { Engine } from '../src/engine'
 import { ethers } from 'ethers'
+import { getTestConfigs } from './shared/testConfigs'
 
 const test = async () => {
-  const engine = new Engine({
-    chainId: 56,
-    provider: new ethers.providers.JsonRpcProvider('https://bscrpc.com/'),
-    providerToGetLog: new ethers.providers.JsonRpcProvider(
-      'https://bscrpc.com/',
-    ),
-    scanApi: 'https://api.bscscan.com/api',
-    rpcUrl: 'https://bsc-dataseed.binance.org/',
-  })
+  const configs = getTestConfigs(42161)
+  const engine = new Engine(configs.account, configs)
 
   const pairInfo = await engine.UNIV2PAIR.getPairInfo({
-    pairAddress: '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16',
+    pairAddress: '0x8165c70b01b7807351EF0c5ffD3EF010cAbC16fB',
   })
 
   const pairsInfo = await engine.UNIV2PAIR.getPairsInfo({
     pairAddresses: [
-      '0x58F876857a02D6762E0101bb5C46A8c1ED44Dc16',
-      '0x7EFaEf62fDdCCa950418312c6C91Aef321375A00',
+      '0x8165c70b01b7807351EF0c5ffD3EF010cAbC16fB',
+      '0x905dfCD5649217c42684f23958568e533C711Aa3',
     ],
   })
   console.log({

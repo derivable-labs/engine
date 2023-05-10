@@ -43,11 +43,11 @@ export class Derivable {
     const scanApi = config.scanApi
     const rpcUrl = config.rpcUrl
     const overrideProvider = new JsonRpcProvider(config.rpcUrl)
-    const provider = new ethers.providers.JsonRpcProvider(config.rpcToGetLogs)
+    const provider = new ethers.providers.JsonRpcProvider(config.rpcUrl)
     const signer = provider.getSigner()
     const storage = config.storage
     const providerToGetLog = new ethers.providers.JsonRpcProvider(
-      config.rpcToGetLogs,
+      config.rpcToGetLogs || config.rpcUrl,
     )
     const poolAddress = config.poolAddress
     const timePerBlock = config.timePerBlock

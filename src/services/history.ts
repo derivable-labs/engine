@@ -1,15 +1,9 @@
-// @ts-nocheck
 import { ethers } from 'ethers'
 import { PowerState } from 'powerLib/dist/powerLib'
 import { LogType } from '../types'
 import { CurrentPool } from './currentPool'
 import { EventDataAbis, NATIVE_ADDRESS, POOL_IDS } from '../utils/constant'
 import { ConfigType } from './setConfig'
-
-// type ConfigType = {
-//   account?: string
-//   CURRENT_POOL: CurrentPool
-// }
 
 export class History {
   account?: string
