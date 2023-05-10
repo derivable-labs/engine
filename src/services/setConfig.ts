@@ -44,6 +44,7 @@ export class Derivable {
 
     return {
       ...config,
+      signer: configProp.signer,
       account,
       overrideProvider,
       provider,
