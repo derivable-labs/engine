@@ -17,11 +17,11 @@ export class UniV2Pair {
   provider: ethers.providers.Provider
   constractAddresses: Partial<DerivableContractAddress>
   constructor(config: ConfigType) {
-    const {chainId, scanApi, provider} = config;
-    this.constractAddresses = config.addresses;
-    this.chainId = chainId;
-    this.scanApi = scanApi;
-    this.provider = provider;
+    const { chainId, scanApi, provider } = config
+    this.constractAddresses = config.addresses
+    this.chainId = chainId
+    this.scanApi = scanApi
+    this.provider = provider
   }
 
   async getPairInfo({

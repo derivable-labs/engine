@@ -3,7 +3,7 @@ import { getTestConfigs } from './shared/testConfigs'
 import { BigNumber } from 'ethers'
 import { FixedPoint } from '../src/utils/number'
 import { bn } from '../src/utils/helper'
-import {ZERO_ADDRESS} from "../dist/utils/constant";
+import { ZERO_ADDRESS } from '../dist/utils/constant'
 
 const testLocal = async () => {
   const engine = new Engine(ZERO_ADDRESS, getTestConfigs(42161))

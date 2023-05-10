@@ -1,6 +1,6 @@
-import {Engine} from "../engine";
-import {ethers} from "ethers";
-import {JsonRpcProvider} from "@ethersproject/providers";
+import { Engine } from '../engine'
+import { ethers } from 'ethers'
+import { JsonRpcProvider } from '@ethersproject/providers'
 import {
   ARBITRUM_CONFIG,
   BNB_CONFIG,
@@ -8,26 +8,26 @@ import {
   DerivableContractAddress,
   TESTNET_CONFIG,
   config,
-} from "../utils/configs";
-import {UniV2Pair} from "./uniV2Pair";
-import {Storage} from "../types";
-import {UniV3Pair} from "./uniV3Pair";
+} from '../utils/configs'
+import { UniV2Pair } from './uniV2Pair'
+import { Storage } from '../types'
+import { UniV3Pair } from './uniV3Pair'
 
 export interface ConfigType {
-  chainId: number;
-  scanApi?: string;
-  rpcUrl: string;
-  signer?: ethers.providers.JsonRpcSigner;
-  account?: string;
-  storage?: Storage;
-  overrideProvider: JsonRpcProvider;
-  provider: ethers.providers.Provider;
-  providerToGetLog: ethers.providers.Provider;
-  poolAddress?: string;
-  timePerBlock: number;
-  nativeToken?: string;
-  addresses: Partial<DerivableContractAddress>;
-  logic?: any 
+  chainId: number
+  scanApi?: string
+  rpcUrl: string
+  signer?: ethers.providers.JsonRpcSigner
+  account?: string
+  storage?: Storage
+  overrideProvider: JsonRpcProvider
+  provider: ethers.providers.Provider
+  providerToGetLog: ethers.providers.Provider
+  poolAddress?: string
+  timePerBlock: number
+  nativeToken?: string
+  addresses: Partial<DerivableContractAddress>
+  logic?: any
 }
 
 export class Derivable {
@@ -37,22 +37,22 @@ export class Derivable {
     chainIdProp?: number,
   ): ConfigType {
     if (chainIdProp) {
-      config = this.checkConfig(chainIdProp);
+      config = this.checkConfig(chainIdProp)
     }
-    const chainId = config.chainId;
-    const scanApi = config.scanApi;
-    const rpcUrl = config.rpcUrl;
-    const overrideProvider = new JsonRpcProvider(config.rpcUrl);
-    const provider = new ethers.providers.JsonRpcProvider(config.rpcToGetLogs);
-    const signer = provider.getSigner();
-    const storage = config.storage;
+    const chainId = config.chainId
+    const scanApi = config.scanApi
+    const rpcUrl = config.rpcUrl
+    const overrideProvider = new JsonRpcProvider(config.rpcUrl)
+    const provider = new ethers.providers.JsonRpcProvider(config.rpcToGetLogs)
+    const signer = provider.getSigner()
+    const storage = config.storage
     const providerToGetLog = new ethers.providers.JsonRpcProvider(
       config.rpcToGetLogs,
-    );
-    const poolAddress = config.poolAddress;
-    const timePerBlock = config.timePerBlock;
-    const nativeToken = config.nativeToken;
-    const addresses = config.addresses;
+    )
+    const poolAddress = config.poolAddress
+    const timePerBlock = config.timePerBlock
+    const nativeToken = config.nativeToken
+    const addresses = config.addresses
 
     return {
       chainId,
@@ -68,7 +68,7 @@ export class Derivable {
       timePerBlock,
       nativeToken,
       addresses,
-    };
+    }
   }
 
   static loadContract(
@@ -76,19 +76,19 @@ export class Derivable {
     chainIdProp?: number,
   ): DerivableContractAddress {
     if (chainIdProp) {
-      config = this.checkConfig(chainIdProp);
+      config = this.checkConfig(chainIdProp)
     }
-    const token = config.addresses.token as string;
-    const multiCall = config.addresses.multiCall as string;
-    const pairsInfo = config.addresses.pairsInfo as string;
-    const pairsV3Info = config.addresses.pairsV3Info as string;
-    const bnA = config.addresses.bnA as string;
-    const tokensInfo = config.addresses.tokensInfo as string;
-    const router = config.addresses.router as string;
-    const wrapToken = config.addresses.wrapToken as string;
-    const wrapUsdPair = config.addresses.wrapUsdPair as string;
-    const poolFactory = config.addresses.poolFactory as string;
-    const stateCalHelper = config.addresses.stateCalHelper as string;
+    const token = config.addresses.token as string
+    const multiCall = config.addresses.multiCall as string
+    const pairsInfo = config.addresses.pairsInfo as string
+    const pairsV3Info = config.addresses.pairsV3Info as string
+    const bnA = config.addresses.bnA as string
+    const tokensInfo = config.addresses.tokensInfo as string
+    const router = config.addresses.router as string
+    const wrapToken = config.addresses.wrapToken as string
+    const wrapUsdPair = config.addresses.wrapUsdPair as string
+    const poolFactory = config.addresses.poolFactory as string
+    const stateCalHelper = config.addresses.stateCalHelper as string
     return {
       token,
       multiCall,
@@ -101,24 +101,24 @@ export class Derivable {
       wrapUsdPair,
       poolFactory,
       stateCalHelper,
-    };
+    }
   }
 
   static setConfig(account: string, config = DEFAULT_CONFIG): Engine {
-    const engine = new Engine(account, config);
-    return engine;
+    const engine = new Engine(account, config)
+    return engine
   }
 
   static checkConfig(chainId: number): config {
     switch (chainId) {
       case 56:
-        return BNB_CONFIG;
+        return BNB_CONFIG
       case 1337:
-        return TESTNET_CONFIG;
+        return TESTNET_CONFIG
       case 42161:
-        return ARBITRUM_CONFIG;
+        return ARBITRUM_CONFIG
       default:
-        return BNB_CONFIG;
+        return BNB_CONFIG
     }
   }
 }

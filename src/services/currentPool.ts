@@ -100,8 +100,7 @@ export class CurrentPool {
     try {
       if (address === this.baseToken) return bn(this.baseId)
       if (address === this.quoteToken) return bn(this.quoteId)
-      if (address === this.config.nativeToken)
-        return bn(POOL_IDS.native)
+      if (address === this.config.nativeToken) return bn(POOL_IDS.native)
       if (address === this.cToken) return bn(POOL_IDS.cToken)
       return bn(address.split('-')[1])
     } catch (e) {

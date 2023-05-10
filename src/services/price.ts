@@ -66,8 +66,7 @@ export class Price {
       }
 
       const blocknumber24hAgo =
-        headBlock -
-        Math.floor(MINI_SECOND_PER_DAY / this.config.timePerBlock)
+        headBlock - Math.floor(MINI_SECOND_PER_DAY / this.config.timePerBlock)
       const eventInterface = new ethers.utils.Interface(EventsAbi)
       const { totalBaseReserve, totalQuoteReserve } =
         await this.providerToGetLog

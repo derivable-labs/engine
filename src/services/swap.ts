@@ -393,7 +393,11 @@ export class Swap {
   }
 
   getRouterContract(provider: any) {
-    return new ethers.Contract(this.config.addresses.router as string, UtrAbi, provider)
+    return new ethers.Contract(
+      this.config.addresses.router as string,
+      UtrAbi,
+      provider,
+    )
   }
 
   getStateCalHelperContract(address: string, provider?: any) {

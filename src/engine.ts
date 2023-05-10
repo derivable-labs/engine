@@ -44,25 +44,25 @@ export class Engine {
   CURRENT_POOL: CurrentPool
   currentPoolAddress: string
   CREATE_POOL: CreatePool
-  config: ConfigType;
+  config: ConfigType
 
   constructor(account: string, config = DEFAULT_CONFIG, chainIdProp?: number) {
-    this.config = Derivable.loadConfig(account, config, chainIdProp);
-    this.chainId = this.config.chainId;
-    this.scanApi = this.config.scanApi;
-    this.rpcUrl = this.config.rpcUrl;
-    this.storage = this.config.storage;
-    this.overrideProvider = this.config.overrideProvider;
-    this.provider = this.config.provider;
-    this.account = account;
-    this.signer = this.config.signer;
-    this.providerToGetLog = this.config.providerToGetLog;
-    this.initServices();
+    this.config = Derivable.loadConfig(account, config, chainIdProp)
+    this.chainId = this.config.chainId
+    this.scanApi = this.config.scanApi
+    this.rpcUrl = this.config.rpcUrl
+    this.storage = this.config.storage
+    this.overrideProvider = this.config.overrideProvider
+    this.provider = this.config.provider
+    this.account = account
+    this.signer = this.config.signer
+    this.providerToGetLog = this.config.providerToGetLog
+    this.initServices()
   }
 
   initServices() {
-    this.UNIV2PAIR = new UniV2Pair(this.config);
-    this.UNIV3PAIR = new UniV3Pair(this.config);
+    this.UNIV2PAIR = new UniV2Pair(this.config)
+    this.UNIV3PAIR = new UniV3Pair(this.config)
     this.BNA = new BnA(this.config)
     this.RESOURCE = new Resource(this.config)
     this.PRICE = new Price(this.config)

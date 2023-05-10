@@ -17,19 +17,19 @@ export class UniV3Pair {
   scanApi?: string
   provider: ethers.providers.Provider
   rpcUrl: string
-  pairsV3Info: string;
+  pairsV3Info: string
 
   constructor(config: ConfigType) {
-    const {chainId, scanApi, provider, rpcUrl} = config;
-    const {pairsV3Info} = config.addresses;
+    const { chainId, scanApi, provider, rpcUrl } = config
+    const { pairsV3Info } = config.addresses
     if (!pairsV3Info) {
-      throw new Error(`required pairsV3Info contract to be defined!`);
+      throw new Error(`required pairsV3Info contract to be defined!`)
     }
-    this.chainId = chainId;
-    this.scanApi = scanApi;
-    this.provider = provider;
-    this.rpcUrl = rpcUrl;
-    this.pairsV3Info = pairsV3Info;
+    this.chainId = chainId
+    this.scanApi = scanApi
+    this.provider = provider
+    this.rpcUrl = rpcUrl
+    this.pairsV3Info = pairsV3Info
   }
 
   async getPairInfo({
