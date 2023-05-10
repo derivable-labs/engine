@@ -68,7 +68,10 @@ export class Engine {
     this.PRICE = new Price(this.config)
     this.CURRENT_POOL = new CurrentPool(this.config)
     this.HISTORY = new History(this.config)
-    this.SWAP = new Swap(this.config)
+    this.SWAP = new Swap({
+      ...this.config,
+      CURRENT_POOL: this.CURRENT_POOL,
+    })
     this.CREATE_POOL = new CreatePool(this.config)
   }
 

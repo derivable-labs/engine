@@ -66,7 +66,7 @@ export class Swap {
   UNIV2PAIR: UniV2Pair
   CURRENT_POOL: CurrentPool
   config: ConfigType
-  constructor(config: ConfigType) {
+  constructor(config: ConfigType & { CURRENT_POOL: CurrentPool }) {
     this.config = config
     this.account = config.account
     this.chainId = config.chainId
@@ -74,7 +74,7 @@ export class Swap {
     this.provider = config.provider
     this.overrideProvider = config.overrideProvider
     this.signer = config.signer
-    this.CURRENT_POOL = new CurrentPool(config)
+    this.CURRENT_POOL = config.CURRENT_POOL
   }
 
   //@ts-ignore
@@ -150,7 +150,7 @@ export class Swap {
   } {
     let value = bn(0)
     steps.forEach((step) => {
-      if (step.tokenIn === this.config.nativeToken) {
+      if (step.tokenIn === NATIVE_ADDRESS) {
         value = value.add(step.amountIn)
       }
     })
@@ -206,8 +206,7 @@ export class Swap {
     const promises: any = []
     steps.forEach((step) => {
       if (
-        (step.tokenIn === this.config.nativeToken ||
-          step.tokenOut === this.config.nativeToken) &&
+        (step.tokenIn === NATIVE_ADDRESS || step.tokenOut === NATIVE_ADDRESS) &&
         this.CURRENT_POOL.TOKEN_R !== this.config.addresses.wrapToken
       ) {
         throw 'This pool do not support swap by native Token'
@@ -218,11 +217,11 @@ export class Swap {
 
       let idIn = this.getIdByAddress(step.tokenIn)
       const idOut = this.getIdByAddress(step.tokenOut)
-      if (step.tokenIn === this.config.nativeToken) {
+      if (step.tokenIn === NATIVE_ADDRESS) {
         nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn)
       }
 
-      if (step.tokenOut === this.config.nativeToken) {
+      if (step.tokenOut === NATIVE_ADDRESS) {
         withdrawWrapToNative = true
       }
 
@@ -246,7 +245,7 @@ export class Swap {
             recipient: poolAddress,
           },
         ]
-        if (step.tokenIn === this.config.nativeToken) {
+        if (step.tokenIn === NATIVE_ADDRESS) {
           inputs = [
             {
               mode: CALL_VALUE,
@@ -336,7 +335,7 @@ export class Swap {
     try {
       if (address === this.CURRENT_POOL.TOKEN_R) return bn(POOL_IDS.R)
       if (
-        address === this.config.nativeToken &&
+        address === NATIVE_ADDRESS &&
         this.CURRENT_POOL.TOKEN_R === this.config.addresses.wrapToken
       ) {
         return bn(POOL_IDS.native)
@@ -383,7 +382,7 @@ export class Swap {
       return address.split('-')[0]
     }
     if (
-      address === this.config.nativeToken &&
+      address === NATIVE_ADDRESS &&
       this.CURRENT_POOL.TOKEN_R === this.config.addresses.wrapToken
     ) {
       return this.config.addresses.wrapToken

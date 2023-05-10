@@ -166,9 +166,6 @@ export const parseSqrtSpotX96 = (
   token1: TokenType,
   quoteTokenIndex: number,
 ) => {
-  value = bn('3460663242738747649206486')
-  // const buyOneOfToken0 = (sqrtPriceX96 * sqrtPriceX96 * (10**Decimal0) / (10**Decimal1) / JSBI.BigInt(2) ** (JSBI.BigInt(192))).toFixed(Decimal1);
-
   let price = weiToNumber(
     value
       .mul(value)

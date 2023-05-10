@@ -8,17 +8,6 @@ const walletPrivateKey = new Wallet(PRIVATE_KEY)
 const wallet = walletPrivateKey.connect(provider)
 
 const TestConfigs = {
-  [31337]: {
-    chainId: 31337,
-    scanApi: '',
-    rpcUrl: 'http://localhost:8545/',
-    account,
-    provider: new ethers.providers.JsonRpcProvider('http://localhost:8545'),
-    providerToGetLog: new ethers.providers.JsonRpcProvider(
-      'http://localhost:8545/',
-    ),
-    signer: wallet,
-  },
   [1337]: {
     chainId: 1337,
     scanApi: '',
@@ -29,19 +18,19 @@ const TestConfigs = {
       'HTTP://0.0.0.0:8545',
     ),
     signer: wallet,
-  },
-  [56]: {
-    chainId: 56,
-    scanApi: '',
-    rpcUrl: 'https://bsc-dataseed.binance.org/',
-    account,
-    provider: new ethers.providers.JsonRpcProvider(
-      'https://bsc-dataseed.binance.org/',
-    ),
-    providerToGetLog: new ethers.providers.JsonRpcProvider(
-      'https://bscrpc.com',
-    ),
-    signer: wallet,
+    addresses: {
+      token: '0xc28A7e46bE1BB74a63aD32784D785A941D1954ab',
+      multiCall: '0x270bf3040041160e309130d6AF61c1a7aBf2497D',
+      pairsInfo: '0xF258e00021773b7603109887BF2eeb80d5C6f601',
+      pairsV3Info: '0x448816f124c9cE4234907566ECef78f95bdDaF5E',
+      bnA: '0xE0b291b76b78b1a73Da8F2Cc2e717267065bF95A',
+      tokensInfo: '0x7094BFd0db1b11Dd677831d4f9eB81bb15348c21',
+      router: '0x4F1111145AB659CF9BBB45442F54A5D427783DaA',
+      wrapToken: '0xaf9173D7fcd8f18d57Ea7EE2b3DeCF263C25679F',
+      wrapUsdPair: '0xBf4CC059DfF52AeFe7f12516e4CA4Bc691D97474',
+      poolFactory: '0x2B528278eEEf8d30838fCC6297e6f28D4F03b1BD',
+      stateCalHelper: '0x95a7d5edfD4701478D3ACA5DCb69D549D83E3c52',
+    },
   },
   [42161]: {
     chainId: 42161,
