@@ -4,7 +4,7 @@ import { getTestConfigs } from './shared/testConfigs'
 
 const test = async () => {
   const configs = getTestConfigs(42161)
-  const engine = new Engine(configs.account, configs)
+  const engine = new Engine(configs.account, configs, 42161)
 
   const pairInfo = await engine.UNIV2PAIR.getPairInfo({
     pairAddress: '0x8165c70b01b7807351EF0c5ffD3EF010cAbC16fB',

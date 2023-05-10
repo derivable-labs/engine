@@ -1,4 +1,5 @@
 import { Storage } from '../types'
+import { Signer } from 'ethers'
 
 export interface config {
   chainId: number
@@ -12,6 +13,7 @@ export interface config {
   theGraphExchange?: string
   candleChartApi?: string
   storage?: Storage
+  signer?: Signer
   poolAddress?: string
   nativeToken?: string
   addresses: Partial<DerivableContractAddress>
@@ -92,4 +94,5 @@ export const ARBITRUM_CONFIG: config = {
   },
 }
 
-export const DEFAULT_CONFIG = BNB_CONFIG
+export const DEFAULT_CONFIG = ARBITRUM_CONFIG
+export const DEFAULT_CHAIN = 42161

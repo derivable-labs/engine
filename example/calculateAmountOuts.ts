@@ -7,7 +7,7 @@ import { NATIVE_ADDRESS } from '../dist/utils/constant'
 
 const testLocal = async () => {
   const configs = getTestConfigs(1337)
-  const engine = new Engine(configs.account, configs)
+  const engine = new Engine(configs.account, configs, 1337)
   await engine.RESOURCE.fetchResourceData(engine.account || '')
 
   const currentPool = Object.values(engine.RESOURCE.poolGroups)[0]

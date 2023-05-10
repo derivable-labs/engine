@@ -11,7 +11,8 @@ import { CreatePool } from './services/createPool'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { UniV3Pair } from './services/uniV3Pair'
 import { ConfigType, Derivable } from './services/setConfig'
-import { DEFAULT_CONFIG } from './utils/configs'
+import { DEFAULT_CHAIN, DEFAULT_CONFIG } from './utils/configs'
+import { DeepPartial } from './types/utils'
 
 // type ConfigType = {
 //   chainId: number
@@ -46,7 +47,11 @@ export class Engine {
   CREATE_POOL: CreatePool
   config: ConfigType
 
-  constructor(account: string, config = DEFAULT_CONFIG, chainIdProp?: number) {
+  constructor(
+    account: string,
+    config: DeepPartial<ConfigType>,
+    chainIdProp = DEFAULT_CHAIN,
+  ) {
     this.config = Derivable.loadConfig(account, config, chainIdProp)
     this.chainId = this.config.chainId
     this.scanApi = this.config.scanApi

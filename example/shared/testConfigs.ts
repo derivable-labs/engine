@@ -11,12 +11,8 @@ const TestConfigs = {
   [1337]: {
     chainId: 1337,
     scanApi: '',
-    rpcUrl: 'HTTP://0.0.0.0:8545',
+    rpcUrl: 'http://localhost:8545',
     account,
-    provider: new ethers.providers.JsonRpcProvider('HTTP://0.0.0.0:8545'),
-    providerToGetLog: new ethers.providers.JsonRpcProvider(
-      'HTTP://0.0.0.0:8545',
-    ),
     signer: wallet,
     addresses: {
       token: '0xc28A7e46bE1BB74a63aD32784D785A941D1954ab',
@@ -37,12 +33,6 @@ const TestConfigs = {
     scanApi: 'https://api.arbiscan.io/api',
     rpcUrl: 'https://arb1.arbitrum.io/rpc',
     account,
-    provider: new ethers.providers.JsonRpcProvider(
-      'https://arb1.arbitrum.io/rpc',
-    ),
-    providerToGetLog: new ethers.providers.JsonRpcProvider(
-      'https://arb1.arbitrum.io/rpc',
-    ),
     signer: wallet,
     addresses: {
       token: '0x2c57087D69f1Bf5974CA21ADb50b9dBEF8CF51CC',

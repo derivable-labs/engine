@@ -1,4 +1,3 @@
-import { Engine } from '../engine'
 import { ethers } from 'ethers'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import {
@@ -9,9 +8,9 @@ import {
   TESTNET_CONFIG,
   config,
 } from '../utils/configs'
-import { UniV2Pair } from './uniV2Pair'
 import { Storage } from '../types'
-import { UniV3Pair } from './uniV3Pair'
+import { mergeDeep } from '../utils/helper'
+import { DeepPartial } from '../types/utils'
 
 export interface ConfigType {
   chainId: number
@@ -33,41 +32,22 @@ export interface ConfigType {
 export class Derivable {
   static loadConfig(
     account: string,
-    config = DEFAULT_CONFIG,
-    chainIdProp?: number,
+    configProp: DeepPartial<config>,
+    chainIdProp: number,
   ): ConfigType {
-    if (chainIdProp) {
-      config = this.checkConfig(chainIdProp)
-    }
-    const chainId = config.chainId
-    const scanApi = config.scanApi
-    const rpcUrl = config.rpcUrl
+    const config = mergeDeep(this.loadDefaultConfig(chainIdProp), configProp)
     const overrideProvider = new JsonRpcProvider(config.rpcUrl)
     const provider = new ethers.providers.JsonRpcProvider(config.rpcUrl)
-    const signer = provider.getSigner()
-    const storage = config.storage
     const providerToGetLog = new ethers.providers.JsonRpcProvider(
-      config.rpcToGetLogs || config.rpcUrl,
+      config.rpcToGetLogs,
     )
-    const poolAddress = config.poolAddress
-    const timePerBlock = config.timePerBlock
-    const nativeToken = config.nativeToken
-    const addresses = config.addresses
 
     return {
-      chainId,
-      scanApi,
-      rpcUrl,
-      signer,
+      ...config,
       account,
-      storage,
       overrideProvider,
       provider,
       providerToGetLog,
-      poolAddress,
-      timePerBlock,
-      nativeToken,
-      addresses,
     }
   }
 
@@ -76,7 +56,7 @@ export class Derivable {
     chainIdProp?: number,
   ): DerivableContractAddress {
     if (chainIdProp) {
-      config = this.checkConfig(chainIdProp)
+      config = this.loadDefaultConfig(chainIdProp)
     }
     const token = config.addresses.token as string
     const multiCall = config.addresses.multiCall as string
@@ -104,12 +84,12 @@ export class Derivable {
     }
   }
 
-  static setConfig(account: string, config = DEFAULT_CONFIG): Engine {
-    const engine = new Engine(account, config)
-    return engine
-  }
+  // static setConfig(account: string, config = DEFAULT_CONFIG): Engine {
+  //   const engine = new Engine(account, config)
+  //   return engine
+  // }
 
-  static checkConfig(chainId: number): config {
+  static loadDefaultConfig(chainId: number): config {
     switch (chainId) {
       case 56:
         return BNB_CONFIG

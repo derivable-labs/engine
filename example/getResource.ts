@@ -7,7 +7,7 @@ import { ZERO_ADDRESS } from '../dist/utils/constant'
 
 const testLocal = async () => {
   const configs = getTestConfigs(1337)
-  const engine = new Engine(configs.account, configs)
+  const engine = new Engine(configs.account, configs, 1337)
   await engine.RESOURCE.fetchResourceData(
     '0xbC52C688c34A480c6785A38715c693Bb22863DE1',
   )
