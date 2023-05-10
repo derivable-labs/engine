@@ -1,4 +1,4 @@
-import {BigNumber} from "ethers";
+import { BigNumber } from 'ethers'
 
 export type Storage = {
   setItem: (itemName: string, value: string) => void
@@ -14,65 +14,65 @@ export type ParseLogType = {
 }
 
 export type LogType = {
-  "address": string,
-  "timeStamp": number,
-  "transactionHash": string,
-  "blockNumber": number,
-  "index": number,
-  "logIndex": string,
-  "name": string,
-  "topics": string [],
-  "args": any
+  address: string
+  timeStamp: number
+  transactionHash: string
+  blockNumber: number
+  index: number
+  logIndex: string
+  name: string
+  topics: string[]
+  args: any
 }
 
 export type StatesType = {
-  "twapBase": BigNumber,
-  "twapLP": BigNumber,
-  "spotBase": BigNumber,
-  "spotLP": BigNumber,
-  "R": BigNumber,
-  "Rc": BigNumber,
-  "Rb": BigNumber,
-  "Rq": BigNumber,
-  "priceScaleTimestamp": number,
-  "priceScaleLong": BigNumber,
-  "priceScaleShort": BigNumber,
-  "oracleStore": {
-    basePriceCumulative: BigNumber,
-    blockTimestamp: number,
+  twapBase: BigNumber
+  twapLP: BigNumber
+  spotBase: BigNumber
+  spotLP: BigNumber
+  R: BigNumber
+  Rc: BigNumber
+  Rb: BigNumber
+  Rq: BigNumber
+  priceScaleTimestamp: number
+  priceScaleLong: BigNumber
+  priceScaleShort: BigNumber
+  oracleStore: {
+    basePriceCumulative: BigNumber
+    blockTimestamp: number
     baseTWAP: {
       _x: BigNumber
     }
-  },
-  "oracleStoreUpdated": {
-    basePriceCumulative: BigNumber,
-    blockTimestamp: number,
+  }
+  oracleStoreUpdated: {
+    basePriceCumulative: BigNumber
+    blockTimestamp: number
     baseTWAP: {
       _x: BigNumber
     }
-  },
-  "twap": {
+  }
+  twap: {
     base: {
       _x: BigNumber
-    },
+    }
     LP: {
       _x: BigNumber
     }
-  },
-  "spot": {
+  }
+  spot: {
     base: {
       _x: BigNumber
-    },
+    }
     LP: {
       _x: BigNumber
     }
-  },
-  "totalSupplies": BigNumber[],
-  "rDcNeutral": BigNumber,
-  "rDcLong": BigNumber,
-  "rDcShort": BigNumber,
-  "rentRateLong": BigNumber,
-  "rentRateShort": BigNumber
+  }
+  totalSupplies: BigNumber[]
+  rDcNeutral: BigNumber
+  rDcLong: BigNumber
+  rDcShort: BigNumber
+  rentRateLong: BigNumber
+  rentRateShort: BigNumber
 }
 
 export type PoolConfig = {
@@ -90,14 +90,14 @@ export type PoolConfig = {
 export type PoolGroupType = {
   UTR: string
   TOKEN: string
-  pools: {[key: string]: PoolType}
+  pools: { [key: string]: PoolType }
   ORACLE: string
   TOKEN_R: string
   states: {
     twapBase: BigNumber
     spotBase: BigNumber
-    supplyDetails: {[key: number]: BigNumber}
-    rDetails: {[key: number]: BigNumber}
+    supplyDetails: { [key: number]: BigNumber }
+    rDetails: { [key: number]: BigNumber }
     R: BigNumber
     rC: BigNumber
     rDcLong: BigNumber
@@ -136,41 +136,40 @@ export type PoolType = {
 }
 
 export type SwapLog = {
-  address: string,
-  args: any[],
+  address: string
+  args: any[]
   name: string
   // ...
 }
 
-export type PoolsType = {[key: string]: PoolType}
-export type PoolGroupsType = {[key: string]: PoolGroupType}
+export type PoolsType = { [key: string]: PoolType }
+export type PoolGroupsType = { [key: string]: PoolGroupType }
 export type TokenType = {
-  address:string
-  decimal:number
+  address: string
+  decimal: number
   name: string
   symbol: string
 }
 
-export type BalancesType = {[key: string]: BigNumber}
-export type AllowancesType = {[key: string]: BigNumber}
+export type BalancesType = { [key: string]: BigNumber }
+export type AllowancesType = { [key: string]: BigNumber }
 
 export type PoolErc1155StepType = {
-  idIn: BigNumber | string,
-  idOut: BigNumber | string,
+  idIn: BigNumber | string
+  idOut: BigNumber | string
   amountIn: BigNumber
   amountOutMin: BigNumber | string | number
 }
 
 export type StepType = {
-  tokenIn: string,
-  tokenOut: string,
+  tokenIn: string
+  tokenOut: string
   amountIn: BigNumber
 }
 
-
 export type SwapStepType = {
-  tokenIn: string,
-  tokenOut: string,
+  tokenIn: string
+  tokenOut: string
   amountIn: BigNumber
   amountOutMin: BigNumber | string | number
 }

@@ -1,14 +1,14 @@
 import _ from 'lodash'
 import { BigNumber, ethers } from 'ethers'
-import {parseEther} from "ethers/lib/utils";
-import {bn} from "../utils/helper";
+import { parseEther } from 'ethers/lib/utils'
+import { bn } from '../utils/helper'
 const { floor, abs } = Math
 
 const BN_0 = bn(0)
 
 export type StepType = {
-  tokenIn: string,
-  tokenOut: string,
+  tokenIn: string
+  tokenOut: string
   amountIn: BigNumber
   amountOutMin?: BigNumber
 }
@@ -41,7 +41,7 @@ export class PowerState {
     this.states = _.clone(states)
   }
 
-  getMarks(): {[key: number]: number} {
+  getMarks(): { [key: number]: number } {
     const exposures = this.getExposures()
     const result = {}
     exposures.forEach((exposure) => {
@@ -55,21 +55,21 @@ export class PowerState {
   }
 
   getPrices(): number[] {
-    return this.getPowers().map(power => this.calculatePrice(power))
+    return this.getPowers().map((power) => this.calculatePrice(power))
   }
 
   getExposures(): number[] {
-    return this.getPowers().map(power => this.calculateExposure(power))
+    return this.getPowers().map((power) => this.calculateExposure(power))
   }
 
-  getPrice(power: number|string): number {
+  getPrice(power: number | string): number {
     if (power == 'C') {
       return this.getCPrice()
     }
     return this.calculatePrice(Number(power))
   }
 
-  calculatePrice(power: any, states:any = this.states): number {
+  calculatePrice(power: any, states: any = this.states): number {
     const { twapBase, priceScaleLong, priceScaleShort } = states
     let price = bn(this.unit)
     for (let i = 0; i < abs(power); ++i) {
@@ -96,7 +96,7 @@ export class PowerState {
   }
 
   findMaxExposure(): number {
-    for (let i = this.powersSorted.length-1; i >= 0; --i) {
+    for (let i = this.powersSorted.length - 1; i >= 0; --i) {
       const power = this.powersSorted[i]
       const price = this.calculatePrice(power)
       if (price != 0 && Number.isFinite(price)) {
@@ -116,7 +116,7 @@ export class PowerState {
     }
     const projectedStates = {
       ...this.states,
-      twapBase: this.states.twapBase.mul(101).div(100)
+      twapBase: this.states.twapBase.mul(101).div(100),
     }
     const projection = this.calculatePrice(power, projectedStates)
     return (projection - current) / current / 0.01
@@ -134,7 +134,9 @@ export class PowerState {
       }
       const exposure = this.calculateExposure(power)
       totalValue = totalValue.add(balance.mul(floor(this.unit * price)))
-      totalExposure = totalExposure.add(balance.mul(floor(this.unit * price * exposure)))
+      totalExposure = totalExposure.add(
+        balance.mul(floor(this.unit * price * exposure)),
+      )
     }
     if (totalValue.isZero()) {
       return 0
@@ -156,19 +158,19 @@ export class PowerState {
     es = _.sortBy(es)
     if (e <= es[0]) {
       for (let i = 1; i < es.length; ++i) {
-        if (es[i] > es[i-1]) {
-          return [i-1]
+        if (es[i] > es[i - 1]) {
+          return [i - 1]
         }
       }
       return [0]
     }
     if (e > es[es.length - 1]) {
-      for (let i = es.length-1; 0 <= i; --i) {
-        if (es[i] < es[i+1]) {
-          return [i+1]
+      for (let i = es.length - 1; 0 <= i; --i) {
+        if (es[i] < es[i + 1]) {
+          return [i + 1]
         }
       }
-      return [es.length-1]
+      return [es.length - 1]
     }
     const rateTolerance = 1 + tolerance
     for (let i = 0; i < es.length; ++i) {
@@ -193,14 +195,18 @@ export class PowerState {
     if (ij.length === 1) {
       const i = ij[0]
       return {
-        [powers[i]]: V.mul(this.unit).mul(floor(this.unit * ps[i]))
+        [powers[i]]: V.mul(this.unit).mul(floor(this.unit * ps[i])),
       }
     }
     const [i, j] = ij
     // vj = V*(E-ei)/(ej-ei)
-    const vj = V.mul(floor((E - es[i]) * this.unit)).div(floor((es[j] - es[i]) * this.unit))
+    const vj = V.mul(floor((E - es[i]) * this.unit)).div(
+      floor((es[j] - es[i]) * this.unit),
+    )
     // bi = (V-vj)/pi
-    const bi = V.mul(this.unit).sub(vj.mul(this.unit)).div(floor(ps[i] * this.unit))
+    const bi = V.mul(this.unit)
+      .sub(vj.mul(this.unit))
+      .div(floor(ps[i] * this.unit))
     // bj = vj / pj
     const bj = vj.mul(this.unit).div(floor(ps[j] * this.unit))
     return {
@@ -209,7 +215,9 @@ export class PowerState {
     }
   }
 
-  valuesFromBalances(balances: {[key: number]: BigNumber}): {[key: number]: BigNumber} {
+  valuesFromBalances(balances: { [key: number]: BigNumber }): {
+    [key: number]: BigNumber
+  } {
     return _.transform(balances, (r: {}, v: BigNumber, k: number) => {
       r[k] = v.mul(floor(this.unit * this.calculatePrice(k))).div(this.unit)
     })
@@ -224,32 +232,39 @@ export class PowerState {
   }
 
   getSwapSteps(
-    oldBalances: {[key: number]: BigNumber},
+    oldBalances: { [key: number]: BigNumber },
     newExposure: number,
     changeAmount?: BigNumber | number,
-    changeToken?: 'C'|'B'|'Q'
-  ) : StepType[] {
-    if(changeAmount === -1) {
+    changeToken?: 'C' | 'B' | 'Q',
+  ): StepType[] {
+    if (changeAmount === -1) {
       return this.swapAllToC(oldBalances)
     }
 
     const oldValues = this.valuesFromBalances(oldBalances)
-    const oldValue = Object.values(oldValues).reduce((totalValue, value) => totalValue.add(value), BN_0)
+    const oldValue = Object.values(oldValues).reduce(
+      (totalValue, value) => totalValue.add(value),
+      BN_0,
+    )
     const changePrice =
-      changeToken == 'Q' ? 1 :
-        changeToken == 'B' ? this.getBasePrice() :
-          this.getCPrice()
-    const changeValue = changeAmount instanceof BigNumber
-      ? changeAmount?.mul(floor(this.unit * changePrice)).div(this.unit) ?? BN_0
-      : oldValue
-        .mul(parseEther((changeAmount || 0).toString()))
-        .div(parseEther('1'))
+      changeToken == 'Q'
+        ? 1
+        : changeToken == 'B'
+        ? this.getBasePrice()
+        : this.getCPrice()
+    const changeValue =
+      changeAmount instanceof BigNumber
+        ? changeAmount?.mul(floor(this.unit * changePrice)).div(this.unit) ??
+          BN_0
+        : oldValue
+            .mul(parseEther((changeAmount || 0).toString()))
+            .div(parseEther('1'))
 
     const newValue = oldValue.add(changeValue)
     const newBalances = this.getOptimalBalances(newValue, newExposure)
     const newValues = this.valuesFromBalances(newBalances)
 
-    const changeValues: {[key: number]: BigNumber} = {}
+    const changeValues: { [key: number]: BigNumber } = {}
     for (const power of this.getPowers()) {
       const oldValue = oldValues[power] ?? BN_0
       const newValue = newValues[power] ?? BN_0
@@ -262,15 +277,19 @@ export class PowerState {
     let steps: StepType[] = []
 
     // there should be atmost 1 step from or to C
-    let stepToC: StepType|undefined
+    let stepToC: StepType | undefined
     if (changeValue && !changeValue.isZero()) {
       if (changeValue.isNegative()) {
-        const power = maxKey(_.mapValues(changeValues, change => BN_0.sub(change)))
+        const power = maxKey(
+          _.mapValues(changeValues, (change) => BN_0.sub(change)),
+        )
         if (power == null) {
           console.error('maxKey not found', changeValues)
           throw new Error('maxKey not found')
         }
-        const amountIn = changeValue.mul(-this.unit).div(floor(this.calculatePrice(power) * this.unit))
+        const amountIn = changeValue
+          .mul(-this.unit)
+          .div(floor(this.calculatePrice(power) * this.unit))
         stepToC = {
           tokenIn: String(power),
           tokenOut: changeToken ?? 'C',
@@ -296,22 +315,30 @@ export class PowerState {
       const from = _firstKey(changeValues, true)
       const to = _firstKey(changeValues, false)
       if (to && from == null) {
-        const amountIn = changeValues[to].mul(this.unit).div(floor(this.unit * this.getCPrice()))
+        const amountIn = changeValues[to]
+          .mul(this.unit)
+          .div(floor(this.unit * this.getCPrice()))
         console.warn(`missing C->${to}`, amountIn.toString())
         delete changeValues[to]
         continue
       }
       if (from && to == null) {
         if (changeValues[from].abs().mul(this.unit).gte(oldValue)) {
-          const amountIn = changeValues[from].mul(this.unit).div(floor(-this.unit * this.calculatePrice(from)))
+          const amountIn = changeValues[from]
+            .mul(this.unit)
+            .div(floor(-this.unit * this.calculatePrice(from)))
           console.warn(`missing ${from}->C`, amountIn.toString())
         }
         delete changeValues[from]
         continue
       }
       if (from && to) {
-        const changeValue = changeValues[from].abs().lte(changeValues[to]) ? changeValues[from].abs() : changeValues[to]
-        const amountIn = changeValue.mul(this.unit).div(floor(this.unit * this.calculatePrice(from)))
+        const changeValue = changeValues[from].abs().lte(changeValues[to])
+          ? changeValues[from].abs()
+          : changeValues[to]
+        const amountIn = changeValue
+          .mul(this.unit)
+          .div(floor(this.unit * this.calculatePrice(from)))
         steps.push({
           tokenIn: String(from),
           tokenOut: String(to),
@@ -332,7 +359,7 @@ export class PowerState {
       steps.push(stepToC)
     }
 
-    steps = steps.filter(step => !step.amountIn.isZero())
+    steps = steps.filter((step) => !step.amountIn.isZero())
 
     // don't leave small balance behind
     const remainBalances = this.getInputBalancesAfterSwap(oldBalances, steps)
@@ -361,7 +388,10 @@ export class PowerState {
   }
 
   // does not compute the amount out to returned balances
-  getInputBalancesAfterSwap(balances: {[key: number]: BigNumber}, steps: StepType[]) : {[key: number]: BigNumber} {
+  getInputBalancesAfterSwap(
+    balances: { [key: number]: BigNumber },
+    steps: StepType[],
+  ): { [key: number]: BigNumber } {
     const newBalances = _.clone(balances)
     for (const step of steps) {
       if (!newBalances[step.tokenIn] || newBalances[step.tokenIn].isZero()) {
@@ -375,9 +405,12 @@ export class PowerState {
     return newBalances
   }
 
-  swap(balances: {[key: number]: BigNumber}, steps: StepType[]) : {
-    amountOuts: BigNumber[],
-    newBalances: {[key: number]: BigNumber},
+  swap(
+    balances: { [key: number]: BigNumber },
+    steps: StepType[],
+  ): {
+    amountOuts: BigNumber[]
+    newBalances: { [key: number]: BigNumber }
   } {
     const newBalances = _.clone(balances)
     const amountOuts: BigNumber[] = []
@@ -387,7 +420,11 @@ export class PowerState {
       if (newBalances[tokenIn].isZero()) {
         delete newBalances[tokenIn]
       }
-      const amountOut = amountIn.mul(floor(this.unit*this.getPrice(tokenIn)/this.getPrice(tokenOut))).div(this.unit)
+      const amountOut = amountIn
+        .mul(
+          floor((this.unit * this.getPrice(tokenIn)) / this.getPrice(tokenOut)),
+        )
+        .div(this.unit)
       amountOuts.push(amountOut)
       newBalances[tokenOut] = (newBalances[tokenOut] ?? BN_0).add(amountOut)
     }
@@ -398,8 +435,11 @@ export class PowerState {
   }
 }
 
-function _firstKey(values: {[key: number]: BigNumber}, negative: boolean = false): number|null {
-  let m: number|null = null
+function _firstKey(
+  values: { [key: number]: BigNumber },
+  negative: boolean = false,
+): number | null {
+  let m: number | null = null
   Object.entries(values).forEach(([key, value]) => {
     if (negative && value.gte(0)) return
     if (!negative && value.lte(0)) return
@@ -413,7 +453,7 @@ function _firstKey(values: {[key: number]: BigNumber}, negative: boolean = false
 
 function maxKey(values: {}): any {
   let key
-  for(const k of Object.keys(values)) {
+  for (const k of Object.keys(values)) {
     if (key == null || values[k].gt(values[key])) {
       key = k
     }
@@ -447,6 +487,5 @@ export const decodePowers = (powersBytes: string) => {
   }
   return powers
 }
-
 
 export default PowerState

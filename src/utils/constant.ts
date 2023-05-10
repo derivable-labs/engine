@@ -6,13 +6,14 @@ export const fee10000 = 30
 export const MINI_SECOND_PER_DAY = 86400000
 export const LP_PRICE_UNIT = 10000
 export const TIME_TO_REFRESH_STATE = 30000
-export const CHART_API_ENDPOINT = "https://api-chart-{chainId}.derivable.finance/";
+export const CHART_API_ENDPOINT =
+  'https://api-chart-{chainId}.derivable.finance/'
 
 export const LOCALSTORAGE_KEY = {
   DDL_LOGS: 'ddl-log-v1.0',
   LAST_BLOCK_DDL_LOGS: 'last-block-ddl-log-v1.0',
   SWAP_LOGS: 'swap-log-v1.0',
-  SWAP_BLOCK_LOGS: 'last-block-swap-log-v1.0'
+  SWAP_BLOCK_LOGS: 'last-block-swap-log-v1.0',
 }
 
 export const ddlGenesisBlock = {
@@ -46,7 +47,7 @@ export const EventDataAbis = {
     'uint256 MARK',
     'uint256 INIT_TIME',
     'uint256 HALF_LIFE',
-    'uint256 k'
+    'uint256 k',
   ],
   Swap: [
     'address payer',
@@ -56,6 +57,6 @@ export const EventDataAbis = {
     'uint sideIn',
     'uint sideOut',
     'uint amountIn',
-    'uint amountOut'
-  ]
+    'uint amountOut',
+  ],
 }

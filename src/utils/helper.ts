@@ -1,18 +1,18 @@
-import {BigNumber, ethers, utils} from "ethers";
+import { BigNumber, ethers, utils } from 'ethers'
 import LogicAbi56 from '../abi/56/Logic.json'
 import LogicAbi97 from '../abi/97/Logic.json'
 import LogicAbi31337 from '../abi/31337/Logic.json'
 import LogicAbi42161 from '../abi/31337/Logic.json'
-import {TokenType} from "../types";
+import { TokenType } from '../types'
 
 const LogicAbi = {
   56: LogicAbi56,
   97: LogicAbi97,
   31337: LogicAbi31337,
-  42161: LogicAbi42161
+  42161: LogicAbi42161,
 }
 export const provider = new ethers.providers.JsonRpcProvider(
-  "https://bsc-dataseed.binance.org/"
+  'https://bsc-dataseed.binance.org/',
 )
 
 export const bn = BigNumber.from
@@ -34,7 +34,6 @@ export const numberToWei = (number: any, decimal: number = 18) => {
 
   return utils.parseUnits(number, decimal).toString()
 }
-
 
 export const decodePowers = (powersBytes: string) => {
   powersBytes = powersBytes.slice(6)
@@ -117,7 +116,7 @@ export const formatPercent = (floatNumber: any, decimal: number = 2) => {
 export const mul = (a: any, b: any) => {
   const result = weiToNumber(
     BigNumber.from(numberToWei(a)).mul(numberToWei(b)),
-    36
+    36,
   )
   const arr = result.split('.')
   arr[1] = arr[1]?.slice(0, 18)
@@ -145,8 +144,8 @@ export const detectDecimalFromPrice = (price: number | string) => {
   } else {
     const rate = !bn(numberToWei(price)).isZero()
       ? weiToNumber(
-        BigNumber.from(numberToWei(1, 36)).div(numberToWei(price)).toString()
-      )
+          BigNumber.from(numberToWei(1, 36)).div(numberToWei(price)).toString(),
+        )
       : '0'
     return rate.split('.')[0].length + 3
   }
@@ -161,7 +160,12 @@ export const parseUq128x128 = (value: BigNumber, unit = 1000) => {
   return value.mul(unit).shr(128).toNumber() / unit
 }
 
-export const parseSqrtSpotX96 = (value: BigNumber, token0: TokenType, token1: TokenType, quoteTokenIndex: number) => {
+export const parseSqrtSpotX96 = (
+  value: BigNumber,
+  token0: TokenType,
+  token1: TokenType,
+  quoteTokenIndex: number,
+) => {
   value = bn('3460663242738747649206486')
   // const buyOneOfToken0 = (sqrtPriceX96 * sqrtPriceX96 * (10**Decimal0) / (10**Decimal1) / JSBI.BigInt(2) ** (JSBI.BigInt(192))).toFixed(Decimal1);
 
@@ -169,15 +173,11 @@ export const parseSqrtSpotX96 = (value: BigNumber, token0: TokenType, token1: To
     value
       .mul(value)
       .mul(numberToWei(1, token0.decimal))
-      .shr(96 * 2)
-    , token1.decimal
-  );
+      .shr(96 * 2),
+    token1.decimal,
+  )
   if (quoteTokenIndex === 0) {
-    price = weiToNumber(
-      bn(numberToWei(1, 36))
-        .div(bn(numberToWei(price))
-        )
-    )
+    price = weiToNumber(bn(numberToWei(1, 36)).div(bn(numberToWei(price))))
   }
   return formatFloat(price, 5)
 }

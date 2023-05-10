@@ -58,7 +58,7 @@ export class CreatePool {
       await this.callStaticCreatePool({
         params: newPoolConfigs,
         value: params.amountInit,
-        gasLimit
+        gasLimit,
       })
       const helper = this.getStateCalHelperContract(this.signer)
       const res = await helper.createPool(

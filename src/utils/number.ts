@@ -1,8 +1,8 @@
-import {BigNumber, ethers} from "ethers";
-import {bn} from "./helper";
+import { BigNumber, ethers } from 'ethers'
+import { bn } from './helper'
 
 export const FixedPoint = {
-  Q128: bn('0x0100000000000000000000000000000000') // 2**128
+  Q128: bn('0x0100000000000000000000000000000000'), // 2**128
 }
 
 const packId = (kind: BigNumber, address: string) => {
@@ -12,8 +12,10 @@ const packId = (kind: BigNumber, address: string) => {
 
 const unpackId = (id: BigNumber) => {
   const k = ethers.utils.hexlify(id.shr(160))
-  const p = ethers.utils.getAddress(ethers.utils.hexlify(id.mod(bn(1).shl(160))))
-  return {k, p}
+  const p = ethers.utils.getAddress(
+    ethers.utils.hexlify(id.mod(bn(1).shl(160))),
+  )
+  return { k, p }
 }
 
 function encodeSqrtX96(reserve1: number, reserve0: number) {
@@ -25,7 +27,9 @@ function encodeSqrtX96(reserve1: number, reserve0: number) {
 const FLOAT_UNIT = 100000
 
 export const floatToFixed128 = (n: number) => {
-  return bn(n * FLOAT_UNIT).shl(128).div(FLOAT_UNIT)
+  return bn(n * FLOAT_UNIT)
+    .shl(128)
+    .div(FLOAT_UNIT)
 }
 
 export const fixed128ToFloat = (fixed128: BigNumber) => {
@@ -33,7 +37,6 @@ export const fixed128ToFloat = (fixed128: BigNumber) => {
 }
 
 export const formatFloat = (number: number | string, decimal = 4) => {
-
   number = number.toString()
   const arr = number.split('.')
   if (arr.length > 1) {

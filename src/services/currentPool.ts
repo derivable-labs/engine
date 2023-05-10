@@ -1,8 +1,8 @@
-import {Resource} from "./resource";
-import {CONFIGS}  from "../utils/configs";
-import {bn} from "../utils/helper";
-import {POOL_IDS} from "../utils/constant";
-import {BigNumber} from "ethers";
+import { Resource } from './resource'
+import { CONFIGS } from '../utils/configs'
+import { bn } from '../utils/helper'
+import { POOL_IDS } from '../utils/constant'
+import { BigNumber } from 'ethers'
 
 type ConfigType = {
   resource: Resource
@@ -81,14 +81,15 @@ export class CurrentPool {
     // this.quoteId = poolData.quoteId;
   }
 
-  getTokenByPower(power: number | string){
+  getTokenByPower(power: number | string) {
     if (power === 'C') {
       return this.cToken
     } else if (power === 'B') {
       return this.baseToken
     } else if (power === 'Q') {
       return this.quoteToken
-    } else if (power === 'N') { // native token
+    } else if (power === 'N') {
+      // native token
       return CONFIGS[this.chainId].nativeToken
     }
     const index = this.powers.findIndex((p) => p === Number(power))
@@ -99,7 +100,8 @@ export class CurrentPool {
     try {
       if (address === this.baseToken) return bn(this.baseId)
       if (address === this.quoteToken) return bn(this.quoteId)
-      if (address === CONFIGS[this.chainId].nativeToken) return bn(POOL_IDS.native)
+      if (address === CONFIGS[this.chainId].nativeToken)
+        return bn(POOL_IDS.native)
       if (address === this.cToken) return bn(POOL_IDS.cToken)
       return bn(address.split('-')[1])
     } catch (e) {

@@ -1,6 +1,6 @@
-import {numberToWei, weiToNumber} from "./utils/helper";
-import {TokenType}                from "./types";
-import {CHART_API_ENDPOINT}       from "./utils/constant";
+import { numberToWei, weiToNumber } from './utils/helper'
+import { TokenType } from './types'
+import { CHART_API_ENDPOINT } from './utils/constant'
 import fetch from 'node-fetch'
 
 const history = {}
@@ -22,7 +22,7 @@ export const resolutionToPeriod = {
   15: '15m',
   60: '1h',
   240: '4h',
-  '1D': '1d'
+  '1D': '1d',
 }
 
 export type CandleType = {
@@ -45,7 +45,7 @@ export type CandleFromApiType = {
 }
 
 type GetPricesType = {
-  data: { [key: string]: string },
+  data: { [key: string]: string }
   code: number
 }
 
@@ -59,7 +59,7 @@ export default {
     outputToken,
     limit,
     chainId,
-    to
+    to,
   }: {
     inputToken: TokenType
     outputToken: TokenType
@@ -71,7 +71,10 @@ export default {
   }): Promise<CandleType[]> {
     console.log(route)
     const q = route.split('/').join(',')
-    const url = `${CHART_API_ENDPOINT.replace('{chainId}', chainId || '56')}candleline4?q=${q}&r=${convertResolution(resolution)}&l=${limit}&t=${to}`
+    const url = `${CHART_API_ENDPOINT.replace(
+      '{chainId}',
+      chainId || '56',
+    )}candleline4?q=${q}&r=${convertResolution(resolution)}&l=${limit}&t=${to}`
 
     return fetch(url)
       .then((r: any) => r.json())
@@ -83,24 +86,28 @@ export default {
           response.t &&
           response.t.length > 0
         ) {
-          const decimal = 18 + (outputToken?.decimal || 18) - (inputToken?.decimal || 18)
+          const decimal =
+            18 + (outputToken?.decimal || 18) - (inputToken?.decimal || 18)
           for (let i = 0; i < response.t.length; i++) {
             bars.push({
               low: Number(weiToNumber(numberToWei(response.l[i]), decimal)),
               open: Number(weiToNumber(numberToWei(response.o[i]), decimal)),
               time: response.t[i] * 1000,
-              volume: Number(weiToNumber(response.v[i].split('.')[0], outputToken?.decimal)),
+              volume: Number(
+                weiToNumber(response.v[i].split('.')[0], outputToken?.decimal),
+              ),
               close: Number(weiToNumber(numberToWei(response.c[i]), decimal)),
-              high: Number(weiToNumber(numberToWei(response.h[i]), decimal))
+              high: Number(weiToNumber(numberToWei(response.h[i]), decimal)),
             })
           }
           return bars
         } else {
           return []
         }
-      }).catch((e: any) => {
+      })
+      .catch((e: any) => {
         console.error(e)
         return []
       })
-  }
+  },
 }

@@ -1,10 +1,10 @@
 // @ts-nocheck
-import {BigNumber, ethers} from "ethers";
-import {bn} from "../utils/helper";
-import _ from "lodash";
-import {PowerState} from 'powerLib/dist/powerLib'
-import {LogType, StatesType} from "../types";
-import {CurrentPool} from "./currentPool";
+import { BigNumber, ethers } from 'ethers'
+import { bn } from '../utils/helper'
+import _ from 'lodash'
+import { PowerState } from 'powerLib/dist/powerLib'
+import { LogType, StatesType } from '../types'
+import { CurrentPool } from './currentPool'
 
 type ConfigType = {
   account?: string
@@ -24,10 +24,10 @@ export class History {
     logs,
     poolAddress,
     states,
-    powers
+    powers,
   }: {
-    logs: LogType[],
-    poolAddress: string,
+    logs: LogType[]
+    poolAddress: string
     states: StatesType
     powers: number[]
   }) {
@@ -36,11 +36,19 @@ export class History {
         return []
       }
 
-      const logGrouped: any = Object.values(_.groupBy(logs, (log) => log.transactionHash))
-                                    .filter((order) => {
-                                      return order.find((log) => ['TransferSingle', 'TransferBatch'].includes(log.args.name))
-                                    })
-      const orders = logGrouped.slice().sort((a: { blockNumber: number; }[], b: { blockNumber: number; }[]) => a[0].blockNumber - b[0].blockNumber)
+      const logGrouped: any = Object.values(
+        _.groupBy(logs, (log) => log.transactionHash),
+      ).filter((order) => {
+        return order.find((log) =>
+          ['TransferSingle', 'TransferBatch'].includes(log.args.name),
+        )
+      })
+      const orders = logGrouped
+        .slice()
+        .sort(
+          (a: { blockNumber: number }[], b: { blockNumber: number }[]) =>
+            a[0].blockNumber - b[0].blockNumber,
+        )
       // const swapLogs = logs.slice().sort((a: { timeStamp: number; }, b: { timeStamp: number; }) => a.timeStamp - b.timeStamp)
 
       const p = new PowerState({ powers: [...powers] })
@@ -59,38 +67,54 @@ export class History {
         for (const tx of txs) {
           if (tx.args.name === 'Transfer') {
             const encodeData = ethers.utils.defaultAbiCoder.encode(
-              ["address", "address", "uint256"], tx.args.args
+              ['address', 'address', 'uint256'],
+              tx.args.args,
             )
             const formatedData = ethers.utils.defaultAbiCoder.decode(
-              ["address from", "address to", "uint256 value"],
-              encodeData
+              ['address from', 'address to', 'uint256 value'],
+              encodeData,
             )
             const id = this.CURRENT_POOL.getIdByAddress(tx.address)?.toNumber()
             if (!id) continue
             if (formatedData.from === this.account) {
-              balances[id] = balances[id] ? balances[id].sub(formatedData.value) : bn(0).sub(formatedData.value)
+              balances[id] = balances[id]
+                ? balances[id].sub(formatedData.value)
+                : bn(0).sub(formatedData.value)
             } else if (formatedData.to === this.account) {
-              balances[id] = balances[id] ? balances[id].add(formatedData.value) : bn(0).add(formatedData.value)
+              balances[id] = balances[id]
+                ? balances[id].add(formatedData.value)
+                : bn(0).add(formatedData.value)
             }
             continue
           }
 
           if (tx.args.name === 'TransferSingle') {
             const encodeData = ethers.utils.defaultAbiCoder.encode(
-              ["address", "address", "address", "uint256", "uint256"], tx.args.args
+              ['address', 'address', 'address', 'uint256', 'uint256'],
+              tx.args.args,
             )
             const formatedData = ethers.utils.defaultAbiCoder.decode(
-              ["address operator", "address from", "address to", "uint256 id", "uint256 value"],
-              encodeData
+              [
+                'address operator',
+                'address from',
+                'address to',
+                'uint256 id',
+                'uint256 value',
+              ],
+              encodeData,
             )
 
             const id = formatedData.id.toNumber()
 
             if (formatedData.from === this.account) {
-              balances[id] = balances[id] ? balances[id].sub(formatedData.value) : bn(0).sub(formatedData.value)
+              balances[id] = balances[id]
+                ? balances[id].sub(formatedData.value)
+                : bn(0).sub(formatedData.value)
             }
             if (formatedData.to === this.account) {
-              balances[id] = balances[id] ? balances[id].add(formatedData.value) : bn(0).add(formatedData.value)
+              balances[id] = balances[id]
+                ? balances[id].add(formatedData.value)
+                : bn(0).add(formatedData.value)
             }
           }
         }
@@ -106,12 +130,12 @@ export class History {
           newBalances: _.cloneDeep(balances),
           cAmount,
           newLeverage,
-          oldLeverage
+          oldLeverage,
         })
       })
 
       //@ts-ignore
-      return result.sort((a, b) => (b.blockNumber - a.blockNumber))
+      return result.sort((a, b) => b.blockNumber - a.blockNumber)
     } catch (e) {
       throw e
     }

@@ -1,15 +1,15 @@
-import {PoolsType, Storage, SwapLog, TokenType} from "./types";
-import {ethers}                                 from "ethers";
-import {Price}                                  from "./services/price";
-import {Resource}                               from "./services/resource";
-import {BnA}                                    from "./services/balanceAndAllowance";
-import {UniV2Pair}                              from "./services/uniV2Pair";
-import {History}                                from "./services/history";
-import {Swap}                  from "./services/swap";
-import {CurrentPool, PoolData} from "./services/currentPool";
-import {CreatePool}            from "./services/createPool";
-import {JsonRpcProvider} from "@ethersproject/providers";
-import {UniV3Pair} from "./services/uniV3Pair";
+import { PoolsType, Storage, SwapLog, TokenType } from './types'
+import { ethers } from 'ethers'
+import { Price } from './services/price'
+import { Resource } from './services/resource'
+import { BnA } from './services/balanceAndAllowance'
+import { UniV2Pair } from './services/uniV2Pair'
+import { History } from './services/history'
+import { Swap } from './services/swap'
+import { CurrentPool, PoolData } from './services/currentPool'
+import { CreatePool } from './services/createPool'
+import { JsonRpcProvider } from '@ethersproject/providers'
+import { UniV3Pair } from './services/uniV3Pair'
 
 type ConfigType = {
   chainId: number
@@ -60,13 +60,13 @@ export class Engine {
     this.UNIV2PAIR = new UniV2Pair({
       chainId: this.chainId,
       scanApi: this.scanApi,
-      provider: this.provider
+      provider: this.provider,
     })
     this.UNIV3PAIR = new UniV3Pair({
       chainId: this.chainId,
       scanApi: this.scanApi,
       provider: this.provider,
-      rpcUrl: this.rpcUrl
+      rpcUrl: this.rpcUrl,
     })
     this.BNA = new BnA({
       account: this.account,
@@ -90,13 +90,13 @@ export class Engine {
       scanApi: this.scanApi,
       provider: this.provider,
       providerToGetLog: this.providerToGetLog,
-      UNIV2PAIR: this.UNIV2PAIR
+      UNIV2PAIR: this.UNIV2PAIR,
     })
 
     this.CURRENT_POOL = new CurrentPool({
       chainId: this.chainId,
       resource: this.RESOURCE,
-      poolAddress: this.currentPoolAddress
+      poolAddress: this.currentPoolAddress,
     })
 
     this.HISTORY = new History({
@@ -112,7 +112,7 @@ export class Engine {
       CURRENT_POOL: this.CURRENT_POOL,
       signer: this.signer,
       account: this.account,
-      overrideProvider: this.overrideProvider
+      overrideProvider: this.overrideProvider,
     })
 
     this.CREATE_POOL = new CreatePool({
@@ -122,12 +122,11 @@ export class Engine {
       UNIV2PAIR: this.UNIV2PAIR,
       signer: this.signer,
       account: this.account,
-      overrideProvider: this.overrideProvider
+      overrideProvider: this.overrideProvider,
     })
   }
 
   setCurrentPool(poolData: any) {
     this.CURRENT_POOL.initCurrentPoolData(poolData)
   }
-
 }
