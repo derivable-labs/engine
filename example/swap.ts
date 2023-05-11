@@ -1,8 +1,7 @@
 import { Engine } from '../src/engine'
 import { bn, numberToWei } from '../src/utils/helper'
 import { getTestConfigs } from './shared/testConfigs'
-import { POOL_IDS } from '../src/utils/constant'
-import { NATIVE_ADDRESS } from '../dist/utils/constant'
+import {NATIVE_ADDRESS, POOL_IDS} from '../src/utils/constant'
 
 const testLocal = async () => {
   const configs = getTestConfigs(1337)

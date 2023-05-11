@@ -2,8 +2,6 @@ import { Engine } from '../src/engine'
 import { getTestConfigs } from './shared/testConfigs'
 import { BigNumber } from 'ethers'
 import { FixedPoint } from '../src/utils/number'
-import { bn } from '../src/utils/helper'
-import { ZERO_ADDRESS } from '../dist/utils/constant'
 
 const testLocal = async () => {
   const configs = getTestConfigs(1337)
@@ -11,14 +9,6 @@ const testLocal = async () => {
   await engine.RESOURCE.fetchResourceData(
     '0xbC52C688c34A480c6785A38715c693Bb22863DE1',
   )
-
-  const test = bn(1000).shl(128)
-
-  // const rA = _r(
-  //   bn('0x02ab'),
-  //   bn('0x097df2c9405d70b557a80c'),
-  //   bn('0xb469471f80140000')
-  // )
 
   console.log({
     poolGroups: engine.RESOURCE.poolGroups,
