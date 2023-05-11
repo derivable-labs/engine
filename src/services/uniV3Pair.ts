@@ -1,28 +1,35 @@
 import { ethers } from 'ethers'
 import PairV3DetailAbi from '../abi/PairV3Detail.json'
-import { CONFIGS } from '../utils/configs'
 import { JsonRpcProvider } from '@ethersproject/providers'
+import { ConfigType } from './setConfig'
 
 const FLAG =
   '0x0000110000000000000000000000000000000000000000000000000000000111'
-type ConfigType = {
-  chainId: number
-  scanApi: string
-  provider: ethers.providers.Provider
-  rpcUrl: string
-}
+// type ConfigType = {
+//   chainId: number
+//   scanApi: string
+//   provider: ethers.providers.Provider
+//   rpcUrl: string
+// }
 
 export class UniV3Pair {
   chainId: number
-  scanApi: string
+  scanApi?: string
   provider: ethers.providers.Provider
   rpcUrl: string
+  pairsV3Info: string
 
-  constructor(configs: ConfigType) {
-    this.chainId = configs.chainId
-    this.scanApi = configs.scanApi
-    this.provider = configs.provider
-    this.rpcUrl = configs.rpcUrl
+  constructor(config: ConfigType) {
+    const { chainId, scanApi, provider, rpcUrl } = config
+    const { pairsV3Info } = config.addresses
+    if (!pairsV3Info) {
+      throw new Error(`required pairsV3Info contract to be defined!`)
+    }
+    this.chainId = chainId
+    this.scanApi = scanApi
+    this.provider = provider
+    this.rpcUrl = rpcUrl
+    this.pairsV3Info = pairsV3Info
   }
 
   async getPairInfo({
@@ -36,13 +43,13 @@ export class UniV3Pair {
       const provider = new JsonRpcProvider(this.rpcUrl)
       // @ts-ignore
       provider.setStateOverride({
-        [CONFIGS[this.chainId].pairsV3Info]: {
+        [this.pairsV3Info]: {
           code: PairV3DetailAbi.deployedBytecode,
         },
       })
 
       const pairDetailContract = new ethers.Contract(
-        CONFIGS[this.chainId].pairsV3Info,
+        this.pairsV3Info,
         PairV3DetailAbi.abi,
         provider,
       )
@@ -65,13 +72,13 @@ export class UniV3Pair {
       const provider = new JsonRpcProvider(this.rpcUrl)
       // @ts-ignore
       provider.setStateOverride({
-        [CONFIGS[this.chainId].pairsV3Info]: {
+        [this.pairsV3Info]: {
           code: PairV3DetailAbi.deployedBytecode,
         },
       })
 
       const pairDetailContract = new ethers.Contract(
-        CONFIGS[this.chainId].pairsV3Info,
+        this.pairsV3Info,
         PairV3DetailAbi.abi,
         provider,
       )

@@ -10,21 +10,24 @@ import { CurrentPool, PoolData } from './services/currentPool'
 import { CreatePool } from './services/createPool'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { UniV3Pair } from './services/uniV3Pair'
+import { ConfigType, Derivable } from './services/setConfig'
+import { DEFAULT_CHAIN, DEFAULT_CONFIG } from './utils/configs'
+import { DeepPartial } from './types/utils'
 
-type ConfigType = {
-  chainId: number
-  scanApi: string
-  rpcUrl: string
-  signer?: ethers.providers.JsonRpcSigner
-  provider: ethers.providers.Provider
-  providerToGetLog: ethers.providers.Provider
-  account?: string
-  storage?: Storage
-}
+// type ConfigType = {
+//   chainId: number
+//   scanApi: string
+//   rpcUrl: string
+//   signer?: ethers.providers.JsonRpcSigner
+//   provider: ethers.providers.Provider
+//   providerToGetLog: ethers.providers.Provider
+//   account?: string
+//   storage?: Storage
+// }
 
 export class Engine {
   chainId: number
-  scanApi: string
+  scanApi?: string
   rpcUrl: string
   account?: string
   signer?: ethers.providers.JsonRpcSigner
@@ -42,88 +45,39 @@ export class Engine {
   CURRENT_POOL: CurrentPool
   currentPoolAddress: string
   CREATE_POOL: CreatePool
+  config: ConfigType
 
-  constructor(configs: ConfigType) {
-    this.chainId = configs.chainId
-    this.scanApi = configs.scanApi
-    this.rpcUrl = configs.rpcUrl
-    this.overrideProvider = new JsonRpcProvider(configs.rpcUrl)
-    this.storage = configs.storage
-    this.provider = configs.provider
-    this.account = configs.account
-    this.signer = configs.signer
-    this.providerToGetLog = configs.providerToGetLog
+  constructor(
+    account: string,
+    config: DeepPartial<ConfigType>,
+    chainIdProp = DEFAULT_CHAIN,
+  ) {
+    this.config = Derivable.loadConfig(account, config, chainIdProp)
+    this.chainId = this.config.chainId
+    this.scanApi = this.config.scanApi
+    this.rpcUrl = this.config.rpcUrl
+    this.storage = this.config.storage
+    this.overrideProvider = this.config.overrideProvider
+    this.provider = this.config.provider
+    this.account = account
+    this.signer = this.config.signer
+    this.providerToGetLog = this.config.providerToGetLog
     this.initServices()
   }
 
   initServices() {
-    this.UNIV2PAIR = new UniV2Pair({
-      chainId: this.chainId,
-      scanApi: this.scanApi,
-      provider: this.provider,
-    })
-    this.UNIV3PAIR = new UniV3Pair({
-      chainId: this.chainId,
-      scanApi: this.scanApi,
-      provider: this.provider,
-      rpcUrl: this.rpcUrl,
-    })
-    this.BNA = new BnA({
-      account: this.account,
-      chainId: this.chainId,
-      provider: this.provider,
-    })
-    this.RESOURCE = new Resource({
-      account: this.account,
-      chainId: this.chainId,
-      scanApi: this.scanApi,
-      storage: this.storage,
-      provider: this.provider,
-      providerToGetLog: this.providerToGetLog,
-      UNIV2PAIR: this.UNIV2PAIR,
-      UNIV3PAIR: this.UNIV3PAIR,
-      overrideProvider: this.overrideProvider,
-    })
-
-    this.PRICE = new Price({
-      chainId: this.chainId,
-      scanApi: this.scanApi,
-      provider: this.provider,
-      providerToGetLog: this.providerToGetLog,
-      UNIV2PAIR: this.UNIV2PAIR,
-    })
-
-    this.CURRENT_POOL = new CurrentPool({
-      chainId: this.chainId,
-      resource: this.RESOURCE,
-      poolAddress: this.currentPoolAddress,
-    })
-
-    this.HISTORY = new History({
-      account: this.account,
-      CURRENT_POOL: this.CURRENT_POOL,
-    })
-
+    this.UNIV2PAIR = new UniV2Pair(this.config)
+    this.UNIV3PAIR = new UniV3Pair(this.config)
+    this.BNA = new BnA(this.config)
+    this.RESOURCE = new Resource(this.config)
+    this.PRICE = new Price(this.config)
+    this.CURRENT_POOL = new CurrentPool(this.config)
+    this.HISTORY = new History(this.config)
     this.SWAP = new Swap({
-      chainId: this.chainId,
-      provider: this.provider,
-      scanApi: this.scanApi,
-      UNIV2PAIR: this.UNIV2PAIR,
+      ...this.config,
       CURRENT_POOL: this.CURRENT_POOL,
-      signer: this.signer,
-      account: this.account,
-      overrideProvider: this.overrideProvider,
     })
-
-    this.CREATE_POOL = new CreatePool({
-      chainId: this.chainId,
-      provider: this.provider,
-      scanApi: this.scanApi,
-      UNIV2PAIR: this.UNIV2PAIR,
-      signer: this.signer,
-      account: this.account,
-      overrideProvider: this.overrideProvider,
-    })
+    this.CREATE_POOL = new CreatePool(this.config)
   }
 
   setCurrentPool(poolData: any) {

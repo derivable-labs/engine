@@ -1,6 +1,5 @@
 import { ethers } from 'ethers'
 import { MINI_SECOND_PER_DAY, POOL_IDS } from '../utils/constant'
-import { CONFIGS } from '../utils/configs'
 import EventsAbi from '../abi/Events.json'
 import {
   bn,
@@ -14,31 +13,34 @@ import { TokenType } from '../types'
 import historyProvider from '../historyProvider'
 import PoolAbi from '../abi/Pool.json'
 import { UniV2Pair } from './uniV2Pair'
+import { ConfigType } from './setConfig'
 
 const SYNC_EVENT_TOPIC =
   '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1'
 
-type ConfigType = {
-  chainId: number
-  scanApi: string
-  provider: ethers.providers.Provider
-  providerToGetLog: ethers.providers.Provider
-  UNIV2PAIR: UniV2Pair
-}
+// type ConfigType = {
+//   chainId: number
+//   scanApi: string
+//   provider: ethers.providers.Provider
+//   providerToGetLog: ethers.providers.Provider
+//   UNIV2PAIR: UniV2Pair
+// }
 
 export class Price {
   chainId: number
-  scanApi: string
+  scanApi?: string
   provider: ethers.providers.Provider
   providerToGetLog: ethers.providers.Provider
   UNIV2PAIR: UniV2Pair
+  config: ConfigType
 
-  constructor(configs: ConfigType) {
-    this.chainId = configs.chainId
-    this.scanApi = configs.scanApi
-    this.provider = configs.provider
-    this.providerToGetLog = configs.providerToGetLog
-    this.UNIV2PAIR = configs.UNIV2PAIR
+  constructor(config: ConfigType) {
+    this.config = config
+    this.chainId = config.chainId
+    this.scanApi = config.scanApi
+    this.provider = config.provider
+    this.providerToGetLog = config.providerToGetLog
+    this.UNIV2PAIR = new UniV2Pair(config)
   }
 
   async get24hChangeByLog({
@@ -64,8 +66,7 @@ export class Price {
       }
 
       const blocknumber24hAgo =
-        headBlock -
-        Math.floor(MINI_SECOND_PER_DAY / CONFIGS[this.chainId].timePerBlock)
+        headBlock - Math.floor(MINI_SECOND_PER_DAY / this.config.timePerBlock)
       const eventInterface = new ethers.utils.Interface(EventsAbi)
       const { totalBaseReserve, totalQuoteReserve } =
         await this.providerToGetLog
@@ -161,14 +162,14 @@ export class Price {
    * @return price of native token
    */
   async getNativePrice(): Promise<string> {
-    if (!CONFIGS[this.chainId].wrapUsdPair) {
+    if (!this.config.addresses.wrapUsdPair) {
       return '0'
     }
     const res = await this.UNIV2PAIR.getPairInfo({
-      pairAddress: CONFIGS[this.chainId].wrapUsdPair,
+      pairAddress: this.config.addresses.wrapUsdPair,
     })
     const [wrapToken, usdToken] =
-      res.token0.adr === CONFIGS[this.chainId].wrapToken
+      res.token0.adr === this.config.addresses.wrapToken
         ? [res.token0, res.token1]
         : [res.token1, res.token0]
     const priceWei = usdToken.reserve.mul(numberToWei(1)).div(wrapToken.reserve)

@@ -166,9 +166,6 @@ export const parseSqrtSpotX96 = (
   token1: TokenType,
   quoteTokenIndex: number,
 ) => {
-  value = bn('3460663242738747649206486')
-  // const buyOneOfToken0 = (sqrtPriceX96 * sqrtPriceX96 * (10**Decimal0) / (10**Decimal1) / JSBI.BigInt(2) ** (JSBI.BigInt(192))).toFixed(Decimal1);
-
   let price = weiToNumber(
     value
       .mul(value)
@@ -180,4 +177,26 @@ export const parseSqrtSpotX96 = (
     price = weiToNumber(bn(numberToWei(1, 36)).div(bn(numberToWei(price))))
   }
   return formatFloat(price, 5)
+}
+
+const isObject = (item: any) => {
+  return item && typeof item === 'object' && !Array.isArray(item)
+}
+
+export const mergeDeep = (target: any, ...sources: any): any => {
+  if (!sources.length) return target
+  const source = sources.shift()
+
+  if (isObject(target) && isObject(source)) {
+    for (const key in source) {
+      if (isObject(source[key])) {
+        if (!target[key]) Object.assign(target, { [key]: {} })
+        mergeDeep(target[key], source[key])
+      } else {
+        Object.assign(target, { [key]: source[key] })
+      }
+    }
+  }
+
+  return mergeDeep(target, ...sources)
 }

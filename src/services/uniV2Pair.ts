@@ -1,24 +1,27 @@
 import { ethers } from 'ethers'
 import PairDetailAbi from '../abi/PairDetail.json'
-import { CONFIGS } from '../utils/configs'
+import { DerivableContractAddress } from '../utils/configs'
+import { ConfigType } from './setConfig'
 
 const FLAG =
   '0x0000110000000000000000000000000000000000000000000000000000000111'
-type ConfigType = {
-  chainId: number
-  scanApi: string
-  provider: ethers.providers.Provider
-}
+// type ConfigType = {
+//   chainId: number
+//   scanApi: string
+//   provider: ethers.providers.Provider
+// }
 
 export class UniV2Pair {
   chainId: number
-  scanApi: string
+  scanApi?: string
   provider: ethers.providers.Provider
-
-  constructor(configs: ConfigType) {
-    this.chainId = configs.chainId
-    this.scanApi = configs.scanApi
-    this.provider = configs.provider
+  constractAddresses: Partial<DerivableContractAddress>
+  constructor(config: ConfigType) {
+    const { chainId, scanApi, provider } = config
+    this.constractAddresses = config.addresses
+    this.chainId = chainId
+    this.scanApi = scanApi
+    this.provider = provider
   }
 
   async getPairInfo({
@@ -30,7 +33,7 @@ export class UniV2Pair {
   }) {
     try {
       const pairDetailContract = new ethers.Contract(
-        CONFIGS[this.chainId].pairsInfo,
+        this.constractAddresses.pairsInfo as string,
         PairDetailAbi,
         this.provider,
       )
@@ -51,7 +54,7 @@ export class UniV2Pair {
   }) {
     try {
       const pairDetailContract = new ethers.Contract(
-        CONFIGS[this.chainId].pairsInfo,
+        this.constractAddresses.pairsInfo as string,
         PairDetailAbi,
         this.provider,
       )

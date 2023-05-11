@@ -3,7 +3,8 @@ import { getTestConfigs } from './shared/testConfigs'
 import { bn, numberToWei, weiToNumber } from '../src/utils/helper'
 
 const test = async () => {
-  const engine = new Engine(getTestConfigs(1337))
+  const configs = getTestConfigs(1337)
+  const engine = new Engine(configs.account, configs, 1337)
 
   const pairInfo = await engine.UNIV3PAIR.getPairInfo({
     pairAddress: '0xBf4CC059DfF52AeFe7f12516e4CA4Bc691D97474',
