@@ -35,7 +35,17 @@ export class Derivable {
     configProp: DeepPartial<config>,
     chainIdProp: number,
   ): ConfigType {
-    const config = mergeDeep(this.loadDefaultConfig(chainIdProp), configProp)
+    const defaultConfig = this.loadDefaultConfig(chainIdProp)
+    const config = {
+      ...defaultConfig,
+      ...configProp,
+      addresses: {
+        ...defaultConfig.addresses,
+        ...configProp.addresses,
+      }
+    }
+
+    // const config = mergeDeep(this.loadDefaultConfig(chainIdProp), configProp)
     const overrideProvider = new JsonRpcProvider(config.rpcUrl)
     const provider = new ethers.providers.JsonRpcProvider(config.rpcUrl)
     const providerToGetLog = new ethers.providers.JsonRpcProvider(
@@ -44,7 +54,6 @@ export class Derivable {
 
     return {
       ...config,
-      signer: configProp.signer,
       account,
       overrideProvider,
       provider,

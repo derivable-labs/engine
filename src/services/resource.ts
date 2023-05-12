@@ -108,7 +108,7 @@ export class Resource {
   }
 
   getLastBlockCached(account: string) {
-    if (!this.storage) return ddlGenesisBlock[this.chainId]
+    if (!this.storage || !this.storage.getItem) return ddlGenesisBlock[this.chainId]
     const lastDDlBlock =
       Number(
         this.storage.getItem(
@@ -136,7 +136,7 @@ export class Resource {
     headBlock: number
     account: string
   }) {
-    if (!this.storage) return
+    if (!this.storage || !this.storage.getItem || !this.storage.setItem) return
     const cachedDdlLogs = JSON.parse(
       this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) ||
         '[]',
@@ -198,7 +198,7 @@ export class Resource {
       swapLogs: [],
       poolGroups: {},
     }
-    if (!this.storage) return results
+    if (!this.storage || !this.storage.getItem) return results
     const ddlLogs = JSON.parse(
       this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) ||
         '[]',

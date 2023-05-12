@@ -13,7 +13,6 @@ export interface config {
   theGraphExchange?: string
   candleChartApi?: string
   storage?: Storage
-  signer?: Signer
   poolAddress?: string
   nativeToken?: string
   addresses: Partial<DerivableContractAddress>
