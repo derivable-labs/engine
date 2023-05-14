@@ -26,7 +26,7 @@ import {
   getLogicAbi,
   getNormalAddress,
   numberToWei,
-  parseSqrtSpotX96,
+  parseSqrtSpotPrice,
   parseUq128x128,
   weiToNumber,
 } from '../utils/helper'
@@ -470,7 +470,7 @@ export class Resource {
           spotBase: poolsState[i].spot,
           ...poolsState[i],
         }
-        poolGroups[id].basePrice = parseSqrtSpotX96(
+        poolGroups[id].basePrice = parseSqrtSpotPrice(
           poolsState[i].spot,
           pairsInfo[pair].token0,
           pairsInfo[pair].token1,

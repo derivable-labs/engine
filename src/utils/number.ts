@@ -35,12 +35,12 @@ export const floatToFixed128 = (n: number) => {
 export const fixed128ToFloat = (fixed128: BigNumber) => {
   return bn(fixed128).mul(FLOAT_UNIT).shr(128).toNumber() / FLOAT_UNIT
 }
-
-export const formatFloat = (number: number | string, decimal = 4) => {
-  number = number.toString()
-  const arr = number.split('.')
-  if (arr.length > 1) {
-    arr[1] = arr[1].slice(0, decimal)
-  }
-  return Number(arr.join('.'))
-}
+//
+// export const formatFloat = (number: number | string, decimal = 4) => {
+//   number = number.toString()
+//   const arr = number.split('.')
+//   if (arr.length > 1) {
+//     arr[1] = arr[1].slice(0, decimal)
+//   }
+//   return arr.join('.')
+// }

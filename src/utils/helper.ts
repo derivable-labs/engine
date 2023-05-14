@@ -95,17 +95,13 @@ export const getNormalAddress = (addresses: string[]) => {
   return addresses.filter((adr: string) => /^0x[0-9,a-f,A-Z]{40}$/g.test(adr))
 }
 
-export const formatFloat = (number: number | string, decimal?: number) => {
-  if (!decimal) {
-    decimal = detectDecimalFromPrice(number)
-  }
-
+export const formatFloat = (number: number | string, decimal = 4) => {
   number = number.toString()
   const arr = number.split('.')
   if (arr.length > 1) {
     arr[1] = arr[1].slice(0, decimal)
   }
-  return Number(arr.join('.'))
+  return arr.join('.')
 }
 
 export const formatPercent = (floatNumber: any, decimal: number = 2) => {
@@ -157,10 +153,10 @@ export const packId = (kind: string, address: string) => {
 }
 
 export const parseUq128x128 = (value: BigNumber, unit = 1000) => {
-  return value.mul(unit).shr(128).toNumber() / unit
+  return value.mul(unit).shr(112).toNumber() / unit
 }
 
-export const parseSqrtSpotX96 = (
+export const parseSqrtSpotPrice = (
   value: BigNumber,
   token0: TokenType,
   token1: TokenType,
@@ -170,13 +166,13 @@ export const parseSqrtSpotX96 = (
     value
       .mul(value)
       .mul(numberToWei(1, token0.decimal))
-      .shr(96 * 2),
+      .shr(256),
     token1.decimal,
   )
   if (quoteTokenIndex === 0) {
     price = weiToNumber(bn(numberToWei(1, 36)).div(bn(numberToWei(price))))
   }
-  return formatFloat(price, 5)
+  return formatFloat(price, 18)
 }
 
 const isObject = (item: any) => {
