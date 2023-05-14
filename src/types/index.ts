@@ -31,6 +31,11 @@ export type StatesType = {
   spotBase: BigNumber
   spotLP: BigNumber
   R: BigNumber
+  rA: BigNumber
+  rB: BigNumber
+  sA: BigNumber
+  sB: BigNumber
+  sC: BigNumber
   Rc: BigNumber
   Rb: BigNumber
   Rq: BigNumber
@@ -93,6 +98,7 @@ export type PoolGroupType = {
   pools: { [key: string]: PoolType }
   ORACLE: string
   TOKEN_R: string
+  k: number[]
   states: {
     twapBase: BigNumber
     spotBase: BigNumber

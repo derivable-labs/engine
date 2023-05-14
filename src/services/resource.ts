@@ -485,8 +485,10 @@ export class Resource {
       }
 
       if (poolGroups[id].powers) {
+        poolGroups[id].k.push(pools[i].k.toNumber())
         poolGroups[id].powers.push(pools[i].powers[0], pools[i].powers[1])
       } else {
+        poolGroups[id].k = [pools[i].k.toNumber()]
         poolGroups[id].powers = [...pools[i].powers]
       }
       if (poolGroups[id].dTokens) {
