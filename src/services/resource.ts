@@ -21,7 +21,7 @@ import {
 } from '../types'
 import {
   bn,
-  decodePowers,
+  decodePowers, div,
   formatMultiCallBignumber,
   getLogicAbi,
   getNormalAddress,
@@ -427,13 +427,14 @@ export class Resource {
 
     for (const i in pools) {
       pools[i].states = poolsState[i]
+      pools[i] = {
+        ...pools[i],
+        ...this.calcPoolInfo(pools[i])
+      }
+
       const {
-        UTR,
-        TOKEN,
         MARK: _MARK,
         ORACLE,
-        TOKEN_R,
-        powers,
         k: _k,
       } = pools[i]
 
@@ -450,7 +451,7 @@ export class Resource {
 
       const MARK = _MARK.toString()
       const k = _k.toNumber()
-      const id = [UTR, TOKEN, MARK, ORACLE, TOKEN_R].join('-')
+      const id = [pair].join('-')
       if (poolGroups[id]) {
         poolGroups[id].pools[i] = pools[i]
       } else {
@@ -586,14 +587,6 @@ export class Resource {
     return this.overrideProvider
   }
 
-  getBasePrice(pairInfo: any, baseToken: string) {
-    const token0 = pairInfo.token0.adr
-    const r0 = pairInfo.token0.reserve
-    const r1 = pairInfo.token1.reserve
-    const [rb, rq] = token0 === baseToken ? [r0, r1] : [r1, r0]
-    return weiToNumber(rq.mul(numberToWei(1)).div(rb))
-  }
-
   /**
    * get Multicall Request to get List token and poolState data in 1 request to RPC
    * @param normalTokens
@@ -671,6 +664,18 @@ export class Resource {
     })
 
     return { tokens, poolsState: pools }
+  }
+
+  calcPoolInfo(pool: PoolType) {
+    const {R, rA, rB} = pool.states
+    const rC = R.sub(rA).sub(rB)
+    const SECONDS_PER_DAY = 86400
+    const riskFactor = rC.gt(0) ? div(rA.sub(rB),rC) : bn(0)
+    const dailyInterestRate = 1 - Math.pow(2, - SECONDS_PER_DAY / pool.HALF_LIFE.toNumber())
+    return {
+      riskFactor,
+      dailyInterestRate
+    }
   }
 
   getRdc(pools: any): {
