@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import {BigNumber, ethers} from 'ethers'
 import {parseEther} from 'ethers/lib/utils'
-import {bn, div, formatFloat, isErc1155Address} from '../utils/helper'
+import {bn, div, formatFloat, isErc1155Address, weiToNumber} from '../utils/helper'
 import {PoolsType, PoolType} from "../types";
 import {POOL_IDS} from "../utils/constant";
 
@@ -97,7 +97,7 @@ export class PowerState {
     changeAmount?: BigNumber,
     changeToken?: string,
   ): StepType[] {
-    oldBalances = this.encodeBalances(oldBalances)
+    oldBalances = _.clone(this.encodeBalances(oldBalances))
     const oldValues = this.valuesFromBalances(oldBalances)
     const oldValue = Object.values(oldValues).reduce(
       (totalValue, value) => totalValue.add(value),
@@ -228,8 +228,9 @@ export class PowerState {
         const [address, id] = token.split('-')
         if (!this.pools[address]) continue
         const pool = this.pools[address]
-        if (pool) {
-          result[Number(id) === POOL_IDS.A ? pool.k.toNumber() : -pool.k.toNumber()] = balances[token]
+        const power = Number(id) === POOL_IDS.A ? pool.k.toNumber() :  Number(id) === POOL_IDS.B ?  -pool.k.toNumber() : 0
+        if (pool && power) {
+          result[power] = balances[token]
         }
       }
     }
@@ -356,7 +357,7 @@ export class PowerState {
   }
 
   getCPrice() {
-    return this.basePrice
+    return 1
   }
 
   valuesFromBalances(balances: { [key: number]: BigNumber }): {
