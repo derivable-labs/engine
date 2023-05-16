@@ -30,6 +30,7 @@ export interface DerivableContractAddress {
   wrapUsdPair: string
   poolFactory: string
   stateCalHelper: string
+  logic: string
 }
 
 export const TESTNET_CONFIG: config = {
@@ -50,6 +51,7 @@ export const TESTNET_CONFIG: config = {
     wrapUsdPair: '0xBf4CC059DfF52AeFe7f12516e4CA4Bc691D97474',
     poolFactory: '0x2B528278eEEf8d30838fCC6297e6f28D4F03b1BD',
     stateCalHelper: '0x95a7d5edfD4701478D3ACA5DCb69D549D83E3c52',
+    logic: '0xe2b8a85De2ad4076593B81F2435C77a2cb84caAf',
   },
 }
 
