@@ -42,7 +42,7 @@ export class Derivable {
       addresses: {
         ...defaultConfig.addresses,
         ...configProp.addresses,
-      }
+      },
     }
 
     // const config = mergeDeep(this.loadDefaultConfig(chainIdProp), configProp)
@@ -79,6 +79,7 @@ export class Derivable {
     const wrapUsdPair = config.addresses.wrapUsdPair as string
     const poolFactory = config.addresses.poolFactory as string
     const stateCalHelper = config.addresses.stateCalHelper as string
+    const logic = config.addresses.logic as string
     return {
       token,
       multiCall,
@@ -91,6 +92,7 @@ export class Derivable {
       wrapUsdPair,
       poolFactory,
       stateCalHelper,
+      logic,
     }
   }
 

@@ -26,7 +26,6 @@ export class CreatePool {
   signer?: ethers.providers.JsonRpcSigner
   UNIV2PAIR: UniV2Pair
   contractAddresses: Partial<DerivableContractAddress>
-  logic?: any
   constructor(config: ConfigType) {
     this.account = config.account
     this.chainId = config.chainId
@@ -34,7 +33,6 @@ export class CreatePool {
     this.provider = config.provider
     this.overrideProvider = config.overrideProvider
     this.signer = config.signer
-    this.logic = config.logic
     this.contractAddresses = config.addresses
   }
 
@@ -94,7 +92,7 @@ export class CreatePool {
     return {
       utr: this.contractAddresses.router,
       token: this.contractAddresses.token,
-      logic: this.logic,
+      logic: this.contractAddresses.logic,
       oracle,
       reserveToken: this.contractAddresses.wrapToken,
       recipient,
