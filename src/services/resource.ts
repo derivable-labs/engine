@@ -382,6 +382,7 @@ export class Resource {
   async loadStatesData(
     listTokens: string[],
     listPools: { [key: string]: PoolType },
+    //@ts-ignore
     uniPools: string[],
   ): Promise<{
     tokens: TokenType[]
