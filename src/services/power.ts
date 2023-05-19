@@ -1,11 +1,17 @@
 import _ from 'lodash'
-import {BigNumber, ethers} from 'ethers'
-import {parseEther} from 'ethers/lib/utils'
-import {bn, div, formatFloat, isErc1155Address, weiToNumber} from '../utils/helper'
-import {PoolsType, PoolType} from "../types";
-import {POOL_IDS} from "../utils/constant";
+import { BigNumber, ethers } from 'ethers'
+import { parseEther } from 'ethers/lib/utils'
+import {
+  bn,
+  div,
+  formatFloat,
+  isErc1155Address,
+  weiToNumber,
+} from '../utils/helper'
+import { PoolsType, PoolType } from '../types'
+import { POOL_IDS } from '../utils/constant'
 
-const {floor, abs} = Math
+const { floor, abs } = Math
 
 const BN_0 = bn(0)
 
@@ -38,7 +44,7 @@ export class PowerState {
   getPoolByK(k: number) {
     const pool = Object.values(this.pools).find((p) => p.k.toNumber() === k)
     if (!pool) {
-      throw "Not found pool with k=" + k
+      throw 'Not found pool with k=' + k
     }
     return pool
   }
@@ -57,9 +63,14 @@ export class PowerState {
         if (Number(id) === POOL_IDS.B) {
           price = this.calculateLongPriceByK(this.pools[address].k.toNumber())
         }
-        const exposure = this.getExposureByIdAndK(id, this.pools[address].k.toNumber())
+        const exposure = this.getExposureByIdAndK(
+          id,
+          this.pools[address].k.toNumber(),
+        )
         const balance = balances[token]
-        totalValue = totalValue.add(balance.mul(floor(this.unit * Number(price))))
+        totalValue = totalValue.add(
+          balance.mul(floor(this.unit * Number(price))),
+        )
         totalExposure = totalExposure.add(
           balance.mul(floor(this.unit * Number(price) * exposure)),
         )
@@ -90,7 +101,6 @@ export class PowerState {
     return totalValue.div(this.unit)
   }
 
-
   getSwapSteps(
     oldBalances: { [key: number]: BigNumber },
     newExposure: number,
@@ -104,7 +114,8 @@ export class PowerState {
       BN_0,
     )
     const changePrice = this.getCPrice()
-    const changeValue = changeAmount?.mul(floor(this.unit * changePrice)).div(this.unit) ?? BN_0
+    const changeValue =
+      changeAmount?.mul(floor(this.unit * changePrice)).div(this.unit) ?? BN_0
 
     const newValue = oldValue.add(changeValue)
     const newBalances = this.getOptimalBalances(newValue, newExposure)
@@ -210,7 +221,7 @@ export class PowerState {
     // don't leave small balance behind
     const remainBalances = this.getInputBalancesAfterSwap(oldBalances, steps)
     for (const step of steps) {
-      const {tokenIn, amountIn} = step
+      const { tokenIn, amountIn } = step
       const balance = remainBalances[tokenIn] ?? BN_0
       if (!balance.isZero() && amountIn.div(balance).gt(this.unit)) {
         step.amountIn = amountIn.add(balance)
@@ -228,7 +239,12 @@ export class PowerState {
         const [address, id] = token.split('-')
         if (!this.pools[address]) continue
         const pool = this.pools[address]
-        const power = Number(id) === POOL_IDS.A ? pool.k.toNumber() :  Number(id) === POOL_IDS.B ?  -pool.k.toNumber() : 0
+        const power =
+          Number(id) === POOL_IDS.A
+            ? pool.k.toNumber()
+            : Number(id) === POOL_IDS.B
+            ? -pool.k.toNumber()
+            : 0
         if (pool && power) {
           result[power] = balances[token]
         }
@@ -237,23 +253,27 @@ export class PowerState {
     return result
   }
 
-  encodeSteps(steps: { tokenIn: string, tokenOut: string, amountIn: BigNumber }[]) {
+  encodeSteps(
+    steps: { tokenIn: string; tokenOut: string; amountIn: BigNumber }[],
+  ) {
     return steps.map((step) => {
       return {
         tokenIn: this.convertPowerToAddress(step.tokenIn),
         tokenOut: this.convertPowerToAddress(step.tokenOut),
-        amountIn: step.amountIn
+        amountIn: step.amountIn,
       }
     })
   }
 
   // power is 2 | 3 | 4 | ... | C
   convertPowerToAddress(power: string) {
-    if(power === "C") {
+    if (power === 'C') {
       return this.TOKEN_R
-    } else if(this.k.includes(Math.abs(Number(power)))) {
+    } else if (this.k.includes(Math.abs(Number(power)))) {
       const pool = this.getPoolByK(Math.abs(Number(power)))
-      return pool.poolAddress + '-' + (Number(power) > 0 ? POOL_IDS.A : POOL_IDS.B)
+      return (
+        pool.poolAddress + '-' + (Number(power) > 0 ? POOL_IDS.A : POOL_IDS.B)
+      )
     }
 
     return power
@@ -366,7 +386,9 @@ export class PowerState {
     const result = {}
     for (const power of Object.keys(balances)) {
       let price = this.calculatePrice(Number(power))
-      result[power] = balances[power].mul(floor(this.unit * Number(price))).div(this.unit)
+      result[power] = balances[power]
+        .mul(floor(this.unit * Number(price)))
+        .div(this.unit)
     }
     return result
   }
@@ -426,13 +448,13 @@ export class PowerState {
 
   calculateLongPriceByK(k: number): string {
     const pool = this.getPoolByK(k)
-    const {rA, sA} = pool.states
+    const { rA, sA } = pool.states
     return div(rA, sA)
   }
 
   calculateShortPriceByK(k: number): string {
     const pool = this.getPoolByK(k)
-    const {rB, sB} = pool.states
+    const { rB, sB } = pool.states
     return div(rB, sB)
   }
 }
@@ -446,7 +468,6 @@ function maxKey(values: {}): any {
   }
   return key
 }
-
 
 function _firstKey(
   values: { [key: number]: BigNumber },

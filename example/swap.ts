@@ -1,8 +1,8 @@
 import { Engine } from '../src/engine'
 import { bn, numberToWei } from '../src/utils/helper'
 import { getTestConfigs } from './shared/testConfigs'
-import {NATIVE_ADDRESS, POOL_IDS} from '../src/utils/constant'
-import PowerState from "../src/services/power";
+import { NATIVE_ADDRESS, POOL_IDS } from '../src/utils/constant'
+import PowerState from '../src/services/power'
 
 const testLocal = async () => {
   const configs = getTestConfigs(1337)
@@ -21,13 +21,18 @@ const testLocal = async () => {
     tokens: tokenArr,
   })
 
-  const power = new PowerState({k: currentPool.k})
+  const power = new PowerState({ k: currentPool.k })
   power.loadPools(currentPool)
-  let steps: any = power.getSwapSteps(res.balances, 3, bn(numberToWei(-1)), NATIVE_ADDRESS)
+  let steps: any = power.getSwapSteps(
+    res.balances,
+    3,
+    bn(numberToWei(-1)),
+    NATIVE_ADDRESS,
+  )
   steps = steps.map((step: any) => {
     return {
       ...step,
-      amountOutMin: 0
+      amountOutMin: 0,
     }
   })
   // console.log(a)
@@ -44,7 +49,9 @@ const testLocal = async () => {
   // ]
 
   console.log(steps[1].amountIn.toString())
-  console.log(res.balances['0x0b7C12C88326cd2ab068470fa098Ac3189c4F8D1-16'].toString())
+  console.log(
+    res.balances['0x0b7C12C88326cd2ab068470fa098Ac3189c4F8D1-16'].toString(),
+  )
   await engine.SWAP.multiSwap(steps, bn(6000000))
 }
 

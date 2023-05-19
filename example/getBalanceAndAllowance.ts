@@ -1,6 +1,6 @@
 import { Engine } from '../src/engine'
 import { getTestConfigs } from './shared/testConfigs'
-import {weiToNumber} from "../src/utils/helper";
+import { weiToNumber } from '../src/utils/helper'
 
 const test = async () => {
   const configs = getTestConfigs(1337)

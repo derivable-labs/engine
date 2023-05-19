@@ -21,7 +21,8 @@ import {
 } from '../types'
 import {
   bn,
-  decodePowers, div,
+  decodePowers,
+  div,
   formatMultiCallBignumber,
   getLogicAbi,
   getNormalAddress,
@@ -108,7 +109,8 @@ export class Resource {
   }
 
   getLastBlockCached(account: string) {
-    if (!this.storage || !this.storage.getItem) return ddlGenesisBlock[this.chainId]
+    if (!this.storage || !this.storage.getItem)
+      return ddlGenesisBlock[this.chainId]
     const lastDDlBlock =
       Number(
         this.storage.getItem(
@@ -430,14 +432,10 @@ export class Resource {
       pools[i].states = poolsState[i]
       pools[i] = {
         ...pools[i],
-        ...this.calcPoolInfo(pools[i])
+        ...this.calcPoolInfo(pools[i]),
       }
 
-      const {
-        MARK: _MARK,
-        ORACLE,
-        k: _k,
-      } = pools[i]
+      const { MARK: _MARK, ORACLE, k: _k } = pools[i]
 
       const quoteTokenIndex = bn(ORACLE.slice(0, 3)).gt(0) ? 1 : 0
       const pair = ethers.utils.getAddress('0x' + ORACLE.slice(-40))
@@ -450,7 +448,6 @@ export class Resource {
       pools[i].baseToken = baseToken.address
       pools[i].quoteToken = quoteToken.address
 
-      const MARK = _MARK.toString()
       const k = _k.toNumber()
       const id = [pair].join('-')
       if (poolGroups[id]) {
@@ -668,14 +665,15 @@ export class Resource {
   }
 
   calcPoolInfo(pool: PoolType) {
-    const {R, rA, rB} = pool.states
+    const { R, rA, rB } = pool.states
     const rC = R.sub(rA).sub(rB)
     const SECONDS_PER_DAY = 86400
-    const riskFactor = rC.gt(0) ? div(rA.sub(rB),rC) : bn(0)
-    const dailyInterestRate = 1 - Math.pow(2, - SECONDS_PER_DAY / pool.HALF_LIFE.toNumber())
+    const riskFactor = rC.gt(0) ? div(rA.sub(rB), rC) : '0'
+    const dailyInterestRate =
+      1 - Math.pow(2, -SECONDS_PER_DAY / pool.HALF_LIFE.toNumber())
     return {
       riskFactor,
-      dailyInterestRate
+      dailyInterestRate,
     }
   }
 

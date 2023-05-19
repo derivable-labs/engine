@@ -2,9 +2,9 @@ import { Engine } from '../src/engine'
 import { getTestConfigs } from './shared/testConfigs'
 import { BigNumber } from 'ethers'
 import { FixedPoint } from '../src/utils/number'
-import PowerState from "../src/services/power";
-import {bn, numberToWei} from "../src/utils/helper";
-import {NATIVE_ADDRESS} from "../src/utils/constant";
+import PowerState from '../src/services/power'
+import { bn, numberToWei } from '../src/utils/helper'
+import { NATIVE_ADDRESS } from '../src/utils/constant'
 
 const testLocal = async () => {
   const configs = getTestConfigs(1337)
@@ -25,9 +25,14 @@ const testLocal = async () => {
     tokens: tokenArr,
   })
 
-  const power = new PowerState({k: currentPool.k})
+  const power = new PowerState({ k: currentPool.k })
   power.loadPools(currentPool)
-  const a = power.getSwapSteps(res.balances, 3, bn(numberToWei(-1)), NATIVE_ADDRESS)
+  const a = power.getSwapSteps(
+    res.balances,
+    3,
+    bn(numberToWei(-1)),
+    NATIVE_ADDRESS,
+  )
   console.log(a)
 }
 
