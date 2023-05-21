@@ -3,6 +3,7 @@ import { bn } from '../utils/helper'
 import { POOL_IDS } from '../utils/constant'
 import { BigNumber } from 'ethers'
 import { ConfigType } from './setConfig'
+import { PoolType } from '../types'
 
 // type ConfigType = {
 //   resource: Resource
@@ -26,10 +27,10 @@ export type PoolData = {
 
 export class CurrentPool {
   resource: Resource
+  pools: { [key: string]: PoolType }
   baseToken: string
   quoteToken: string
   cToken: string
-  TOKEN_R: string
   TOKEN: string
   dTokens: string[]
   logicAddress?: string

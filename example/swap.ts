@@ -20,39 +20,42 @@ const testLocal = async () => {
   const res = await engine.BNA.getBalanceAndAllowance({
     tokens: tokenArr,
   })
-
-  const power = new PowerState({ k: currentPool.k })
-  power.loadPools(currentPool)
-  let steps: any = power.getSwapSteps(
-    res.balances,
-    3,
-    bn(numberToWei(-1)),
-    NATIVE_ADDRESS,
-  )
-  steps = steps.map((step: any) => {
-    return {
-      ...step,
-      amountOutMin: 0,
-    }
-  })
+  //
+  // const power = new PowerState({ k: currentPool.k })
+  // power.loadPools(currentPool)
+  // let steps: any = power.getSwapSteps(
+  //   res.balances,
+  //   3,
+  //   bn(numberToWei(-1)),
+  //   NATIVE_ADDRESS,
+  // )
+  // steps = steps.map((step: any) => {
+  //   return {
+  //     ...step,
+  //     amountOutMin: 0,
+  //   }
+  // })
   // console.log(a)
 
-  // const steps = [
-  //   {
-  //     amountIn: bn(numberToWei(1)),
-  //     tokenIn: NATIVE_ADDRESS,
-  //     tokenOut:
-  //       Object.values(currentPool.pools)[0].poolAddress + '-' + POOL_IDS.C,
-  //     // tokenOut: CONFIGS[1337].nativeToken,
-  //     amountOutMin: 0,
-  //   },
-  // ]
+  const steps = [
+    {
+      amountIn: bn(numberToWei(1)),
+      tokenIn:
+        Object.values(currentPool.pools)[1].poolAddress + '-' + POOL_IDS.A,
+      tokenOut:
+        Object.values(currentPool.pools)[1].poolAddress + '-' + POOL_IDS.B,
+      // tokenOut: CONFIGS[1337].nativeToken,
+      amountOutMin: 0,
+    },
+  ]
 
-  console.log(steps[1].amountIn.toString())
-  console.log(
-    res.balances['0x0b7C12C88326cd2ab068470fa098Ac3189c4F8D1-16'].toString(),
-  )
-  await engine.SWAP.multiSwap(steps, bn(6000000))
+  // console.log(steps[1].amountIn.toString())
+  // console.log(
+  //   res.balances['0x0b7C12C88326cd2ab068470fa098Ac3189c4F8D1-16'].toString(),
+  // )
+  await engine.SWAP.multiSwap(steps, bn(6000000)).catch((e) => {
+    console.log(e)
+  })
 }
 
 testLocal()

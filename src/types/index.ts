@@ -97,7 +97,6 @@ export type PoolGroupType = {
   TOKEN: string
   pools: { [key: string]: PoolType }
   ORACLE: string
-  TOKEN_R: string
   k: number[]
   states: {
     twapBase: BigNumber

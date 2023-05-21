@@ -144,28 +144,28 @@ export class Swap {
     })
   }
 
-  convertStepForPoolErc1155(steps: SwapStepType[]): {
-    stepsToSwap: PoolErc1155StepType[]
-    value: BigNumber
-  } {
-    let value = bn(0)
-    steps.forEach((step) => {
-      if (step.tokenIn === NATIVE_ADDRESS) {
-        value = value.add(step.amountIn)
-      }
-    })
-
-    const stepsToSwap = steps.map((step) => {
-      return {
-        idIn: this.getIdByAddress(step.tokenIn),
-        idOut: this.getIdByAddress(step.tokenOut),
-        amountIn: step.amountIn,
-        amountOutMin: step.amountOutMin,
-      }
-    })
-
-    return { stepsToSwap, value }
-  }
+  // convertStepForPoolErc1155(steps: SwapStepType[]): {
+  //   stepsToSwap: PoolErc1155StepType[]
+  //   value: BigNumber
+  // } {
+  //   let value = bn(0)
+  //   steps.forEach((step) => {
+  //     if (step.tokenIn === NATIVE_ADDRESS) {
+  //       value = value.add(step.amountIn)
+  //     }
+  //   })
+  //
+  //   const stepsToSwap = steps.map((step) => {
+  //     return {
+  //       idIn: this.getIdByAddress(step.tokenIn),
+  //       idOut: this.getIdByAddress(step.tokenOut),
+  //       amountIn: step.amountIn,
+  //       amountOutMin: step.amountOutMin,
+  //     }
+  //   })
+  //
+  //   return { stepsToSwap, value }
+  // }
 
   async convertStepToActions(
     steps: SwapStepType[],
@@ -180,6 +180,8 @@ export class Swap {
       recipient: string | undefined
     }[] = []
     steps.forEach((step) => {
+      const poolGroup = this.getPoolPoolGroup(step.tokenIn, step.tokenOut)
+
       outputs.push({
         recipient: this.account,
         eip: isErc1155Address(step.tokenOut)
@@ -192,8 +194,8 @@ export class Swap {
           : step.tokenOut,
         id: isErc1155Address(step.tokenOut)
           ? packId(
-              this.getIdByAddress(step.tokenOut).toString(),
-              this.getAddressByErc1155Address(step.tokenOut),
+              this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R).toString(),
+              this.getAddressByErc1155Address(step.tokenOut, poolGroup.TOKEN_R),
             )
           : bn(0),
         amountOutMin: step.amountOutMin,
@@ -205,18 +207,26 @@ export class Swap {
     const metaDatas: any = []
     const promises: any = []
     steps.forEach((step) => {
+      const poolGroup = this.getPoolPoolGroup(step.tokenIn, step.tokenOut)
+
       if (
         (step.tokenIn === NATIVE_ADDRESS || step.tokenOut === NATIVE_ADDRESS) &&
-        this.CURRENT_POOL.TOKEN_R !== this.config.addresses.wrapToken
+        poolGroup.TOKEN_R !== this.config.addresses.wrapToken
       ) {
         throw 'This pool do not support swap by native Token'
       }
 
-      const poolIn = this.getAddressByErc1155Address(step.tokenIn)
-      const poolOut = this.getAddressByErc1155Address(step.tokenOut)
+      const poolIn = this.getAddressByErc1155Address(
+        step.tokenIn,
+        poolGroup.TOKEN_R,
+      )
+      const poolOut = this.getAddressByErc1155Address(
+        step.tokenOut,
+        poolGroup.TOKEN_R,
+      )
 
-      let idIn = this.getIdByAddress(step.tokenIn)
-      const idOut = this.getIdByAddress(step.tokenOut)
+      let idIn = this.getIdByAddress(step.tokenIn, poolGroup.TOKEN_R)
+      const idOut = this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R)
       if (step.tokenIn === NATIVE_ADDRESS) {
         nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn)
       }
@@ -227,8 +237,8 @@ export class Swap {
 
       if (
         poolIn === poolOut ||
-        poolOut === this.CURRENT_POOL.TOKEN_R ||
-        poolIn === this.CURRENT_POOL.TOKEN_R
+        poolOut === poolGroup.TOKEN_R ||
+        poolIn === poolGroup.TOKEN_R
       ) {
         const poolAddress = isErc1155Address(step.tokenIn) ? poolIn : poolOut
         let inputs = [
@@ -237,7 +247,7 @@ export class Swap {
             eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
             token: isErc1155Address(step.tokenIn)
               ? this.CURRENT_POOL.TOKEN
-              : this.CURRENT_POOL.TOKEN_R,
+              : poolGroup.TOKEN_R,
             id: isErc1155Address(step.tokenIn)
               ? packId(idIn.toString(), poolIn)
               : 0,
@@ -331,12 +341,12 @@ export class Swap {
     return { params: [outputs, actions], value: nativeAmountToWrap }
   }
 
-  getIdByAddress(address: string) {
+  getIdByAddress(address: string, TOKEN_R: string) {
     try {
-      if (address === this.CURRENT_POOL.TOKEN_R) return bn(POOL_IDS.R)
+      if (address === TOKEN_R) return bn(POOL_IDS.R)
       if (
         address === NATIVE_ADDRESS &&
-        this.CURRENT_POOL.TOKEN_R === this.config.addresses.wrapToken
+        TOKEN_R === this.config.addresses.wrapToken
       ) {
         return bn(POOL_IDS.native)
       }
@@ -344,6 +354,36 @@ export class Swap {
     } catch (e) {
       throw new Error('Token id not found')
     }
+  }
+
+  getPoolPoolGroup(addressIn: string, addressOut: string) {
+    const poolIn = isErc1155Address(addressIn)
+      ? this.CURRENT_POOL.pools[addressIn.split('-')[0]]
+      : null
+
+    const poolOut = isErc1155Address(addressOut)
+      ? this.CURRENT_POOL.pools[addressOut.split('-')[0]]
+      : null
+
+    if (!poolIn && !poolOut) {
+      throw 'Cannot detect pool to swap'
+    }
+
+    if (poolIn && poolOut && poolIn.TOKEN_R !== poolOut.TOKEN_R) {
+      throw 'Cannot swap throw multi pool (need to same Token R)'
+    }
+
+    const result = { pools: {}, TOKEN_R: '' }
+    if (poolIn) {
+      result.pools[poolIn.poolAddress] = poolIn
+      result.TOKEN_R = poolIn.TOKEN_R
+    }
+    if (poolOut) {
+      result.pools[poolOut.poolAddress] = poolOut
+      result.TOKEN_R = poolOut.TOKEN_R
+    }
+
+    return result
   }
 
   async multiSwap(steps: SwapStepType[], gasLimit?: BigNumber) {
@@ -377,13 +417,13 @@ export class Swap {
     }
   }
 
-  getAddressByErc1155Address(address: string) {
+  getAddressByErc1155Address(address: string, TOKEN_R: string) {
     if (isErc1155Address(address)) {
       return address.split('-')[0]
     }
     if (
       address === NATIVE_ADDRESS &&
-      this.CURRENT_POOL.TOKEN_R === this.config.addresses.wrapToken
+      TOKEN_R === this.config.addresses.wrapToken
     ) {
       return this.config.addresses.wrapToken
     }
