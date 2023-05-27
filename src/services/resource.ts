@@ -1,4 +1,4 @@
-import { BigNumber, ethers } from 'ethers'
+import {BigNumber, ethers} from 'ethers'
 import {
   ddlGenesisBlock,
   EventDataAbis,
@@ -6,7 +6,7 @@ import {
   POOL_IDS,
 } from '../utils/constant'
 import EventsAbi from '../abi/Events.json'
-import { Multicall } from 'ethereum-multicall'
+import {Multicall} from 'ethereum-multicall'
 import TokensInfoAbi from '../abi/TokensInfo.json'
 import {
   LogType,
@@ -31,18 +31,18 @@ import {
   parseUq128x128,
   weiToNumber,
 } from '../utils/helper'
-import { UniV2Pair } from './uniV2Pair'
-import { JsonRpcProvider } from '@ethersproject/providers'
+import {UniV2Pair} from './uniV2Pair'
+import {JsonRpcProvider} from '@ethersproject/providers'
 import PoolOverride from '../abi/PoolOverride.json'
 import Pool from '../abi/Pool.json'
 // import { PowerState } from 'powerLib/dist/powerLib'
 import _ from 'lodash'
-import { UniV3Pair } from './uniV3Pair'
+import {UniV3Pair} from './uniV3Pair'
 import PairV3DetailAbi from '../abi/PairV3Detail.json'
-import { ConfigType } from './setConfig'
-import { DerivableContractAddress } from '../utils/configs'
+import {ConfigType} from './setConfig'
+import {DerivableContractAddress} from '../utils/configs'
 
-const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider')
+const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
 const TOPIC_APP = ethers.utils.formatBytes32String('DDL')
 
@@ -102,8 +102,8 @@ export class Resource {
       this.getResourceCached(account),
       this.getNewResource(account),
     ])
-    this.poolGroups = { ...resultCached.poolGroups, ...newResource.poolGroups }
-    this.pools = { ...resultCached.pools, ...newResource.pools }
+    this.poolGroups = {...resultCached.poolGroups, ...newResource.poolGroups}
+    this.pools = {...resultCached.pools, ...newResource.pools}
     this.tokens = [...resultCached.tokens, ...newResource.tokens]
     this.swapLogs = [...resultCached.swapLogs, ...newResource.swapLogs]
   }
@@ -128,11 +128,11 @@ export class Resource {
   }
 
   cacheDdlLog({
-    swapLogs,
-    ddlLogs,
-    headBlock,
-    account,
-  }: {
+                swapLogs,
+                ddlLogs,
+                headBlock,
+                account,
+              }: {
     swapLogs: any
     ddlLogs: any
     headBlock: number
@@ -141,7 +141,7 @@ export class Resource {
     if (!this.storage || !this.storage.getItem || !this.storage.setItem) return
     const cachedDdlLogs = JSON.parse(
       this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) ||
-        '[]',
+      '[]',
     )
     const newCachedDdlLogs = [...ddlLogs, ...cachedDdlLogs].filter(
       (log, index, self) => {
@@ -203,7 +203,7 @@ export class Resource {
     if (!this.storage || !this.storage.getItem) return results
     const ddlLogs = JSON.parse(
       this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) ||
-        '[]',
+      '[]',
     )
     const swapLogs = JSON.parse(
       this.storage.getItem(
@@ -216,7 +216,7 @@ export class Resource {
     ]
 
     if (ddlLogsParsed && ddlLogsParsed.length > 0) {
-      const { tokens, pools, poolGroups } = await this.generatePoolData(
+      const {tokens, pools, poolGroups} = await this.generatePoolData(
         ddlLogsParsed,
       )
       results.tokens = tokens
@@ -226,20 +226,20 @@ export class Resource {
     if (swapLogsParsed && swapLogsParsed.length > 0) {
       results.swapLogs = swapLogsParsed
     }
-    this.pools = { ...results.pools, ...this.pools }
+    this.pools = {...results.pools, ...this.pools}
     return results
   }
 
   async getNewResource(account: string): Promise<ResourceData> {
     const etherscanConfig = this.scanApi
       ? {
-          url: this.scanApi,
-          maxResults: 1000,
-          rangeThreshold: 0,
-          rateLimitCount: 1,
-          rateLimitDuration: 5000,
-          apiKeys: [''],
-        }
+        url: this.scanApi,
+        maxResults: 1000,
+        rangeThreshold: 0,
+        rateLimitCount: 1,
+        rateLimitDuration: 5000,
+        apiKeys: [''],
+      }
       : undefined
 
     const provider = new AssistedJsonRpcProvider(
@@ -297,19 +297,19 @@ export class Resource {
           result.swapLogs = swapLogs
         }
         if (ddlLogs && ddlLogs.length > 0) {
-          const { tokens, pools, poolGroups } = await this.generatePoolData(
+          const {tokens, pools, poolGroups} = await this.generatePoolData(
             ddlLogs,
           )
           result.tokens = tokens
           result.pools = pools
           result.poolGroups = poolGroups
         }
-        this.pools = { ...result.pools, ...this.pools }
+        this.pools = {...result.pools, ...this.pools}
         return result
       })
       .catch((e: any) => {
         console.error(e)
-        return { pools: {}, tokens: [], swapLogs: [] }
+        return {pools: {}, tokens: [], swapLogs: []}
       })
   }
 
@@ -328,7 +328,7 @@ export class Resource {
         logicData[log.address] = {
           logic: log.address,
           dTokens: powers.map((value, key) => {
-            return { power: value, index: key }
+            return {power: value, index: key}
           }),
           baseToken: ethers.utils.getAddress(log.topics[2].slice(0, 42)),
           baseSymbol: ethers.utils.parseBytes32String(log.args.baseSymbol),
@@ -349,7 +349,7 @@ export class Resource {
         const data = log.args
         const powers = [log.args.k.toNumber(), -log.args.k.toNumber()]
         data.dTokens = powers.map((value, key) => {
-          return { power: value, index: key }
+          return {power: value, index: key}
         })
 
         data.dTokens = (data.dTokens as { index: number; power: number }[]).map(
@@ -403,14 +403,14 @@ export class Resource {
       normalTokens,
       listPools,
     )
-    const [{ results }, pairsInfo] = await Promise.all([
+    const [{results}, pairsInfo] = await Promise.all([
       multicall.call(context),
       this.UNIV3PAIR.getPairsInfo({
         pairAddresses: _.uniq(uniPools),
       }),
     ])
 
-    const { tokens: tokensArr, poolsState } = this.parseMultiCallResponse(
+    const {tokens: tokensArr, poolsState} = this.parseMultiCallResponse(
       results,
       Object.keys(listPools),
     )
@@ -425,7 +425,7 @@ export class Resource {
       })
     }
 
-    const pools = { ...listPools }
+    const pools = {...listPools}
     const poolGroups = {}
 
     for (const i in pools) {
@@ -435,7 +435,7 @@ export class Resource {
         ...this.calcPoolInfo(pools[i]),
       }
 
-      const { MARK: _MARK, ORACLE, k: _k } = pools[i]
+      const {MARK: _MARK, ORACLE, k: _k} = pools[i]
 
       const quoteTokenIndex = bn(ORACLE.slice(0, 3)).gt(0) ? 1 : 0
       const pair = ethers.utils.getAddress('0x' + ORACLE.slice(-40))
@@ -453,7 +453,7 @@ export class Resource {
       if (poolGroups[id]) {
         poolGroups[id].pools[i] = pools[i]
       } else {
-        poolGroups[id] = { pools: { [i]: pools[i] } }
+        poolGroups[id] = {pools: {[i]: pools[i]}}
         poolGroups[id].UTR = pools[i].UTR
         poolGroups[id].pair = pairsInfo[pair]
         poolGroups[id].baseToken = pools[i].baseToken
@@ -519,21 +519,21 @@ export class Resource {
         {
           symbol: baseToken.symbol + '^' + (1 + k / 2),
           name: baseToken.symbol + '^' + (1 + k / 2),
-          decimal: 18,
+          decimal: this.getDecimals(baseToken, quoteToken, POOL_IDS.A),
           totalSupply: 0,
           address: pools[i].poolAddress + '-' + POOL_IDS.A,
         },
         {
           symbol: baseToken.symbol + '^' + (1 - k / 2),
           name: baseToken.symbol + '^' + (1 - k / 2),
-          decimal: 18,
+          decimal: this.getDecimals(baseToken, quoteToken, POOL_IDS.B),
           totalSupply: 0,
           address: pools[i].poolAddress + '-' + POOL_IDS.B,
         },
         {
           symbol: `DLP-${baseToken.symbol}-${k / 2}`,
           name: `DLP-${baseToken.symbol}-${k / 2}`,
-          decimal: 18,
+          decimal: this.getDecimals(baseToken, quoteToken, POOL_IDS.C),
           totalSupply: 0,
           address: pools[i].poolAddress + '-' + POOL_IDS.C,
         },
@@ -661,11 +661,11 @@ export class Resource {
       }
     })
 
-    return { tokens, poolsState: pools }
+    return {tokens, poolsState: pools}
   }
 
   calcPoolInfo(pool: PoolType) {
-    const { R, rA, rB } = pool.states
+    const {R, rA, rB} = pool.states
     const rC = R.sub(rA).sub(rB)
     const SECONDS_PER_DAY = 86400
     const riskFactor = rC.gt(0) ? div(rA.sub(rB), rC) : '0'
@@ -719,7 +719,8 @@ export class Resource {
         let appName = ''
         try {
           appName = ethers.utils.parseBytes32String(decodeLog.args.topic1)
-        } catch (e) {}
+        } catch (e) {
+        }
 
         let data: any = decodeLog
         if (appName) {
@@ -760,5 +761,12 @@ export class Resource {
       topics[events[i].name] = ethers.utils.id(i)
     }
     return topics
+  }
+
+  getDecimals(baseToken: TokenType, quoteToken: TokenType, side: number) {
+    if (side == POOL_IDS.C) {
+      return (baseToken.decimal + quoteToken.decimal) / 2
+    }
+    return 18 - baseToken.decimal + quoteToken.decimal;
   }
 }
