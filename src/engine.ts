@@ -72,7 +72,10 @@ export class Engine {
     this.RESOURCE = new Resource(this.config)
     this.PRICE = new Price(this.config)
     this.CURRENT_POOL = new CurrentPool(this.config)
-    this.HISTORY = new History(this.config)
+    this.HISTORY = new History({
+      ...this.config,
+      CURRENT_POOL: this.CURRENT_POOL,
+    })
     this.SWAP = new Swap({
       ...this.config,
       CURRENT_POOL: this.CURRENT_POOL,

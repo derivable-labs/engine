@@ -15,11 +15,9 @@ const testLocal = async () => {
     swapLogs: engine.RESOURCE.swapLogs,
   })
 
-  const currentPool = Object.values(engine.RESOURCE.pools)[0]
+  const currentPool = Object.values(engine.RESOURCE.poolGroups)[0]
   engine.setCurrentPool({
     ...currentPool,
-    logic: currentPool.logic,
-    cTokenPrice: currentPool.cTokenPrice,
   })
 
   const swapTxs = engine?.HISTORY.formatSwapHistory({
