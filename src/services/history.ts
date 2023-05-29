@@ -23,8 +23,7 @@ export class History {
 
       const poolAddresses = Object.keys(this.CURRENT_POOL.pools)
 
-      const swapLogs = logs.map((log, index) => {
-        console.log(index)
+      const swapLogs = logs.map((log) => {
         const encodeData = ethers.utils.defaultAbiCoder.encode(
           EventDataAbis.Swap,
           log.args.args,

@@ -9,7 +9,7 @@
     "example:getBnA": "npx ts-node --files ./example/getBalanceAndAllowance.ts",
     "example:getPairDetail": "npx ts-node --files ./example/getPairDetail.ts",
     "example:getPairDetailV3": "npx ts-node --files ./example/getPairDetailV3.ts",
-    "example:price": "npx ts-node --files ./example/priceExample.ts",
+    "example:price": "npx ts-node --files ./example/getTokenPrice.ts",
     "example:swap": "npx ts-node --files ./example/swap.ts",
     "example:createPool": "npx ts-node --files ./example/createPool.ts",
     "example:calcAmountOuts": "npx ts-node --files ./example/calculateAmountOuts.ts",

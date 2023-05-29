@@ -26,6 +26,7 @@ export interface ConfigType {
   timePerBlock: number
   nativeToken?: string
   addresses: Partial<DerivableContractAddress>
+  stableCoins: Partial<string[]>
   logic?: any
 }
 
@@ -80,6 +81,8 @@ export class Derivable {
     const poolFactory = config.addresses.poolFactory as string
     const stateCalHelper = config.addresses.stateCalHelper as string
     const logic = config.addresses.logic as string
+    const reserveTokenPrice = config.addresses.reserveTokenPrice as string
+    const uniswapFactory = config.addresses.uniswapFactory as string
     return {
       token,
       multiCall,
@@ -93,6 +96,8 @@ export class Derivable {
       poolFactory,
       stateCalHelper,
       logic,
+      reserveTokenPrice,
+      uniswapFactory
     }
   }
 
