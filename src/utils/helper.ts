@@ -172,6 +172,19 @@ export const parseSqrtSpotPrice = (
   return formatFloat(price, 18)
 }
 
+export const parseSqrtX96 = (
+  price: BigNumber,
+  baseToken: TokenType,
+  quoteToken:TokenType
+) => {
+  return weiToNumber(
+    price
+      .mul(price)
+      .mul(numberToWei(1, baseToken.decimal))
+      .shr(192),
+    quoteToken.decimal)
+}
+
 const isObject = (item: any) => {
   return item && typeof item === 'object' && !Array.isArray(item)
 }

@@ -1,7 +1,7 @@
 import { Engine } from '../src/engine'
 import { ethers } from 'ethers'
 import { getTestConfigs } from './shared/testConfigs'
-import {bn, numberToWei, weiToNumber} from "../src/utils/helper";
+import {bn, numberToWei, parseSqrtX96, weiToNumber} from "../src/utils/helper";
 
 const test = async () => {
   const configs = getTestConfigs(42161)
@@ -14,14 +14,16 @@ const test = async () => {
   const res = await engine.PRICE.getTokenPrices([
     '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f',
     '0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0',
+    '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1'
   ])
 
-  const priceFloat = weiToNumber(
-    bn(res[0][0])
-      .mul(res[0][0])
-      .mul(numberToWei(1, 8))
-      .shr(192),
-    6)
+  const priceFloat = parseSqrtX96(
+    res['0x82aF49447D8a07e3bd95BD0d56f35241523fBab1'],
+    //@ts-ignore
+     {decimal: 18},
+    //@ts-ignore
+    {decimal: 6}
+  )
   console.log(priceFloat)
 
 }

@@ -60,9 +60,12 @@ export class Price {
         this.config.stableCoins[0]
       )
 
+      const result = {}
+      for(let i in tokens) {
+        result[tokens[i]] = res.sqrtPriceX96[i]
+      }
 
-
-      return res
+      return result
     } catch (e) {
       throw e
     }
