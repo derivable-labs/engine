@@ -2,8 +2,8 @@ import { ethers } from 'ethers'
 import ReserveTokenPrice from '../abi/ReserveTokenPrice.json'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { ConfigType } from './setConfig'
-import {fixed128ToFloat} from "../utils/number";
-import {bn, numberToWei, weiToNumber} from "../utils/helper";
+import { fixed128ToFloat } from '../utils/number'
+import { bn, numberToWei, weiToNumber } from '../utils/helper'
 
 export class Price {
   chainId: number
@@ -43,25 +43,16 @@ export class Price {
         provider,
       )
 
-      console.log(
-        tokens,
-        this.config.addresses.wrapToken,
-        this.config.addresses.uniswapFactory,
-        this.config.stableCoins,
-        this.config.addresses.wrapToken,
-        this.config.stableCoins[0]
-      )
-
       const res = await pairDetailContract.functions.fetchMarketBatch(
         tokens,
         this.config.addresses.uniswapFactory,
         this.config.stableCoins,
         this.config.addresses.wrapToken,
-        this.config.stableCoins[0]
+        this.config.stableCoins[0],
       )
 
       const result = {}
-      for(let i in tokens) {
+      for (let i in tokens) {
         result[tokens[i]] = res.sqrtPriceX96[i]
       }
 

@@ -58,9 +58,7 @@ export const TESTNET_CONFIG: config = {
     stateCalHelper: '0xF258e00021773b7603109887BF2eeb80d5C6f601',
     logic: '0xE1550e06C6759b48cD0a6f5851029A30a6Fee735',
   },
-  stableCoins: [
-    '0x8F98902cf8255ab9D403Dfa68875b1024cd6C3d4'
-  ]
+  stableCoins: ['0x8F98902cf8255ab9D403Dfa68875b1024cd6C3d4'],
 }
 
 export const BNB_CONFIG: config = {
@@ -83,9 +81,7 @@ export const BNB_CONFIG: config = {
     poolFactory: '0x2B528278eEEf8d30838fCC6297e6f28D4F03b1BD',
     stateCalHelper: '0x95a7d5edfD4701478D3ACA5DCb69D549D83E3c52',
   },
-  stableCoins: [
-    '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d'
-  ]
+  stableCoins: ['0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d'],
 }
 
 export const ARBITRUM_CONFIG: config = {
@@ -111,8 +107,8 @@ export const ARBITRUM_CONFIG: config = {
   stableCoins: [
     '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
     '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8',
-    '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1'
-  ]
+    '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
+  ],
 }
 
 export const DEFAULT_CONFIG = ARBITRUM_CONFIG

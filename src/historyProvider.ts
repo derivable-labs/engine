@@ -69,7 +69,6 @@ export default {
     chainId: string
     to: number
   }): Promise<CandleType[]> {
-    console.log(route)
     const q = route.split('/').join(',')
     const url = `${CHART_API_ENDPOINT.replace(
       '{chainId}',

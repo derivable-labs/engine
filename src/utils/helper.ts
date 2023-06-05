@@ -175,14 +175,15 @@ export const parseSqrtSpotPrice = (
 export const parseSqrtX96 = (
   price: BigNumber,
   baseToken: TokenType,
-  quoteToken:TokenType
+  quoteToken: TokenType,
 ) => {
   return weiToNumber(
     price
       .mul(price)
-      .mul(numberToWei(1, baseToken.decimal))
+      .mul(numberToWei(1, baseToken.decimal + 18))
       .shr(192),
-    quoteToken.decimal)
+    quoteToken.decimal + 18,
+  )
 }
 
 const isObject = (item: any) => {

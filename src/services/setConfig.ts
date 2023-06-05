@@ -97,7 +97,7 @@ export class Derivable {
       stateCalHelper,
       logic,
       reserveTokenPrice,
-      uniswapFactory
+      uniswapFactory,
     }
   }
 
