@@ -714,7 +714,6 @@ export class Resource {
 
   parseDdlLogs(ddlLogs: any) {
     const eventInterface = new ethers.utils.Interface(EventsAbi)
-
     return ddlLogs.map((log: any) => {
       try {
         const decodeLog = eventInterface.parseLog(log)
@@ -730,13 +729,10 @@ export class Resource {
             decodeLog.args.data,
           )
         }
-        const lastHeadBlockCached = this.getLastBlockCached(this.account || '')
 
         return {
           address: log.address,
-          timeStamp:
-            new Date().getTime() -
-            (lastHeadBlockCached - log.blockNumber) * 3000,
+          timeStamp: parseInt(log.timeStamp),
           transactionHash: log.transactionHash,
           blockNumber: log.blockNumber,
           index: log.logIndex,
