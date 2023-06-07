@@ -283,6 +283,10 @@ class Resource {
             const pools = Object.assign({}, listPools);
             const poolGroups = {};
             for (const i in pools) {
+                if (!poolsState[i]) {
+                    delete pools[i];
+                    continue;
+                }
                 pools[i].states = poolsState[i];
                 pools[i] = Object.assign(Object.assign({}, pools[i]), this.calcPoolInfo(pools[i]));
                 const { MARK: _MARK, ORACLE, k: _k } = pools[i];
@@ -451,12 +455,18 @@ class Resource {
         const pools = {};
         const tokens = multiCallData.tokens.callsReturnContext[0].returnValues;
         poolAddresses.forEach((poolAddress) => {
-            const abiInterface = new ethers_1.ethers.utils.Interface(PoolOverride_json_1.default.abi);
-            const poolStateData = multiCallData['pools-' + poolAddress].callsReturnContext;
-            const data = (0, helper_1.formatMultiCallBignumber)(poolStateData[0].returnValues);
-            const encodeData = abiInterface.encodeFunctionResult('getStates', [data]);
-            const formatedData = abiInterface.decodeFunctionResult('getStates', encodeData);
-            pools[poolStateData[0].reference] = Object.assign({}, formatedData.states);
+            try {
+                const abiInterface = new ethers_1.ethers.utils.Interface(PoolOverride_json_1.default.abi);
+                const poolStateData = multiCallData['pools-' + poolAddress].callsReturnContext;
+                const data = (0, helper_1.formatMultiCallBignumber)(poolStateData[0].returnValues);
+                const encodeData = abiInterface.encodeFunctionResult('getStates', [data]);
+                const formatedData = abiInterface.decodeFunctionResult('getStates', encodeData);
+                pools[poolStateData[0].reference] = Object.assign({}, formatedData.states);
+            }
+            catch (e) {
+                console.error("Cannot get states of: ", poolAddress);
+                console.error(e);
+            }
         });
         return { tokens, poolsState: pools };
     }
@@ -503,7 +513,8 @@ class Resource {
                 try {
                     appName = ethers_1.ethers.utils.parseBytes32String(decodeLog.args.topic1);
                 }
-                catch (e) { }
+                catch (e) {
+                }
                 let data = decodeLog;
                 if (appName) {
                     data = ethers_1.ethers.utils.defaultAbiCoder.decode(constant_1.EventDataAbis[appName], decodeLog.args.data);
