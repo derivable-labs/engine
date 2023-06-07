@@ -17,6 +17,7 @@ export interface ConfigType {
     timePerBlock: number;
     nativeToken?: string;
     addresses: Partial<DerivableContractAddress>;
+    stableCoins: Partial<string[]>;
     logic?: any;
 }
 export declare class Derivable {

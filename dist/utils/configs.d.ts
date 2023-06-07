@@ -14,10 +14,13 @@ export interface config {
     poolAddress?: string;
     nativeToken?: string;
     addresses: Partial<DerivableContractAddress>;
+    stableCoins: string[];
 }
 export interface DerivableContractAddress {
     token: string;
     multiCall: string;
+    reserveTokenPrice: string;
+    uniswapFactory: string;
     pairsInfo: string;
     pairsV3Info: string;
     bnA: string;

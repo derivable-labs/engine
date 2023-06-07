@@ -31,7 +31,6 @@ exports.resolutionToPeriod = {
 exports.default = {
     history: history,
     getBars: function ({ route, resolution, inputToken, outputToken, limit, chainId, to, }) {
-        console.log(route);
         const q = route.split('/').join(',');
         const url = `${constant_1.CHART_API_ENDPOINT.replace('{chainId}', chainId || '56')}candleline4?q=${q}&r=${convertResolution(resolution)}&l=${limit}&t=${to}`;
         return (0, node_fetch_1.default)(url)

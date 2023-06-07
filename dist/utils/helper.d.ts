@@ -24,4 +24,5 @@ export declare const detectDecimalFromPrice: (price: number | string) => number;
 export declare const packId: (kind: string, address: string) => BigNumber;
 export declare const parseUq128x128: (value: BigNumber, unit?: number) => number;
 export declare const parseSqrtSpotPrice: (value: BigNumber, token0: TokenType, token1: TokenType, quoteTokenIndex: number) => string;
+export declare const parseSqrtX96: (price: BigNumber, baseToken: TokenType, quoteToken: TokenType) => string;
 export declare const mergeDeep: (target: any, ...sources: any) => any;

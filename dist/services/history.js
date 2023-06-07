@@ -14,12 +14,12 @@ class History {
                 return [];
             }
             const poolAddresses = Object.keys(this.CURRENT_POOL.pools);
-            const swapLogs = logs.map((log, index) => {
-                console.log(index);
+            const swapLogs = logs.map((log) => {
                 const encodeData = ethers_1.ethers.utils.defaultAbiCoder.encode(constant_1.EventDataAbis.Swap, log.args.args);
                 const formatedData = ethers_1.ethers.utils.defaultAbiCoder.decode(constant_1.EventDataAbis.Swap, encodeData);
                 const { poolIn, poolOut } = formatedData;
-                if (!poolAddresses.includes(poolIn) || !poolAddresses.includes(poolOut)) {
+                if (!poolAddresses.includes(poolIn) ||
+                    !poolAddresses.includes(poolOut)) {
                     return null;
                 }
                 const tokenIn = this.getTokenAddressByPoolAndSide(poolIn, formatedData.sideIn);
@@ -30,10 +30,10 @@ class History {
                     tokenOut }, formatedData);
             });
             //@ts-ignore
-            return swapLogs
+            return (swapLogs
                 .filter((l) => l !== null)
                 //@ts-ignore
-                .sort((a, b) => b.blockNumber - a.blockNumber);
+                .sort((a, b) => b.blockNumber - a.blockNumber));
         }
         catch (e) {
             throw e;

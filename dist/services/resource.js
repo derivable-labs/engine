@@ -290,6 +290,7 @@ class Resource {
                 const pair = ethers_1.ethers.utils.getAddress('0x' + ORACLE.slice(-40));
                 const baseToken = quoteTokenIndex === 0 ? pairsInfo[pair].token1 : pairsInfo[pair].token0;
                 const quoteToken = quoteTokenIndex === 0 ? pairsInfo[pair].token0 : pairsInfo[pair].token1;
+                const tokenR = tokens.find((t) => t.address === pools[i].TOKEN_R);
                 pools[i].baseToken = baseToken.address;
                 pools[i].quoteToken = quoteToken.address;
                 const k = _k.toNumber();
@@ -344,19 +345,19 @@ class Resource {
                 tokens.push({
                     symbol: baseToken.symbol + '^' + (1 + k / 2),
                     name: baseToken.symbol + '^' + (1 + k / 2),
-                    decimal: this.getDecimals(baseToken, quoteToken, constant_1.POOL_IDS.A),
+                    decimal: tokenR.decimal,
                     totalSupply: 0,
                     address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.A,
                 }, {
                     symbol: baseToken.symbol + '^' + (1 - k / 2),
                     name: baseToken.symbol + '^' + (1 - k / 2),
-                    decimal: this.getDecimals(baseToken, quoteToken, constant_1.POOL_IDS.B),
+                    decimal: tokenR.decimal,
                     totalSupply: 0,
                     address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.B,
                 }, {
                     symbol: `DLP-${baseToken.symbol}-${k / 2}`,
                     name: `DLP-${baseToken.symbol}-${k / 2}`,
-                    decimal: this.getDecimals(baseToken, quoteToken, constant_1.POOL_IDS.C),
+                    decimal: tokenR.decimal,
                     totalSupply: 0,
                     address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.C,
                 }, baseToken, quoteToken);
@@ -432,6 +433,8 @@ class Resource {
                             listPools[i].TOKEN_R,
                             listPools[i].k,
                             listPools[i].TOKEN,
+                            listPools[i].INIT_TIME,
+                            listPools[i].HALF_LIFE,
                         ],
                     },
                 ],
@@ -496,17 +499,14 @@ class Resource {
                 try {
                     appName = ethers_1.ethers.utils.parseBytes32String(decodeLog.args.topic1);
                 }
-                catch (e) {
-                }
+                catch (e) { }
                 let data = decodeLog;
                 if (appName) {
                     data = ethers_1.ethers.utils.defaultAbiCoder.decode(constant_1.EventDataAbis[appName], decodeLog.args.data);
                 }
-                const lastHeadBlockCached = this.getLastBlockCached(this.account || '');
                 return {
                     address: log.address,
-                    timeStamp: new Date().getTime() -
-                        (lastHeadBlockCached - log.blockNumber) * 3000,
+                    timeStamp: parseInt(log.timeStamp),
                     transactionHash: log.transactionHash,
                     blockNumber: log.blockNumber,
                     index: log.logIndex,

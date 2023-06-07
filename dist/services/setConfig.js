@@ -33,6 +33,8 @@ class Derivable {
         const poolFactory = config.addresses.poolFactory;
         const stateCalHelper = config.addresses.stateCalHelper;
         const logic = config.addresses.logic;
+        const reserveTokenPrice = config.addresses.reserveTokenPrice;
+        const uniswapFactory = config.addresses.uniswapFactory;
         return {
             token,
             multiCall,
@@ -46,6 +48,8 @@ class Derivable {
             poolFactory,
             stateCalHelper,
             logic,
+            reserveTokenPrice,
+            uniswapFactory,
         };
     }
     // static setConfig(account: string, config = DEFAULT_CONFIG): Engine {

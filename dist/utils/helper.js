@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mergeDeep = exports.parseSqrtSpotPrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.getLogicAbi = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
+exports.mergeDeep = exports.parseSqrtX96 = exports.parseSqrtSpotPrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.getLogicAbi = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
 const ethers_1 = require("ethers");
 const Logic_json_1 = __importDefault(require("../abi/56/Logic.json"));
 const Logic_json_2 = __importDefault(require("../abi/97/Logic.json"));
@@ -160,6 +160,13 @@ const parseSqrtSpotPrice = (value, token0, token1, quoteTokenIndex) => {
     return (0, exports.formatFloat)(price, 18);
 };
 exports.parseSqrtSpotPrice = parseSqrtSpotPrice;
+const parseSqrtX96 = (price, baseToken, quoteToken) => {
+    return (0, exports.weiToNumber)(price
+        .mul(price)
+        .mul((0, exports.numberToWei)(1, baseToken.decimal + 18))
+        .shr(192), quoteToken.decimal + 18);
+};
+exports.parseSqrtX96 = parseSqrtX96;
 const isObject = (item) => {
     return item && typeof item === 'object' && !Array.isArray(item);
 };
