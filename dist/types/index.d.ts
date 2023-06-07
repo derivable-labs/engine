@@ -29,6 +29,7 @@ export declare type StatesType = {
     R: BigNumber;
     rA: BigNumber;
     rB: BigNumber;
+    rC: BigNumber;
     sA: BigNumber;
     sB: BigNumber;
     sC: BigNumber;

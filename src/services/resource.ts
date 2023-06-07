@@ -471,12 +471,12 @@ export class Resource {
           spotBase: poolsState[i].spot,
           ...poolsState[i],
         }
-        poolGroups[id].basePrice = parseSqrtSpotPrice(
-          poolsState[i].spot,
-          pairsInfo[pair].token0,
-          pairsInfo[pair].token1,
-          quoteTokenIndex,
-        )
+        // poolGroups[id].basePrice = parseSqrtSpotPrice(
+        //   poolsState[i].spot,
+        //   pairsInfo[pair].token0,
+        //   pairsInfo[pair].token1,
+        //   quoteTokenIndex,
+        // )
       }
 
       const rdc = this.getRdc(Object.values(poolGroups[id].pools))
@@ -669,8 +669,7 @@ export class Resource {
   }
 
   calcPoolInfo(pool: PoolType) {
-    const { R, rA, rB } = pool.states
-    const rC = R.sub(rA).sub(rB)
+    const { R, rA, rB, rC } = pool.states
     const SECONDS_PER_DAY = 86400
     const riskFactor = rC.gt(0) ? div(rA.sub(rB), rC) : '0'
     const dailyInterestRate =

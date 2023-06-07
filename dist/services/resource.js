@@ -311,7 +311,12 @@ class Resource {
                     poolGroups[id].ORACLE = pools[i].ORACLE;
                     poolGroups[id].TOKEN_R = pools[i].TOKEN_R;
                     poolGroups[id].states = Object.assign({ twapBase: poolsState[i].twap, spotBase: poolsState[i].spot }, poolsState[i]);
-                    poolGroups[id].basePrice = (0, helper_1.parseSqrtSpotPrice)(poolsState[i].spot, pairsInfo[pair].token0, pairsInfo[pair].token1, quoteTokenIndex);
+                    // poolGroups[id].basePrice = parseSqrtSpotPrice(
+                    //   poolsState[i].spot,
+                    //   pairsInfo[pair].token0,
+                    //   pairsInfo[pair].token1,
+                    //   quoteTokenIndex,
+                    // )
                 }
                 const rdc = this.getRdc(Object.values(poolGroups[id].pools));
                 poolGroups[id].states = Object.assign(Object.assign({}, poolGroups[id].states), rdc);
@@ -456,8 +461,7 @@ class Resource {
         return { tokens, poolsState: pools };
     }
     calcPoolInfo(pool) {
-        const { R, rA, rB } = pool.states;
-        const rC = R.sub(rA).sub(rB);
+        const { R, rA, rB, rC } = pool.states;
         const SECONDS_PER_DAY = 86400;
         const riskFactor = rC.gt(0) ? (0, helper_1.div)(rA.sub(rB), rC) : '0';
         const dailyInterestRate = 1 - Math.pow(2, -SECONDS_PER_DAY / pool.HALF_LIFE.toNumber());
