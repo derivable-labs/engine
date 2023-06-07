@@ -631,6 +631,8 @@ export class Resource {
               listPools[i].TOKEN_R,
               listPools[i].k,
               listPools[i].TOKEN,
+              listPools[i].INIT_TIME,
+              listPools[i].HALF_LIFE,
             ],
           },
         ],
