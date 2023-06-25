@@ -271,6 +271,17 @@ export class Swap {
           code: this.config.addresses.stateCalHelper,
           inputs,
         })
+
+        console.log({
+          sideIn: idIn,
+          poolIn: poolAddress,
+          sideOut: idOut,
+          poolOut: poolAddress,
+          amountIn: step.amountIn,
+          payer: this.account,
+          recipient: this.account,
+        })
+
         promises.push(
           stateCalHelper.populateTransaction.swap({
             sideIn: idIn,
@@ -278,6 +289,7 @@ export class Swap {
             sideOut: idOut,
             poolOut: poolAddress,
             amountIn: step.amountIn,
+            maturity: 0,
             payer: this.account,
             recipient: this.account,
           }),
@@ -296,6 +308,15 @@ export class Swap {
             },
           ],
         })
+        console.log({ sideIn: idIn,
+          poolIn,
+          sideOut: idOut,
+          poolOut,
+          amountIn: step.amountIn,
+          maturity: 0,
+          payer: this.account,
+          recipient: this.account
+        })
         promises.push(
           stateCalHelper.populateTransaction.swap({
             sideIn: idIn,
@@ -303,9 +324,9 @@ export class Swap {
             sideOut: idOut,
             poolOut,
             amountIn: step.amountIn,
+            maturity: 0,
             payer: this.account,
-            recipient: this.account,
-            TOKEN: this.CURRENT_POOL.TOKEN,
+            recipient: this.account
           }),
         )
       }
@@ -468,12 +489,11 @@ export class Swap {
     sideIn: BigNumber,
     sideOut: BigNumber,
     amount: BigNumber,
-    token1155: string,
   ) {
     const abiCoder = new ethers.utils.AbiCoder()
     return abiCoder.encode(
-      ['uint', 'uint', 'uint', 'uint', 'address'],
-      [swapType, sideIn, sideOut, amount, token1155],
+      ['uint', 'uint', 'uint', 'uint'],
+      [swapType, sideIn, sideOut, amount],
     )
   }
 }
