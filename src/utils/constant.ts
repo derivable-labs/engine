@@ -39,15 +39,17 @@ export const POOL_IDS = {
 
 export const EventDataAbis = {
   PoolCreated: [
-    'address UTR',
     'address TOKEN',
-    'address LOGIC',
     'bytes32 ORACLE',
-    'address TOKEN_R',
-    'uint256 MARK',
-    'uint256 INIT_TIME',
-    'uint256 HALF_LIFE',
-    'uint256 k',
+    'uint MARK',
+    'uint k',
+    'uint HALF_LIFE',
+    'uint premiumRate',
+    'uint32 maturity',
+    'uint32 maturityVest',
+    'uint maturityRate',
+    'uint discountRate',
+    'uint openRate'
   ],
   Swap: [
     'address payer',

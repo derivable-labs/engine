@@ -41,6 +41,7 @@ import {UniV3Pair} from './uniV3Pair'
 import PairV3DetailAbi from '../abi/PairV3Detail.json'
 import {ConfigType} from './setConfig'
 import {DerivableContractAddress} from '../utils/configs'
+import {defaultAbiCoder} from "ethers/lib/utils";
 
 const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
@@ -283,8 +284,10 @@ export class Resource {
           headBlock,
           account,
         })
-
-        return [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs)]
+        return [
+          this.parseDdlLogs(ddlLogs),
+          this.parseDdlLogs(swapLogs)
+        ]
       })
       .then(async ([ddlLogs, swapLogs]: any) => {
         const result: ResourceData = {
@@ -344,8 +347,6 @@ export class Resource {
 
     logs.forEach((log) => {
       if (log.name === 'PoolCreated') {
-        const logic = ethers.utils.getAddress(log.topics[3].slice(0, 42))
-        const factory = ethers.utils.getAddress(log.topics[2].slice(0, 42))
         const data = log.args
         const powers = [log.args.k.toNumber(), -log.args.k.toNumber()]
         data.dTokens = powers.map((value, key) => {
@@ -359,8 +360,6 @@ export class Resource {
         poolData[log.address] = {
           ...data,
           poolAddress: log.address,
-          logic,
-          factory,
           powers,
           cToken: data.TOKEN_R,
         }
@@ -598,7 +597,9 @@ export class Resource {
    */
   //@ts-ignore
   getMultiCallRequest(
+    // @ts-ignore
     normalTokens: string[],
+    // @ts-ignore
     listPools: { [key: string]: PoolType },
   ) {
     const request = [
@@ -635,7 +636,6 @@ export class Resource {
               listPools[i].TOKEN_R,
               listPools[i].k,
               listPools[i].TOKEN,
-              listPools[i].INIT_TIME,
               listPools[i].HALF_LIFE,
             ],
           },
@@ -733,15 +733,18 @@ export class Resource {
         }
 
         let data: any = decodeLog
-        if (appName) {
-          data = ethers.utils.defaultAbiCoder.decode(
-            EventDataAbis[appName],
-            decodeLog.args.data,
-          )
+        if (appName === 'PoolCreated') {
+          const decodeData = defaultAbiCoder.decode(['bytes', 'address'], decodeLog.args.data);
+          const poolCreatedData = defaultAbiCoder.decode(EventDataAbis[appName], decodeData[0])
+          data = {
+            ...poolCreatedData,
+            poolAddress: decodeData[1],
+            TOKEN_R: ethers.utils.getAddress(decodeLog.args.topic3.slice(0, 42))
+          }
         }
 
         return {
-          address: log.address,
+          address: data.poolAddress,
           timeStamp: parseInt(log.timeStamp),
           transactionHash: log.transactionHash,
           blockNumber: log.blockNumber,
