@@ -49,7 +49,8 @@ export const EventDataAbis = {
     'uint32 maturityVest',
     'uint maturityRate',
     'uint discountRate',
-    'uint openRate'
+    'uint openRate',
+    'address poolAddress'
   ],
   Swap: [
     'address payer',

@@ -734,11 +734,9 @@ export class Resource {
 
         let data: any = decodeLog
         if (appName === 'PoolCreated') {
-          const decodeData = defaultAbiCoder.decode(['bytes', 'address'], decodeLog.args.data);
-          const poolCreatedData = defaultAbiCoder.decode(EventDataAbis[appName], decodeData[0])
+          const poolCreatedData = defaultAbiCoder.decode(EventDataAbis[appName], decodeLog.args.data)
           data = {
             ...poolCreatedData,
-            poolAddress: decodeData[1],
             TOKEN_R: ethers.utils.getAddress(decodeLog.args.topic3.slice(0, 42))
           }
         }
