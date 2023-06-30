@@ -635,8 +635,8 @@ export class Resource {
               listPools[i].MARK,
               listPools[i].TOKEN_R,
               listPools[i].k,
-              listPools[i].TOKEN,
-              listPools[i].HALF_LIFE,
+              this.addresses.token,
+              listPools[i].INTEREST_HL,
             ],
           },
         ],
@@ -681,7 +681,7 @@ export class Resource {
     const SECONDS_PER_DAY = 86400
     const riskFactor = rC.gt(0) ? div(rA.sub(rB), rC) : '0'
     const dailyInterestRate =
-      1 - Math.pow(2, -SECONDS_PER_DAY / pool.HALF_LIFE.toNumber())
+      1 - Math.pow(2, -SECONDS_PER_DAY / pool.INTEREST_HL.toNumber())
     return {
       riskFactor,
       dailyInterestRate,
@@ -737,7 +737,7 @@ export class Resource {
           const poolCreatedData = defaultAbiCoder.decode(EventDataAbis[appName], decodeLog.args.data)
           data = {
             ...poolCreatedData,
-            TOKEN_R: ethers.utils.getAddress(decodeLog.args.topic3.slice(0, 42))
+            TOKEN_R: ethers.utils.getAddress('0x' + decodeLog.args.topic3.slice(-40))
           }
         }
 
