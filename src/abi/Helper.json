@@ -75,68 +75,65 @@
       {
         "components": [
           {
-            "internalType": "address",
-            "name": "token",
-            "type": "address"
-          },
-          {
             "internalType": "bytes32",
-            "name": "oracle",
+            "name": "ORACLE",
             "type": "bytes32"
           },
           {
             "internalType": "address",
-            "name": "reserveToken",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "recipient",
+            "name": "TOKEN_R",
             "type": "address"
           },
           {
             "internalType": "uint256",
-            "name": "mark",
+            "name": "K",
             "type": "uint256"
           },
           {
             "internalType": "uint256",
-            "name": "halfLife",
+            "name": "MARK",
             "type": "uint256"
           },
           {
             "internalType": "uint256",
-            "name": "premiumRate",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint32",
-            "name": "maturity",
-            "type": "uint32"
-          },
-          {
-            "internalType": "uint32",
-            "name": "maturityVest",
-            "type": "uint32"
-          },
-          {
-            "internalType": "uint256",
-            "name": "maturityRate",
+            "name": "INTEREST_HL",
             "type": "uint256"
           },
           {
             "internalType": "uint256",
-            "name": "discountRate",
+            "name": "PREMIUM_RATE",
             "type": "uint256"
           },
           {
             "internalType": "uint256",
-            "name": "openRate",
+            "name": "MATURITY",
             "type": "uint256"
           },
           {
             "internalType": "uint256",
-            "name": "k",
+            "name": "MATURITY_VEST",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "MATURITY_RATE",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "OPEN_RATE",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct Config",
+        "name": "config",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "R",
             "type": "uint256"
           },
           {
@@ -150,8 +147,8 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct Params",
-        "name": "params",
+        "internalType": "struct State",
+        "name": "state",
         "type": "tuple"
       },
       {

@@ -1,4 +1,4 @@
-import { BigNumber, ethers } from 'ethers'
+import {BigNumber, Contract, ethers} from 'ethers'
 import { UniV2Pair } from './uniV2Pair'
 import { PoolErc1155StepType, StepType, SwapStepType } from '../types'
 import {
@@ -190,7 +190,7 @@ export class Swap {
           ? 0
           : 20,
         token: isErc1155Address(step.tokenOut)
-          ? this.CURRENT_POOL.TOKEN
+          ? this.config.addresses.token as string
           : step.tokenOut,
         id: isErc1155Address(step.tokenOut)
           ? packId(
@@ -270,16 +270,6 @@ export class Swap {
         metaDatas.push({
           code: this.config.addresses.stateCalHelper,
           inputs,
-        })
-
-        console.log({
-          sideIn: idIn,
-          poolIn: poolAddress,
-          sideOut: idOut,
-          poolOut: poolAddress,
-          amountIn: step.amountIn,
-          payer: this.account,
-          recipient: this.account,
         })
 
         promises.push(
