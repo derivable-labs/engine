@@ -273,7 +273,9 @@ export class Resource {
         const headBlock = logs[logs.length - 1]?.blockNumber
         const topics = this.getTopics()
         const ddlLogs = logs.filter((log: any) => {
-          return log.address && [topics.Derivable].includes(log.topics[0])
+          return log.address
+            && [topics.Derivable].includes(log.topics[0])
+            && log.address === this.addresses.poolFactory
         })
         const swapLogs = logs.filter((log: any) => {
           return log.address && [topics.Swap].includes(log.topics[0])
