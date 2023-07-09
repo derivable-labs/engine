@@ -39,6 +39,7 @@ import Pool from '../abi/Pool.json'
 import _ from 'lodash'
 import {UniV3Pair} from './uniV3Pair'
 import PairV3DetailAbi from '../abi/PairV3Detail.json'
+import PoolAbi from '../abi/Pool.json'
 import {ConfigType} from './setConfig'
 import {DerivableContractAddress} from '../utils/configs'
 import {defaultAbiCoder} from "ethers/lib/utils";
@@ -394,7 +395,7 @@ export class Resource {
   }> {
     const multicall = new Multicall({
       multicallCustomContractAddress: this.addresses.multiCall,
-      ethersProvider: this.getPoolOverridedProvider(Object.keys(listPools)),
+      ethersProvider: this.getPoolOverridedProvider(),
       tryAggregate: true,
     })
     const normalTokens = _.uniq(getNormalAddress(listTokens))
@@ -577,13 +578,13 @@ export class Resource {
     }
   }
 
-  getPoolOverridedProvider(poolAddresses: string[]) {
+  getPoolOverridedProvider() {
     const stateOverride = {}
-    poolAddresses.forEach((address: string) => {
-      stateOverride[address] = {
+    // poolAddresses.forEach((address: string) => {
+      stateOverride[this.addresses.logic as string] = {
         code: PoolOverride.deployedBytecode,
       }
-    })
+    // })
 
     //@ts-ignore
     this.overrideProvider.setStateOverride({
@@ -604,7 +605,7 @@ export class Resource {
     // @ts-ignore
     listPools: { [key: string]: PoolType },
   ) {
-    const request = [
+    const request: any = [
       {
         reference: 'tokens',
         contractAddress: this.addresses.tokensInfo,
@@ -630,15 +631,9 @@ export class Resource {
         calls: [
           {
             reference: i,
-            methodName: 'getStates',
-            // @ts-ignore
+            methodName: 'compute',
             methodParameters: [
-              listPools[i].ORACLE as any,
-              listPools[i].MARK,
-              listPools[i].TOKEN_R,
-              listPools[i].k,
               this.addresses.token,
-              listPools[i].INTEREST_HL,
             ],
           },
         ],
@@ -657,9 +652,9 @@ export class Resource {
         const poolStateData =
           multiCallData['pools-' + poolAddress].callsReturnContext
         const data = formatMultiCallBignumber(poolStateData[0].returnValues)
-        const encodeData = abiInterface.encodeFunctionResult('getStates', [data])
+        const encodeData = abiInterface.encodeFunctionResult('compute', [data])
         const formatedData = abiInterface.decodeFunctionResult(
-          'getStates',
+          'compute',
           encodeData,
         )
         pools[poolStateData[0].reference] = {
@@ -667,7 +662,8 @@ export class Resource {
           // twapLP: formatedData.states.twap.LP._x,
           // spotBase: formatedData.states.spot.base._x,
           // spotLP: formatedData.states.spot.LP._x,
-          ...formatedData.states,
+          ...formatedData.stateView,
+          ...formatedData.stateView.states,
         }
       } catch (e) {
         console.error("Cannot get states of: ", poolAddress)
