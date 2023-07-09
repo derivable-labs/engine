@@ -663,7 +663,7 @@ export class Resource {
           // spotBase: formatedData.states.spot.base._x,
           // spotLP: formatedData.states.spot.LP._x,
           ...formatedData.stateView,
-          ...formatedData.stateView.states,
+          ...formatedData.stateView.state,
         }
       } catch (e) {
         console.error("Cannot get states of: ", poolAddress)
