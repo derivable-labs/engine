@@ -246,7 +246,7 @@ export class Swap {
             mode: PAYMENT,
             eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
             token: isErc1155Address(step.tokenIn)
-              ? this.CURRENT_POOL.TOKEN
+              ? this.config.addresses.token
               : poolGroup.TOKEN_R,
             id: isErc1155Address(step.tokenIn)
               ? packId(idIn.toString(), poolIn)
@@ -297,15 +297,6 @@ export class Swap {
               recipient: poolIn,
             },
           ],
-        })
-        console.log({ sideIn: idIn,
-          poolIn,
-          sideOut: idOut,
-          poolOut,
-          amountIn: step.amountIn,
-          maturity: 0,
-          payer: this.account,
-          recipient: this.account
         })
         promises.push(
           stateCalHelper.populateTransaction.swap({
