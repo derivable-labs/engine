@@ -13,6 +13,7 @@ import { mergeDeep } from '../utils/helper'
 import { DeepPartial } from '../types/utils'
 
 export interface ConfigType {
+  unit?: number
   chainId: number
   scanApi?: string
   rpcUrl: string

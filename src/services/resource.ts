@@ -72,6 +72,7 @@ export class Resource {
   pools: PoolsType = {}
   tokens: TokenType[] = []
   swapLogs: LogType[] = []
+  unit: number = 1000000
   chainId: number
   scanApi?: string
   account?: string
@@ -84,6 +85,7 @@ export class Resource {
   addresses: Partial<DerivableContractAddress>
 
   constructor(config: ConfigType) {
+    this.unit = config.unit ?? this.unit
     this.chainId = config.chainId
     this.scanApi = config.scanApi
     this.account = config.account
