@@ -9,13 +9,12 @@ import {
   config,
 } from '../utils/configs'
 import { Storage } from '../types'
-import { mergeDeep } from '../utils/helper'
 import { DeepPartial } from '../types/utils'
 
 export interface ConfigType {
   unit?: number
   chainId: number
-  scanApi?: string
+  scanApi?: any
   rpcUrl: string
   signer?: ethers.providers.JsonRpcSigner
   account?: string

@@ -74,7 +74,7 @@ export class Resource {
   swapLogs: LogType[] = []
   unit: number = 1000000
   chainId: number
-  scanApi?: string
+  scanApi?: any
   account?: string
   storage?: Storage
   provider: ethers.providers.Provider
@@ -235,16 +235,15 @@ export class Resource {
   }
 
   async getNewResource(account: string): Promise<ResourceData> {
-    const etherscanConfig = this.scanApi
-      ? {
+    // TODO: move this part to constructor
+    const etherscanConfig = typeof this.scanApi === 'string' ? {
         url: this.scanApi,
         maxResults: 1000,
         rangeThreshold: 0,
         rateLimitCount: 1,
         rateLimitDuration: 5000,
         apiKeys: [''],
-      }
-      : undefined
+    } : this.scanApi
 
     const provider = new AssistedJsonRpcProvider(
       this.providerToGetLog,
