@@ -119,18 +119,15 @@ export class BnA {
     }
 
     const erc1155BalanceInfo = data.erc1155.callsReturnContext[0].returnValues
-    const erc1155ApproveInfo =
-      data.erc1155.callsReturnContext[1].returnValues[0]
+    const erc1155ApproveInfo = data.erc1155.callsReturnContext[1].returnValues[0]
 
     let index = 0
     for (let poolAddress in erc1155Tokens) {
       for (let i = 0; i < erc1155Tokens[poolAddress].length; i++) {
-        allowances[
-          poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()
-        ] = erc1155ApproveInfo ? bn(LARGE_VALUE) : bn(0)
-        balances[poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()] =
-          bn(erc1155BalanceInfo[index].hex)
-        index++
+        const key = poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()
+        allowances[key] = erc1155ApproveInfo ? bn(LARGE_VALUE) : bn(0)
+        balances[key] = bn(erc1155BalanceInfo[index]?.hex ?? 0)
+        ++index
       }
     }
 
