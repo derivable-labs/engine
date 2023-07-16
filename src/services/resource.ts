@@ -14,9 +14,7 @@ import {
   PoolGroupsType,
   PoolsType,
   PoolType,
-  StatesType,
   Storage,
-  SwapLog,
   TokenType,
 } from '../types'
 import {
@@ -24,22 +22,13 @@ import {
   decodePowers,
   div,
   formatMultiCallBignumber,
-  getLogicAbi,
   getNormalAddress,
-  numberToWei,
-  parseSqrtSpotPrice,
-  parseUq128x128,
-  weiToNumber,
 } from '../utils/helper'
 import {UniV2Pair} from './uniV2Pair'
 import {JsonRpcProvider} from '@ethersproject/providers'
 import PoolOverride from '../abi/PoolOverride.json'
-import Pool from '../abi/Pool.json'
-// import { PowerState } from 'powerLib/dist/powerLib'
 import _ from 'lodash'
 import {UniV3Pair} from './uniV3Pair'
-import PairV3DetailAbi from '../abi/PairV3Detail.json'
-import PoolAbi from '../abi/Pool.json'
 import {ConfigType} from './setConfig'
 import {DerivableContractAddress} from '../utils/configs'
 import {defaultAbiCoder} from "ethers/lib/utils";
@@ -47,18 +36,6 @@ import {defaultAbiCoder} from "ethers/lib/utils";
 const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
 const TOPIC_APP = ethers.utils.formatBytes32String('DDL')
-
-// type ConfigType = {
-//   chainId: number
-//   scanApi: string
-//   account?: string
-//   storage?: Storage
-//   provider: ethers.providers.Provider
-//   providerToGetLog: ethers.providers.Provider
-//   overrideProvider: JsonRpcProvider
-//   UNIV2PAIR: UniV2Pair
-//   UNIV3PAIR: UniV3Pair
-// }
 
 type ResourceData = {
   pools: PoolsType
@@ -75,6 +52,7 @@ export class Resource {
   unit: number = 1000000
   chainId: number
   scanApi?: any
+  scanApiKey?: string
   account?: string
   storage?: Storage
   provider: ethers.providers.Provider
@@ -88,6 +66,7 @@ export class Resource {
     this.unit = config.unit ?? this.unit
     this.chainId = config.chainId
     this.scanApi = config.scanApi
+    this.scanApiKey = config.scanApiKey
     this.account = config.account
     this.storage = config.storage
     this.account = config.account
@@ -242,7 +221,7 @@ export class Resource {
         rangeThreshold: 0,
         rateLimitCount: 1,
         rateLimitDuration: 5000,
-        apiKeys: [''],
+        apiKeys: this.scanApiKey ? [this.scanApiKey] : []
     } : this.scanApi
 
     const provider = new AssistedJsonRpcProvider(

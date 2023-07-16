@@ -15,6 +15,7 @@ export interface ConfigType {
   unit?: number
   chainId: number
   scanApi?: any
+  scanApiKey?: any
   rpcUrl: string
   signer?: ethers.providers.JsonRpcSigner
   account?: string

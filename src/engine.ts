@@ -28,6 +28,7 @@ import { DeepPartial } from './types/utils'
 export class Engine {
   chainId: number
   scanApi?: string
+  scanApiKey?: string
   rpcUrl: string
   account?: string
   signer?: ethers.providers.JsonRpcSigner
@@ -55,6 +56,7 @@ export class Engine {
     this.config = Derivable.loadConfig(account, config, chainIdProp)
     this.chainId = this.config.chainId
     this.scanApi = this.config.scanApi
+    this.scanApiKey = this.config.scanApiKey
     this.rpcUrl = this.config.rpcUrl
     this.storage = this.config.storage
     this.overrideProvider = this.config.overrideProvider
