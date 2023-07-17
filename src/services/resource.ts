@@ -232,14 +232,15 @@ export class Resource {
     const accTopic = account ? '0x' + '0'.repeat(24) + account.slice(2) : null
     const topics = this.getTopics()
 
-    const filterTopics = [[topics.Derivable, null, null, null]]
-    if (accTopic) {
-      filterTopics.push(
-        [null, accTopic, null, null],
-        [null, null, accTopic, null],
-        [null, null, null, accTopic],
-      )
-    }
+    let filterTopics: any = [topics.Derivable, null, null, null]
+    // if (accTopic) {
+    //   filterTopics = [
+    //     [topics.Derivable, null, null, null],
+    //     [null, accTopic, null, null],
+    //     [null, null, accTopic, null],
+    //     [null, null, null, accTopic],
+    //   ]
+    // }
 
     return await provider
       .getLogs({
