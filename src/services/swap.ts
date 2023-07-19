@@ -109,8 +109,7 @@ export class Swap {
       }
       return [result, bn(gasLimit).sub(res.gasLeft)]
     } catch (e) {
-      console.error(e)
-      return [[bn(0)], bn(0)]
+      throw e
     }
   }
 
