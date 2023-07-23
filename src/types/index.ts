@@ -172,6 +172,8 @@ export type StepType = {
   tokenIn: string
   tokenOut: string
   amountIn: BigNumber
+  useSweep?: boolean
+  amountOutMin?: number
 }
 
 export type SwapStepType = {
@@ -179,4 +181,5 @@ export type SwapStepType = {
   tokenOut: string
   amountIn: BigNumber
   amountOutMin: BigNumber | string | number
+  useSweep?: boolean
 }
