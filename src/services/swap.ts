@@ -79,7 +79,7 @@ export class Swap {
   }
 
   //@ts-ignore
-  async calculateAmountOuts(steps: StepType[]) {
+  async calculateAmountOuts(steps: SwapStepType[]) {
     if (!this.signer) return [[bn(0)], bn(0)]
     try {
       const stepsToSwap: SwapStepType[] = [...steps].map((step) => {
@@ -112,28 +112,6 @@ export class Swap {
     } catch (e) {
       throw e
     }
-  }
-
-  //
-  formatSwapSteps(steps: StepType[]): SwapStepType[] {
-    const stepsToSwap = []
-    for (const i in steps) {
-      const step = steps[i]
-      const tokenIn =
-        this.CURRENT_POOL.getTokenByPower(step.tokenIn) || step.tokenIn
-      const tokenOut =
-        this.CURRENT_POOL.getTokenByPower(step.tokenOut) || step.tokenOut
-      if (step.amountIn.isZero() || !tokenIn || !tokenOut) {
-        continue
-      }
-      stepsToSwap.push({
-        tokenIn,
-        tokenOut,
-        amountIn: step.amountIn,
-        amountOutMin: 0,
-      })
-    }
-    return stepsToSwap
   }
 
   async callStaticMultiSwap({params, value, gasLimit}: any) {
@@ -170,7 +148,8 @@ export class Swap {
   async convertStepToActions(
     steps: SwapStepType[],
   ): Promise<{ params: any; value: BigNumber }> {
-    const stateCalHelper = this.getStateCalHelperContract(ZERO_ADDRESS)
+    // @ts-ignore
+    const stateCalHelper = this.getStateCalHelperContract(this.config.addresses.stateCalHelper)
 
     let outputs: {
       eip: number
@@ -230,50 +209,108 @@ export class Swap {
         nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn)
       }
 
-      const poolAddress = isErc1155Address(step.tokenIn) ? poolIn : poolOut
-      let inputs = [
-        {
-          mode: PAYMENT,
-          eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
-          token: isErc1155Address(step.tokenIn)
-            ? this.config.addresses.token
-            : poolGroup.TOKEN_R,
-          id: isErc1155Address(step.tokenIn)
-            ? packId(idIn.toString(), poolIn)
-            : 0,
-          amountIn: step.amountIn,
-          recipient: poolAddress,
-        },
-      ]
-      if (step.tokenIn === NATIVE_ADDRESS) {
-        inputs = [
+      if (step.useSweep && isErc1155Address(step.tokenOut)) {
+        let inputs = [
           {
-            mode: CALL_VALUE,
-            token: ZERO_ADDRESS,
-            eip: 0,
-            id: 0,
+            mode: TRANSFER,
+            eip: 1155,
+            token: this.config.addresses.token,
+            id: packId(idOut + '', poolOut),
+            amountIn: step.currentBalanceOut,
+            recipient: stateCalHelper.address,
+          },
+          step.tokenIn === NATIVE_ADDRESS ?
+            {
+              mode: CALL_VALUE,
+              token: ZERO_ADDRESS,
+              eip: 0,
+              id: 0,
+              amountIn: step.amountIn,
+              recipient: ZERO_ADDRESS,
+            }
+            :
+            {
+              mode: PAYMENT,
+              eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
+              token: isErc1155Address(step.tokenIn)
+                ? this.config.addresses.token
+                : poolGroup.TOKEN_R,
+              id: isErc1155Address(step.tokenIn)
+                ? packId(idIn.toString(), poolIn)
+                : 0,
+              amountIn: step.amountIn,
+              recipient: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
+            },
+        ]
+        metaDatas.push({
+          code: this.config.addresses.stateCalHelper,
+          inputs,
+        }, {
+          code: this.config.addresses.stateCalHelper,
+          inputs: []
+        })
+
+        promises.push(
+          stateCalHelper.populateTransaction.swap({
+            sideIn: idIn,
+            poolIn: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
+            sideOut: idOut,
+            poolOut: isErc1155Address(step.tokenOut) ? poolOut : poolIn,
             amountIn: step.amountIn,
-            recipient: ZERO_ADDRESS,
+            maturity: 0,
+            payer: this.account,
+            recipient: this.account,
+          }),
+          stateCalHelper.populateTransaction.sweep(
+            packId(idOut + '', poolOut),
+            this.account
+          ),
+        )
+      } else {
+        let inputs = [
+          {
+            mode: PAYMENT,
+            eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
+            token: isErc1155Address(step.tokenIn)
+              ? this.config.addresses.token
+              : poolGroup.TOKEN_R,
+            id: isErc1155Address(step.tokenIn)
+              ? packId(idIn.toString(), poolIn)
+              : 0,
+            amountIn: step.amountIn,
+            recipient: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
           },
         ]
-      }
-      metaDatas.push({
-        code: this.config.addresses.stateCalHelper,
-        inputs,
-      })
+        if (step.tokenIn === NATIVE_ADDRESS) {
+          inputs = [
+            {
+              mode: CALL_VALUE,
+              token: ZERO_ADDRESS,
+              eip: 0,
+              id: 0,
+              amountIn: step.amountIn,
+              recipient: ZERO_ADDRESS,
+            },
+          ]
+        }
+        metaDatas.push({
+          code: this.config.addresses.stateCalHelper,
+          inputs,
+        })
 
-      promises.push(
-        stateCalHelper.populateTransaction.swap({
-          sideIn: idIn,
-          poolIn: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
-          sideOut: idOut,
-          poolOut: isErc1155Address(step.tokenOut) ? poolOut : poolIn,
-          amountIn: step.amountIn,
-          maturity: 0,
-          payer: this.account,
-          recipient: this.account,
-        }),
-      )
+        promises.push(
+          stateCalHelper.populateTransaction.swap({
+            sideIn: idIn,
+            poolIn: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
+            sideOut: idOut,
+            poolOut: isErc1155Address(step.tokenOut) ? poolOut : poolIn,
+            amountIn: step.amountIn,
+            maturity: 0,
+            payer: this.account,
+            recipient: this.account,
+          }),
+        )
+      }
     })
     const datas: any[] = await Promise.all(promises)
 
@@ -348,15 +385,6 @@ export class Swap {
       const tx = await res.wait(1)
       console.log('tx', tx)
       return tx
-    } catch (e) {
-      throw e
-    }
-  }
-
-  async updateLeverageAndSize(rawStep: StepType[], gasLimit?: BigNumber) {
-    try {
-      const steps = this.formatSwapSteps(rawStep)
-      return await this.multiSwap(steps, gasLimit)
     } catch (e) {
       throw e
     }
