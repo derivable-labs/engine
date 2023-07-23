@@ -230,19 +230,8 @@ export class Swap {
         nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn)
       }
 
-      // if (
-      //   poolIn === poolOut ||
-      //   poolOut === poolGroup.TOKEN_R ||
-      //   poolIn === poolGroup.TOKEN_R
-      // ) {
       const poolAddress = isErc1155Address(step.tokenIn) ? poolIn : poolOut
       let inputs = [
-        // mode: PAYMENT,
-        // eip: 1155,
-        // token: this.CURRENT_POOL.TOKEN,
-        // id: packId(idIn.toString(), poolIn),
-        // amountIn: step.amountIn,
-        // recipient: poolIn,
         {
           mode: PAYMENT,
           eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
@@ -273,27 +262,8 @@ export class Swap {
         inputs,
       })
 
-      console.log({
-        sideIn: idIn,
-        poolIn: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
-        sideOut: idOut,
-        poolOut: isErc1155Address(step.tokenOut) ? poolOut : poolIn,
-        amountIn: step.amountIn,
-        maturity: 0,
-        payer: this.account,
-        recipient: this.account,
-      })
-
       promises.push(
         stateCalHelper.populateTransaction.swap({
-          // sideIn: idIn,
-          // poolIn,
-          // sideOut: idOut,
-          // poolOut,
-          // amountIn: step.amountIn,
-          // maturity: 0,
-          // payer: this.account,
-          // recipient: this.account
           sideIn: idIn,
           poolIn: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
           sideOut: idOut,
@@ -304,35 +274,6 @@ export class Swap {
           recipient: this.account,
         }),
       )
-
-
-      // } else {
-      //   metaDatas.push({
-      //     code: this.config.addresses.stateCalHelper,
-      //     inputs: [
-      //       {
-      //         mode: PAYMENT,
-      //         eip: 1155,
-      //         token: this.CURRENT_POOL.TOKEN,
-      //         id: packId(idIn.toString(), poolIn),
-      //         amountIn: step.amountIn,
-      //         recipient: poolIn,
-      //       },
-      //     ],
-      //   })
-      //   promises.push(
-      //     stateCalHelper.populateTransaction.swap({
-      //       sideIn: idIn,
-      //       poolIn,
-      //       sideOut: idOut,
-      //       poolOut,
-      //       amountIn: step.amountIn,
-      //       maturity: 0,
-      //       payer: this.account,
-      //       recipient: this.account
-      //     }),
-      //   )
-      // }
     })
     const datas: any[] = await Promise.all(promises)
 
