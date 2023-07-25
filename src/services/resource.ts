@@ -233,14 +233,14 @@ export class Resource {
     const topics = this.getTopics()
 
     let filterTopics: any = [topics.Derivable, null, null, null]
-    // if (accTopic) {
-    //   filterTopics = [
-    //     [topics.Derivable, null, null, null],
-    //     [null, accTopic, null, null],
-    //     [null, null, accTopic, null],
-    //     [null, null, null, accTopic],
-    //   ]
-    // }
+    if (accTopic) {
+      filterTopics = [
+        [topics.Derivable, null, null, null],
+        [null, accTopic, null, null],
+        [null, null, accTopic, null],
+        [null, null, null, accTopic],
+      ]
+    }
 
     return await provider
       .getLogs({
