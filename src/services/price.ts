@@ -3,7 +3,10 @@ import ReserveTokenPrice from '../abi/ReserveTokenPrice.json'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { ConfigType } from './setConfig'
 import { fixed128ToFloat } from '../utils/number'
-import { bn, numberToWei, weiToNumber } from '../utils/helper'
+import {bn, div, formatPercent, numberToWei, sub, weiToNumber} from '../utils/helper'
+import {TokenType} from "../types";
+import {MINI_SECOND_PER_DAY} from "../utils/constant";
+import historyProvider from "../historyProvider";
 
 export class Price {
   chainId: number
@@ -25,6 +28,40 @@ export class Price {
     this.provider = provider
     this.rpcUrl = rpcUrl
     this.reserveTokenPrice = reserveTokenPrice
+  }
+
+
+  async get24hChange({
+                       baseToken,
+                       cToken,
+                       quoteToken,
+                       chainId,
+                       currentPrice,
+                     }: {
+    baseToken: TokenType
+    cToken: string
+    chainId: string
+    quoteToken: TokenType
+    currentPrice: string
+  }) {
+    try {
+      const toTime = Math.floor(
+        (new Date().getTime() - MINI_SECOND_PER_DAY) / 1000,
+      )
+      const result = await historyProvider.getBars({
+        to: toTime,
+        limit: 1,
+        chainId,
+        resolution: '1',
+        route: `${baseToken.address}/${cToken}/${quoteToken.address}`,
+        outputToken: quoteToken,
+        inputToken: baseToken,
+      })
+      const beforePrice = result[0].open
+      return formatPercent(div(sub(currentPrice, beforePrice), beforePrice))
+    } catch (e) {
+      throw e
+    }
   }
 
   async getTokenPrices(tokens: string[]) {
