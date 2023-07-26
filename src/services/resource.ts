@@ -22,7 +22,7 @@ import {
   decodePowers,
   div,
   formatMultiCallBignumber,
-  getNormalAddress,
+  getNormalAddress, parseSqrtSpotPrice,
 } from '../utils/helper'
 import {UniV2Pair} from './uniV2Pair'
 import {JsonRpcProvider} from '@ethersproject/providers'
@@ -458,12 +458,12 @@ export class Resource {
           spotBase: poolsState[i].spot,
           ...poolsState[i],
         }
-        // poolGroups[id].basePrice = parseSqrtSpotPrice(
-        //   poolsState[i].spot,
-        //   pairsInfo[pair].token0,
-        //   pairsInfo[pair].token1,
-        //   quoteTokenIndex,
-        // )
+        poolGroups[id].basePrice = parseSqrtSpotPrice(
+          poolsState[i].spot,
+          pairsInfo[pair].token0,
+          pairsInfo[pair].token1,
+          quoteTokenIndex,
+        )
       }
 
       const rdc = this.getRdc(Object.values(poolGroups[id].pools))
