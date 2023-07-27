@@ -26,12 +26,12 @@ export const resolutionToPeriod = {
 }
 
 export type CandleType = {
-  low: number
-  open: number
+  low: number | string
+  open: number | string
   time: number
-  close: number
-  high: number
-  volume: number
+  close: number | string
+  high: number | string
+  volume: number | string
 }
 
 export type CandleFromApiType = {
@@ -60,6 +60,7 @@ export default {
     limit,
     chainId,
     to,
+    barValueType
   }: {
     inputToken: TokenType
     outputToken: TokenType
@@ -68,6 +69,7 @@ export default {
     limit: number
     chainId: string
     to: number
+    barValueType?: 'string'
   }): Promise<CandleType[]> {
     const q = route.split('/').join(',')
     const url = `${CHART_API_ENDPOINT.replace(
@@ -89,14 +91,12 @@ export default {
             18 + (outputToken?.decimal || 18) - (inputToken?.decimal || 18)
           for (let i = 0; i < response.t.length; i++) {
             bars.push({
-              low: Number(weiToNumber(numberToWei(response.l[i]), decimal)),
-              open: Number(weiToNumber(numberToWei(response.o[i]), decimal)),
+              low: formatResult(weiToNumber(numberToWei(response.l[i]), decimal), barValueType),
+              open: formatResult(weiToNumber(numberToWei(response.o[i]), decimal), barValueType),
               time: response.t[i] * 1000,
-              volume: Number(
-                weiToNumber(response.v[i].split('.')[0], outputToken?.decimal),
-              ),
-              close: Number(weiToNumber(numberToWei(response.c[i]), decimal)),
-              high: Number(weiToNumber(numberToWei(response.h[i]), decimal)),
+              volume: formatResult(weiToNumber(response.v[i].split('.')[0], outputToken?.decimal), barValueType),
+              close: formatResult(weiToNumber(numberToWei(response.c[i]), decimal), barValueType),
+              high: formatResult(weiToNumber(numberToWei(response.h[i]), decimal), barValueType),
             })
           }
           return bars
@@ -109,4 +109,11 @@ export default {
         return []
       })
   },
+}
+
+const formatResult = (value: string, type: undefined | 'string' | 'number') => {
+  if(type === 'string') {
+    return value
+  }
+  return Number(value)
 }

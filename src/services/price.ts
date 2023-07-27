@@ -56,6 +56,7 @@ export class Price {
         route: `${baseToken.address}/${cToken}/${quoteToken.address}`,
         outputToken: quoteToken,
         inputToken: baseToken,
+        barValueType: 'string'
       })
       const beforePrice = result[0].open
       return formatPercent(div(sub(currentPrice, beforePrice), beforePrice))
