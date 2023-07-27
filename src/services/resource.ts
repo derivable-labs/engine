@@ -22,7 +22,7 @@ import {
   decodePowers,
   div,
   formatMultiCallBignumber,
-  getNormalAddress, parseSqrtSpotPrice,
+  getNormalAddress, getTopics, parseSqrtSpotPrice,
 } from '../utils/helper'
 import {UniV2Pair} from './uniV2Pair'
 import {JsonRpcProvider} from '@ethersproject/providers'
@@ -230,12 +230,12 @@ export class Resource {
     )
     const lastHeadBlockCached = this.getLastBlockCached(account)
     const accTopic = account ? '0x' + '0'.repeat(24) + account.slice(2) : null
-    const topics = this.getTopics()
+    const topics = getTopics()
 
-    let filterTopics: any = [topics.Derivable, null, null, null]
+    let filterTopics: any = [topics.Derivable[0], null, null, null]
     if (accTopic) {
       filterTopics = [
-        [topics.Derivable, null, null, null],
+        [topics.Derivable[0], null, null, null],
         [null, accTopic, null, null],
         [null, null, accTopic, null],
         [null, null, null, accTopic],
@@ -253,14 +253,13 @@ export class Resource {
           return [[], []]
         }
         const headBlock = logs[logs.length - 1]?.blockNumber
-        const topics = this.getTopics()
         const ddlLogs = logs.filter((log: any) => {
           return log.address
-            && [topics.Derivable].includes(log.topics[0])
+            && topics.Derivable.includes(log.topics[0])
             && log.address === this.addresses.poolFactory
         })
         const swapLogs = logs.filter((log: any) => {
-          return log.address && [topics.Swap].includes(log.topics[0])
+          return log.address && topics.Swap.includes(log.topics[0])
         })
         this.cacheDdlLog({
           ddlLogs,
@@ -742,22 +741,5 @@ export class Resource {
         return {}
       }
     })
-  }
-
-  getTopics(): { [key: string]: string } {
-    const eventInterface = new ethers.utils.Interface(EventsAbi)
-    const events = eventInterface.events
-    const topics: { [key: string]: string } = {}
-    for (const i in events) {
-      topics[events[i].name] = ethers.utils.id(i)
-    }
-    return topics
-  }
-
-  getDecimals(baseToken: TokenType, quoteToken: TokenType, side: number) {
-    if (side == POOL_IDS.C) {
-      return (baseToken.decimal + quoteToken.decimal) / 2
-    }
-    return 18 - baseToken.decimal + quoteToken.decimal
   }
 }

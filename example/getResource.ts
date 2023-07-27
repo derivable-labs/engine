@@ -7,7 +7,7 @@ const testLocal = async () => {
   const configs = getTestConfigs(42161)
   const engine = new Engine(configs.account, configs, 42161)
   await engine.RESOURCE.fetchResourceData(
-    '0xbC52C688c34A480c6785A38715c693Bb22863DE1',
+    '0xE3C75f8963E4CA02ea9a281c32b41FdfC248e07f',
   )
 
   console.log({

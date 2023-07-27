@@ -5,6 +5,7 @@ import { CurrentPool } from './currentPool'
 import { EventDataAbis, NATIVE_ADDRESS, POOL_IDS } from '../utils/constant'
 import { ConfigType } from './setConfig'
 import { Resource } from './resource'
+import {getTopics} from "../utils/helper";
 
 export class History {
   account?: string
@@ -22,14 +23,16 @@ export class History {
       }
 
       const poolAddresses = Object.keys(this.CURRENT_POOL.pools)
-
+      const topics = getTopics()
       const swapLogs = logs.map((log) => {
+        const abi = log.topics[0] === topics.Swap[0] ? EventDataAbis.Swap : EventDataAbis.Swap1
+
         const encodeData = ethers.utils.defaultAbiCoder.encode(
-          EventDataAbis.Swap,
+          abi,
           log.args.args,
         )
         const formatedData = ethers.utils.defaultAbiCoder.decode(
-          EventDataAbis.Swap,
+          abi,
           encodeData,
         )
 

@@ -4,6 +4,7 @@ import LogicAbi97 from '../abi/97/Logic.json'
 import LogicAbi31337 from '../abi/31337/Logic.json'
 import LogicAbi42161 from '../abi/31337/Logic.json'
 import { TokenType } from '../types'
+import EventsAbi from "../abi/Events.json";
 
 const LogicAbi = {
   56: LogicAbi56,
@@ -215,4 +216,19 @@ export const mergeDeep = (target: any, ...sources: any): any => {
   }
 
   return mergeDeep(target, ...sources)
+}
+
+export const getTopics = (): { [key: string]: string[] }  => {
+  const eventInterface = new ethers.utils.Interface(EventsAbi)
+  const events = eventInterface.events
+  const topics: { [key: string]: string[] } = {}
+  for (const i in events) {
+    if(topics[events[i].name]) {
+      topics[events[i].name].push(ethers.utils.id(i))
+    } else {
+      topics[events[i].name] = [ethers.utils.id(i)]
+    }
+
+  }
+  return topics
 }
