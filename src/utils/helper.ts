@@ -96,7 +96,7 @@ export const getNormalAddress = (addresses: string[]) => {
 }
 
 export const formatFloat = (number: number | string, decimal = 4) => {
-  number = number.toString()
+  number = number.toLocaleString('fullwide', {useGrouping:false})
   const arr = number.split('.')
   if (arr.length > 1) {
     arr[1] = arr[1].slice(0, decimal)
@@ -105,11 +105,13 @@ export const formatFloat = (number: number | string, decimal = 4) => {
 }
 
 export const formatPercent = (floatNumber: any, decimal: number = 2) => {
-  floatNumber = floatNumber.toString()
+  floatNumber = floatNumber.toLocaleString('fullwide', {useGrouping:false})
   return formatFloat(weiToNumber(numberToWei(floatNumber), 16), decimal)
 }
 
 export const mul = (a: any, b: any) => {
+  a = a.toLocaleString('fullwide', {useGrouping:false})
+  b = b.toLocaleString('fullwide', {useGrouping:false})
   const result = weiToNumber(
     BigNumber.from(numberToWei(a)).mul(numberToWei(b)),
     36,
@@ -120,17 +122,23 @@ export const mul = (a: any, b: any) => {
 }
 
 export const sub = (a: any, b: any) => {
+  a = a.toLocaleString('fullwide', {useGrouping:false})
+  b = b.toLocaleString('fullwide', {useGrouping:false})
   return weiToNumber(BigNumber.from(numberToWei(a)).sub(numberToWei(b)))
 }
 
 export const div = (a: any, b: any) => {
-  if (!b || b.toString() === '0') {
-    return '0'
+  if (b.toLocaleString('fullwide', {useGrouping:false}) == '0') {
+    return weiToNumber(BigNumber.from(numberToWei((Number(a)/Number(b)).toLocaleString('fullwide', {useGrouping:false}))))
   }
+  a = a.toLocaleString('fullwide', {useGrouping:false})
+  b = b.toLocaleString('fullwide', {useGrouping:false})
   return weiToNumber(BigNumber.from(numberToWei(a, 36)).div(numberToWei(b)))
 }
 
 export const add = (a: any, b: any) => {
+  a = a.toLocaleString('fullwide', {useGrouping:false})
+  b = b.toLocaleString('fullwide', {useGrouping:false})
   return weiToNumber(BigNumber.from(numberToWei(a)).add(numberToWei(b)))
 }
 
@@ -138,6 +146,7 @@ export const detectDecimalFromPrice = (price: number | string) => {
   if (Number(price || 0) === 0 || Number(price || 0) >= 1) {
     return 4
   } else {
+    price = price.toLocaleString('fullwide', {useGrouping:false})
     const rate = !bn(numberToWei(price)).isZero()
       ? weiToNumber(
           BigNumber.from(numberToWei(1, 36)).div(numberToWei(price)).toString(),
