@@ -102,7 +102,6 @@ export class Swap {
       const res = await contract.callStatic.exec(...params, {
         from: this.account,
         value,
-        gasLimit: gasLimit || undefined,
       })
       const result = []
       for (const i in steps) {
