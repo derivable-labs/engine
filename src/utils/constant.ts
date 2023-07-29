@@ -71,4 +71,16 @@ export const EventDataAbis = {
     'uint amountOut',
     'uint price',
   ],
+  Swap2: [
+    'address payer',
+    'address poolIn',
+    'address poolOut',
+    'address recipient',
+    'uint sideIn',
+    'uint sideOut',
+    'uint amountIn',
+    'uint amountOut',
+    'uint price',
+    'uint priceR',
+  ],
 }

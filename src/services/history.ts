@@ -1,31 +1,116 @@
-import { BigNumber, ethers } from 'ethers'
-import { PowerState } from 'powerLib/dist/powerLib'
-import { LogType } from '../types'
-import { CurrentPool } from './currentPool'
-import { EventDataAbis, NATIVE_ADDRESS, POOL_IDS } from '../utils/constant'
-import { ConfigType } from './setConfig'
-import { Resource } from './resource'
-import {getTopics} from "../utils/helper";
+import {BigNumber, ethers} from 'ethers'
+import {PowerState} from 'powerLib/dist/powerLib'
+import {LogType, TokenType} from '../types'
+import {CurrentPool} from './currentPool'
+import {EventDataAbis, NATIVE_ADDRESS, POOL_IDS} from '../utils/constant'
+import {ConfigType} from './setConfig'
+import {Resource} from './resource'
+import {add, bn, getTopics, numberToWei, parseSqrtSpotPrice, weiToNumber} from "../utils/helper";
 
 export class History {
   account?: string
   CURRENT_POOL: CurrentPool
+  config: ConfigType
 
   constructor(config: ConfigType & { CURRENT_POOL: CurrentPool }) {
+    this.config = config
     this.account = config.account
     this.CURRENT_POOL = config.CURRENT_POOL
   }
 
-  formatSwapHistory({ logs }: { logs: LogType[] }) {
+  generatePositions({tokens, logs}: { tokens: TokenType[], logs: LogType[] }) {
+    try {
+      if (!logs || logs.length === 0) {
+        return []
+      }
+
+      let positions = {}
+      logs = logs.sort((a, b) => a.blockNumber - b.blockNumber)
+      logs.forEach((log: LogType) => {
+        const abi = this.getSwapAbi(log.topics[0])
+        const encodeData = ethers.utils.defaultAbiCoder.encode(
+          abi,
+          log.args.args,
+        )
+        const formatedData = ethers.utils.defaultAbiCoder.decode(
+          abi,
+          encodeData,
+        )
+        positions = this.generatePositionBySwapLog(positions, tokens, formatedData)
+      })
+      return positions
+    } catch (e) {
+      throw e
+    }
+  }
+
+  generatePositionBySwapLog(positions: any, tokens: TokenType[], formatedData: any) {
+    const pools = this.CURRENT_POOL.pools
+    const poolAddresses = Object.keys(this.CURRENT_POOL.pools)
+
+    const {poolIn, poolOut, sideIn, sideOut, amountOut, amountIn, priceR} = formatedData
+
+    if (
+      !poolAddresses.includes(poolIn) ||
+      !poolAddresses.includes(poolOut)
+    ) {
+      return
+    }
+
+    const tokenIn = this.getTokenAddressByPoolAndSide(
+      poolIn,
+      formatedData.sideIn,
+    )
+    const tokenOut = this.getTokenAddressByPoolAndSide(
+      poolOut,
+      formatedData.sideOut,
+    )
+
+    if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideOut.toNumber())) {
+      if (!positions[tokenOut]) {
+        positions[tokenOut] = {
+          balance: amountOut,
+          entry: 0
+        }
+      } else {
+        positions[tokenOut].balance = positions[tokenOut].balance.add(amountOut)
+      }
+      if ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) && priceR) {
+        const pool = pools[poolIn]
+        const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
+        const tokenRQuote = tokens.find((t) => t.address === this.config.stableCoins[0])
+        const _tokenIn = tokens.find((t) => t.address === tokenIn)
+        //@ts-ignore
+        const price = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote, 1)
+
+        positions[tokenOut].entry = add(positions[tokenOut].entry, weiToNumber(amountIn.mul(numberToWei(price) || 0), 18 + (_tokenIn?.decimal || 18)))
+      } else if (positions[tokenIn]) {
+        const oldEntry = positions[tokenIn].entry.mul(amountIn).div(positions[tokenIn].balance)
+        positions[tokenOut].entry = positions[tokenOut].entry.add(oldEntry)
+      }
+    }
+
+    if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber())) {
+      if (positions[tokenIn]) {
+        const oldEntry = positions[tokenIn].entry.mul(amountIn).div(positions[tokenIn].balance)
+        positions[tokenIn] = {
+          balance: positions[tokenIn].balance.sub(amountIn),
+          entry: positions[tokenIn].entry.sub(oldEntry),
+        }
+      }
+    }
+    return positions
+  }
+
+  formatSwapHistory({logs}: { logs: LogType[] }) {
     try {
       if (!logs || logs.length === 0) {
         return []
       }
 
       const poolAddresses = Object.keys(this.CURRENT_POOL.pools)
-      const topics = getTopics()
       const swapLogs = logs.map((log) => {
-        const abi = log.topics[0] === topics.Swap[0] ? EventDataAbis.Swap : EventDataAbis.Swap1
+        const abi = this.getSwapAbi(log.topics[0])
 
         const encodeData = ethers.utils.defaultAbiCoder.encode(
           abi,
@@ -36,7 +121,7 @@ export class History {
           encodeData,
         )
 
-        const { poolIn, poolOut } = formatedData
+        const {poolIn, poolOut} = formatedData
 
         if (
           !poolAddresses.includes(poolIn) ||
@@ -87,6 +172,17 @@ export class History {
       return pool?.TOKEN_R || NATIVE_ADDRESS
     }
     return poolAddress + '-' + side.toString()
+  }
+
+  getSwapAbi = (topic0: string) => {
+    const topics = getTopics()
+    if (topic0 === topics.Swap[0]) {
+      return EventDataAbis.Swap
+    } else if (topic0 === topics.Swap[1]) {
+      return EventDataAbis.Swap1
+    } else {
+      return EventDataAbis.Swap2
+    }
   }
 
   calculateLeverage(powerState: PowerState, balances: any, powers: number[]) {

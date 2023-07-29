@@ -20,11 +20,16 @@ const testLocal = async () => {
     ...currentPool,
   })
 
-  const swapTxs = engine?.HISTORY.formatSwapHistory({
+  // const swapTxs = engine?.HISTORY.formatSwapHistory({
+  //   logs: JSON.parse(JSON.stringify(engine.RESOURCE.swapLogs)),
+  // })
+
+  const positions = engine?.HISTORY.generatePositions({
+    tokens: engine.RESOURCE.tokens,
     logs: JSON.parse(JSON.stringify(engine.RESOURCE.swapLogs)),
   })
 
-  console.log(swapTxs)
+  console.log(positions)
 }
 
 testLocal()
