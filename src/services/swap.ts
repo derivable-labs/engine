@@ -261,6 +261,7 @@ export class Swap {
             maturity: 0,
             payer: this.account,
             recipient: this.account,
+            INDEX_R: step.index_R
           }),
           stateCalHelper.populateTransaction.sweep(
             packId(idOut + '', poolOut),
@@ -309,6 +310,7 @@ export class Swap {
             maturity: 0,
             payer: this.account,
             recipient: this.account,
+            INDEX_R: step.index_R
           }),
         )
       }

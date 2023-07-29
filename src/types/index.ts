@@ -184,4 +184,5 @@ export type SwapStepType = {
   amountOutMin: BigNumber | string | number
   useSweep?: boolean
   currentBalanceOut?: BigNumber
+  index_R?: BigNumber
 }

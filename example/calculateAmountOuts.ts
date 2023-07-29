@@ -27,7 +27,13 @@ const testLocal = async () => {
       tokenOut: poolOut + '-' + POOL_IDS.C,
       amountOutMin: 0,
       currentBalanceOut,
-      useSweep: true
+      useSweep: true,
+      index_R: bn(ethers.utils.hexZeroPad(
+        bn(1).shl(255)
+          .add('0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443')
+          .toHexString(),
+        32,
+      ))
     },
   ]
 
