@@ -5,7 +5,7 @@ import {CurrentPool} from './currentPool'
 import {EventDataAbis, NATIVE_ADDRESS, POOL_IDS} from '../utils/constant'
 import {ConfigType} from './setConfig'
 import {Resource} from './resource'
-import {add, bn, getTopics, numberToWei, parseSqrtSpotPrice, weiToNumber} from "../utils/helper";
+import {add, bn, div, getTopics, mul, numberToWei, parseSqrtSpotPrice, sub, weiToNumber} from "../utils/helper";
 
 export class History {
   account?: string
@@ -54,7 +54,7 @@ export class History {
       !poolAddresses.includes(poolIn) ||
       !poolAddresses.includes(poolOut)
     ) {
-      return
+      return positions
     }
 
     const tokenIn = this.getTokenAddressByPoolAndSide(
@@ -84,18 +84,18 @@ export class History {
         const price = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote, 1)
 
         positions[tokenOut].entry = add(positions[tokenOut].entry, weiToNumber(amountIn.mul(numberToWei(price) || 0), 18 + (_tokenIn?.decimal || 18)))
-      } else if (positions[tokenIn]) {
-        const oldEntry = positions[tokenIn].entry.mul(amountIn).div(positions[tokenIn].balance)
-        positions[tokenOut].entry = positions[tokenOut].entry.add(oldEntry)
+      } else if (positions[tokenIn] && positions[tokenIn].entry) {
+        const oldEntry = div(mul(positions[tokenIn].entry, amountIn),positions[tokenIn].balance)
+        positions[tokenOut].entry = add(positions[tokenOut].entry, oldEntry)
       }
     }
 
     if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber())) {
-      if (positions[tokenIn]) {
-        const oldEntry = positions[tokenIn].entry.mul(amountIn).div(positions[tokenIn].balance)
+      if (positions[tokenIn] && positions[tokenIn].entry) {
+        const oldEntry = div(mul(positions[tokenIn].entry, amountIn), positions[tokenIn].balance)
         positions[tokenIn] = {
           balance: positions[tokenIn].balance.sub(amountIn),
-          entry: positions[tokenIn].entry.sub(oldEntry),
+          entry: sub(positions[tokenIn].entry, oldEntry),
         }
       }
     }
