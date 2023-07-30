@@ -158,6 +158,7 @@ export type TokenType = {
   symbol: string
 }
 
+export type MaturitiesType = { [key: string]: BigNumber }
 export type BalancesType = { [key: string]: BigNumber }
 export type AllowancesType = { [key: string]: BigNumber }
 

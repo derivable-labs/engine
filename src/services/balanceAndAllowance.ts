@@ -1,27 +1,22 @@
-import { bn, getErc1155Token, getNormalAddress, packId } from '../utils/helper'
-import { ethers } from 'ethers'
-import { Multicall } from 'ethereum-multicall'
-import { LARGE_VALUE } from '../utils/constant'
+import {bn, getErc1155Token, getNormalAddress, packId} from '../utils/helper'
+import {ethers} from 'ethers'
+import {Multicall} from 'ethereum-multicall'
+import {LARGE_VALUE} from '../utils/constant'
 import BnAAbi from '../abi/BnA.json'
 import TokenAbi from '../abi/Token.json'
-import PoolAbi from '../abi/Pool.json'
-import { AllowancesType, BalancesType } from '../types'
-import { ConfigType } from './setConfig'
-import { DerivableContractAddress } from '../utils/configs'
+import {AllowancesType, BalancesType, MaturitiesType} from '../types'
+import {ConfigType} from './setConfig'
+import {DerivableContractAddress} from '../utils/configs'
+import {unpackId} from "../utils/number";
 
-type BnAReturnType = { balances: BalancesType; allowances: AllowancesType }
-
-// type ConfigType = {
-//   chainId: number
-//   account?: string
-//   provider: ethers.providers.Provider
-// }
+type BnAReturnType = { balances: BalancesType; allowances: AllowancesType, maturity: MaturitiesType }
 
 export class BnA {
   chainId: number
   account?: string
   provider: ethers.providers.Provider
   contractAddresses: Partial<DerivableContractAddress>
+
   constructor(config: ConfigType) {
     this.chainId = config.chainId
     this.account = config.account
@@ -29,7 +24,7 @@ export class BnA {
     this.contractAddresses = config.addresses
   }
 
-  async getBalanceAndAllowance({ tokens }: any): Promise<BnAReturnType> {
+  async getBalanceAndAllowance({tokens}: any): Promise<BnAReturnType> {
     if (this.account) {
       const multicall = new Multicall({
         multicallCustomContractAddress: this.contractAddresses.multiCall,
@@ -42,25 +37,25 @@ export class BnA {
         erc20Tokens,
         erc1155Tokens,
       })
-      const { results } = await multicall.call(multiCallRequest)
+      const {results} = await multicall.call(multiCallRequest)
 
       return this.parseBnAMultiRes(erc20Tokens, erc1155Tokens, results)
     }
-    return { balances: {}, allowances: {} }
+    return {balances: {}, allowances: {}, maturity: { }}
   }
 
   getBnAMulticallRequest({
-    erc20Tokens,
-    erc1155Tokens,
-  }: {
+                           erc20Tokens,
+                           erc1155Tokens,
+                         }: {
     erc20Tokens: string[]
     erc1155Tokens: { [key: string]: string[] }
   }) {
-    const pack = []
+    const packs = []
     const accounts = []
     for (const poolAddress in erc1155Tokens) {
       for (let side of erc1155Tokens[poolAddress]) {
-        pack.push(packId(side, poolAddress))
+        packs.push(packId(side, poolAddress))
         accounts.push(this.account)
       }
     }
@@ -90,7 +85,7 @@ export class BnA {
           {
             reference: 'balanceOfBatch',
             methodName: 'balanceOfBatch',
-            methodParameters: [accounts, pack],
+            methodParameters: [accounts, packs],
           },
           {
             reference: 'isApprovedForAll',
@@ -101,6 +96,14 @@ export class BnA {
       },
     ]
 
+    for (let pack of packs) {
+      request[1].calls.push({
+        reference: 'maturityOf-' + pack,
+        methodName: 'maturityOf',
+        methodParameters: [this.account, pack],
+      })
+    }
+
     return request
   }
 
@@ -109,6 +112,7 @@ export class BnA {
     erc1155Tokens: any,
     data: any,
   ): BnAReturnType {
+    const maturity: MaturitiesType = {}
     const balances: BalancesType = {}
     const allowances: AllowancesType = {}
     const erc20Info = data.erc20.callsReturnContext[0].returnValues[0]
@@ -131,9 +135,16 @@ export class BnA {
       }
     }
 
+    for(let maturityIndex = 2; maturityIndex < data.erc1155.callsReturnContext.length; maturityIndex++) {
+      const responseData = data.erc1155.callsReturnContext[maturityIndex]
+      const {k, p} = unpackId(bn(responseData.reference?.split('-')[1]))
+      maturity[p + '-' + Number(k)] = bn(responseData.returnValues[0]?.hex)
+    }
+
     return {
       balances,
       allowances,
+      maturity
     }
   }
 }
