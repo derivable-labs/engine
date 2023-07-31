@@ -6,6 +6,7 @@ import {EventDataAbis, NATIVE_ADDRESS, POOL_IDS} from '../utils/constant'
 import {ConfigType} from './setConfig'
 import {Resource} from './resource'
 import {add, bn, div, getTopics, mul, numberToWei, parseSqrtSpotPrice, sub, weiToNumber} from "../utils/helper";
+import {forEach} from "lodash";
 
 export class History {
   account?: string
@@ -38,6 +39,11 @@ export class History {
         )
         positions = this.generatePositionBySwapLog(positions, tokens, formatedData)
       })
+
+      for(let i in positions) {
+        positions[i].entryPrice = positions[i].entry && positions[i].amountIn ? div(positions[i].entry, positions[i].amountIn) : 0
+      }
+
       return positions
     } catch (e) {
       throw e
@@ -57,45 +63,49 @@ export class History {
       return positions
     }
 
-    const tokenIn = this.getTokenAddressByPoolAndSide(
+    const tokenInAddress = this.getTokenAddressByPoolAndSide(
       poolIn,
       formatedData.sideIn,
     )
-    const tokenOut = this.getTokenAddressByPoolAndSide(
+    const tokenOutAddress = this.getTokenAddressByPoolAndSide(
       poolOut,
       formatedData.sideOut,
     )
+    const tokenIn = tokens.find((t) => t.address === tokenInAddress)
 
     if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideOut.toNumber())) {
-      if (!positions[tokenOut]) {
-        positions[tokenOut] = {
+      if (!positions[tokenOutAddress]) {
+        positions[tokenOutAddress] = {
           balance: amountOut,
-          entry: 0
+          entry: 0,
+          amountIn: 0,
         }
       } else {
-        positions[tokenOut].balance = positions[tokenOut].balance.add(amountOut)
+        positions[tokenOutAddress].balance = positions[tokenOutAddress].balance.add(amountOut)
       }
       if ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) && priceR) {
         const pool = pools[poolIn]
         const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
         const tokenRQuote = tokens.find((t) => t.address === this.config.stableCoins[0])
-        const _tokenIn = tokens.find((t) => t.address === tokenIn)
         //@ts-ignore
         const price = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote, 1)
 
-        positions[tokenOut].entry = add(positions[tokenOut].entry, weiToNumber(amountIn.mul(numberToWei(price) || 0), 18 + (_tokenIn?.decimal || 18)))
-      } else if (positions[tokenIn] && positions[tokenIn].entry) {
-        const oldEntry = div(mul(positions[tokenIn].entry, amountIn),positions[tokenIn].balance)
-        positions[tokenOut].entry = add(positions[tokenOut].entry, oldEntry)
+        positions[tokenOutAddress].entry = add(positions[tokenOutAddress].entry, weiToNumber(amountIn.mul(numberToWei(price) || 0), 18 + (tokenIn?.decimal || 18)))
+        positions[tokenOutAddress].amountIn = add(positions[tokenOutAddress].amountIn, weiToNumber(amountIn, tokenIn?.decimal || 18))
+      } else if (positions[tokenInAddress] && positions[tokenInAddress].entry) {
+        const oldEntry = div(mul(positions[tokenInAddress].entry, amountIn),positions[tokenInAddress].balance)
+        positions[tokenOutAddress].entry = add(positions[tokenOutAddress].entry, oldEntry)
+        positions[tokenOutAddress].amountIn = add(positions[tokenOutAddress].amountIn, weiToNumber(amountIn, tokenIn?.decimal || 18))
       }
     }
 
     if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber())) {
-      if (positions[tokenIn] && positions[tokenIn].entry) {
-        const oldEntry = div(mul(positions[tokenIn].entry, amountIn), positions[tokenIn].balance)
-        positions[tokenIn] = {
-          balance: positions[tokenIn].balance.sub(amountIn),
-          entry: sub(positions[tokenIn].entry, oldEntry),
+      if (positions[tokenInAddress] && positions[tokenInAddress].entry) {
+        const oldEntry = div(mul(positions[tokenInAddress].entry, amountIn), positions[tokenInAddress].balance)
+        positions[tokenInAddress] = {
+          balance: positions[tokenInAddress].balance.sub(amountIn),
+          entry: sub(positions[tokenInAddress].entry, oldEntry),
+          amountIn: sub(positions[tokenInAddress].amountIn, weiToNumber(amountIn, tokenIn?.decimal || 18))
         }
       }
     }
