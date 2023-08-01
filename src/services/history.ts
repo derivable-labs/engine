@@ -5,7 +5,7 @@ import {CurrentPool} from './currentPool'
 import {EventDataAbis, NATIVE_ADDRESS, POOL_IDS} from '../utils/constant'
 import {ConfigType} from './setConfig'
 import {Resource} from './resource'
-import {add, bn, div, getTopics, mul, numberToWei, parseSqrtSpotPrice, sub, weiToNumber} from "../utils/helper";
+import {add, bn, div, getTopics, max, mul, numberToWei, parseSqrtSpotPrice, sub, weiToNumber} from "../utils/helper";
 import {forEach} from "lodash";
 
 export class History {
@@ -111,10 +111,10 @@ export class History {
         const oldEntry = div(mul(positions[tokenInAddress].entry, amountIn), positions[tokenInAddress].balance)
         const oldValue = div(mul(positions[tokenInAddress].value, amountIn), positions[tokenInAddress].balance)
         positions[tokenInAddress] = {
-          balance: positions[tokenInAddress].balance.sub(amountIn),
-          entry: sub(positions[tokenInAddress].entry, oldEntry),
-          value: sub(positions[tokenInAddress].value, oldValue),
-          balanceToCalculatePrice: positions[tokenInAddress].balanceToCalculatePrice.sub(amountIn)
+          balance: max(positions[tokenInAddress].balance.sub(amountIn), bn(0)),
+          entry: max(sub(positions[tokenInAddress].entry, oldEntry), 0),
+          value: max(sub(positions[tokenInAddress].value, oldValue),  0),
+          balanceToCalculatePrice: max(positions[tokenInAddress].balanceToCalculatePrice.sub(amountIn), bn(0))
         }
       }
     }

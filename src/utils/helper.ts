@@ -137,6 +137,8 @@ export const div = (a: any, b: any) => {
   return weiToNumber(BigNumber.from(numberToWei(a, 36)).div(numberToWei(b)))
 }
 
+export const max = (a: any, b: any) =>  bn(numberToWei(a)).gt(numberToWei(b)) ? a : b
+
 export const add = (a: any, b: any) => {
   a = a.toLocaleString('fullwide', {useGrouping:false})
   b = b.toLocaleString('fullwide', {useGrouping:false})
