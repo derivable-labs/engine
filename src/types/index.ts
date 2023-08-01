@@ -19,7 +19,7 @@ export type LogType = {
   transactionHash: string
   blockNumber: number
   index: number
-  logIndex: string
+  logIndex: number
   name: string
   topics: string[]
   args: any

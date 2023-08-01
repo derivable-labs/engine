@@ -1,5 +1,5 @@
 {
-  "name": "swap-tools-2",
+  "name": "derivable-tools",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
@@ -17,17 +17,17 @@
     "example:power": "npx ts-node --files ./example/power.ts",
     "pretty": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\""
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Derivable Labs",
+  "license": "MIT",
   "dependencies": {
     "@ethersproject/providers": "https://github.com/launchzone/ethers.js/releases/download/v5.3.2.2/ethers_providers.tar.gz",
-    "assisted-json-rpc-provider": "git+ssh://git@github.com:derivable-io/AssistedJsonRpcProvider.git#1410f1d9a1e733c35d409f4ee79b0ca348f16718",
+    "assisted-json-rpc-provider": "git+ssh://git@github.com:derivable-labs/AssistedJsonRpcProvider.git#dev",
     "canonical-weth": "^1.4.0",
     "ethereum-multicall": "^2.15.0",
     "ethers": "^5.5.4",
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.7",
-    "powerLib": "git+ssh://git@github.com:derivable-io/power-lib.git#502f7724fe3f25676f48e4107a0c7da705e25d7f"
+    "powerLib": "git+ssh://git@github.com:derivable-labs/power-lib.git#build"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.179",

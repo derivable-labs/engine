@@ -162,6 +162,7 @@ export class History {
           transactionHash: log.transactionHash,
           timeStamp: log.timeStamp,
           blockNumber: log.blockNumber,
+          logIndex: log.logIndex,
           poolIn,
           poolOut,
           tokenIn,
@@ -170,12 +171,10 @@ export class History {
         }
       })
 
-      //@ts-ignore
       return (
         swapLogs
           .filter((l) => l !== null)
-          //@ts-ignore
-          .sort((a, b) => b.blockNumber - a.blockNumber)
+          .sort((a, b) => b!.blockNumber - a!.blockNumber || b!.logIndex - a!.logIndex)
       )
     } catch (e) {
       throw e
