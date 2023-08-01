@@ -40,8 +40,8 @@ export class History {
         positions = this.generatePositionBySwapLog(positions, tokens, formatedData)
       })
 
-      for(let i in positions) {
-        positions[i].entryPrice = positions[i].entry && positions[i].amountIn ? div(positions[i].entry, positions[i].amountIn) : 0
+      for (let i in positions) {
+        positions[i].entryPrice = positions[i].value && positions[i].balanceToCalculatePrice && positions[i].balanceToCalculatePrice.gt(0) ? div(positions[i].value, positions[i].balanceToCalculatePrice) : 0
       }
 
       return positions
@@ -54,7 +54,7 @@ export class History {
     const pools = this.CURRENT_POOL.pools
     const poolAddresses = Object.keys(this.CURRENT_POOL.pools)
 
-    const {poolIn, poolOut, sideIn, sideOut, amountOut, amountIn, priceR} = formatedData
+    const {poolIn, poolOut, sideIn, sideOut, amountOut, amountIn, priceR, price} = formatedData
 
     if (
       !poolAddresses.includes(poolIn) ||
@@ -72,13 +72,15 @@ export class History {
       formatedData.sideOut,
     )
     const tokenIn = tokens.find((t) => t.address === tokenInAddress)
+    const tokenOut = tokens.find((t) => t.address === tokenOutAddress)
 
     if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideOut.toNumber())) {
       if (!positions[tokenOutAddress]) {
         positions[tokenOutAddress] = {
           balance: amountOut,
+          balanceToCalculatePrice: bn(0), // to calculate entry price, balanceToCalculatePrice = total amountOut
+          value: 0, // to calculate entry price, value = amountOut * indexPrice => entry price = total value / total amount out
           entry: 0,
-          amountIn: 0,
         }
       } else {
         positions[tokenOutAddress].balance = positions[tokenOutAddress].balance.add(amountOut)
@@ -88,24 +90,31 @@ export class History {
         const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
         const tokenRQuote = tokens.find((t) => t.address === this.config.stableCoins[0])
         //@ts-ignore
-        const price = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote, 1)
+        const priceRFormated = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote, 1)
 
-        positions[tokenOutAddress].entry = add(positions[tokenOutAddress].entry, weiToNumber(amountIn.mul(numberToWei(price) || 0), 18 + (tokenIn?.decimal || 18)))
-        positions[tokenOutAddress].amountIn = add(positions[tokenOutAddress].amountIn, weiToNumber(amountIn, tokenIn?.decimal || 18))
+        positions[tokenOutAddress].entry = add(positions[tokenOutAddress].entry, weiToNumber(amountIn.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18)))
       } else if (positions[tokenInAddress] && positions[tokenInAddress].entry) {
-        const oldEntry = div(mul(positions[tokenInAddress].entry, amountIn),positions[tokenInAddress].balance)
+        const oldEntry = div(mul(positions[tokenInAddress].entry, amountIn), positions[tokenInAddress].balance)
         positions[tokenOutAddress].entry = add(positions[tokenOutAddress].entry, oldEntry)
-        positions[tokenOutAddress].amountIn = add(positions[tokenOutAddress].amountIn, weiToNumber(amountIn, tokenIn?.decimal || 18))
+      }
+
+      if (price) {
+        //@ts-ignore
+        const indexPrice = parseSqrtSpotPrice(price, this.CURRENT_POOL.pair.token0, this.CURRENT_POOL.pair.token1, this.CURRENT_POOL.pair.quoteTokenIndex)
+        positions[tokenOutAddress].value = add(positions[tokenOutAddress].value, mul(amountOut,indexPrice))
+        positions[tokenOutAddress].balanceToCalculatePrice = positions[tokenOutAddress].balanceToCalculatePrice.add(amountOut)
       }
     }
 
     if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber())) {
       if (positions[tokenInAddress] && positions[tokenInAddress].entry) {
         const oldEntry = div(mul(positions[tokenInAddress].entry, amountIn), positions[tokenInAddress].balance)
+        const oldValue = div(mul(positions[tokenInAddress].value, amountIn), positions[tokenInAddress].balance)
         positions[tokenInAddress] = {
           balance: positions[tokenInAddress].balance.sub(amountIn),
           entry: sub(positions[tokenInAddress].entry, oldEntry),
-          amountIn: sub(positions[tokenInAddress].amountIn, weiToNumber(amountIn, tokenIn?.decimal || 18))
+          value: sub(positions[tokenInAddress].value, oldValue),
+          balanceToCalculatePrice: positions[tokenInAddress].balanceToCalculatePrice.sub(amountIn)
         }
       }
     }

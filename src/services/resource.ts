@@ -444,6 +444,7 @@ export class Resource {
         poolGroups[id] = {pools: {[i]: pools[i]}}
         poolGroups[id].UTR = pools[i].UTR
         poolGroups[id].pair = pairsInfo[pair]
+        poolGroups[id].quoteTokenIndex = quoteTokenIndex
         poolGroups[id].baseToken = pools[i].baseToken
         poolGroups[id].quoteToken = pools[i].quoteToken
         poolGroups[id].TOKEN = pools[i].TOKEN
