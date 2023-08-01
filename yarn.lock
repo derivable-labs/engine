@@ -571,10 +571,9 @@ array.prototype.tosorted@^1.1.1:
     es-shim-unscopables "^1.0.0"
     get-intrinsic "^1.1.3"
 
-"assisted-json-rpc-provider@git+ssh://git@github.com:derivable-io/AssistedJsonRpcProvider.git#1410f1d9a1e733c35d409f4ee79b0ca348f16718":
+"assisted-json-rpc-provider@git+ssh://git@github.com:derivable-labs/AssistedJsonRpcProvider.git#dev":
   version "1.0.0"
-  resolved "git+ssh://git@github.com/derivable-io/AssistedJsonRpcProvider.git#1410f1d9a1e733c35d409f4ee79b0ca348f16718"
-  integrity sha512-dRKOy1qTl6AI5ViyXoVfQYSoAee4mLU8VSy1IqjVsBJRNS2OAQlueqBGBZr+yExIA1LXLC4EnuFEz8395X67kg==
+  resolved "git+ssh://git@github.com:derivable-labs/AssistedJsonRpcProvider.git#1410f1d9a1e733c35d409f4ee79b0ca348f16718"
   dependencies:
     async-task-throttle-on-response "^1.0.1"
     ethers "^5.5.3"
@@ -1851,10 +1850,9 @@ path-parse@^1.0.7:
   resolved "https://registry.npmjs.org/path-parse/-/path-parse-1.0.7.tgz"
   integrity sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==
 
-"powerLib@git+ssh://git@github.com:derivable-io/power-lib.git#502f7724fe3f25676f48e4107a0c7da705e25d7f":
+"powerLib@git+ssh://git@github.com:derivable-labs/power-lib.git#build":
   version "1.0.0"
-  resolved "git+ssh://git@github.com/derivable-io/power-lib.git#502f7724fe3f25676f48e4107a0c7da705e25d7f"
-  integrity sha512-lW66osZIFTwsiNUuSfggoMYcMdTm4XSHjNQHIDAWTx2bgtQQrkLGd4idoit+fyUy4x4mqlZUXw0fQC/4AdcjPg==
+  resolved "git+ssh://git@github.com:derivable-labs/power-lib.git#502f7724fe3f25676f48e4107a0c7da705e25d7f"
   dependencies:
     ethers "^5.4.6"
     lodash "^4.17.21"
