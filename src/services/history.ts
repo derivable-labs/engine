@@ -77,14 +77,16 @@ export class History {
     if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideOut.toNumber())) {
       if (!positions[tokenOutAddress]) {
         positions[tokenOutAddress] = {
-          balance: amountOut,
+          balance: bn(0),
           balanceToCalculatePrice: bn(0), // to calculate entry price, balanceToCalculatePrice = total amountOut
           value: 0, // to calculate entry price, value = amountOut * indexPrice => entry price = total value / total amount out
           entry: 0,
         }
-      } else {
+      }
+      if(priceR) {
         positions[tokenOutAddress].balance = positions[tokenOutAddress].balance.add(amountOut)
       }
+
       if ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) && priceR) {
         const pool = pools[poolIn]
         const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
@@ -93,9 +95,6 @@ export class History {
         const priceRFormated = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote, 1)
 
         positions[tokenOutAddress].entry = add(positions[tokenOutAddress].entry, weiToNumber(amountIn.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18)))
-      } else if (positions[tokenInAddress] && positions[tokenInAddress].entry) {
-        const oldEntry = div(mul(positions[tokenInAddress].entry, amountIn), positions[tokenInAddress].balance)
-        positions[tokenOutAddress].entry = add(positions[tokenOutAddress].entry, oldEntry)
       }
 
       if (price) {
@@ -106,7 +105,7 @@ export class History {
       }
     }
 
-    if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber())) {
+    if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber()) ) {
       if (positions[tokenInAddress] && positions[tokenInAddress].entry) {
         const oldEntry = div(mul(positions[tokenInAddress].entry, amountIn), positions[tokenInAddress].balance)
         const oldValue = div(mul(positions[tokenInAddress].value, amountIn), positions[tokenInAddress].balance)
