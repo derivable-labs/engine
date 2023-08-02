@@ -706,7 +706,11 @@ export class Resource {
 
   parseDdlLogs(ddlLogs: any) {
     const eventInterface = new ethers.utils.Interface(EventsAbi)
+    const topics = getTopics()
     return ddlLogs.map((log: any) => {
+      if(!topics.Derivable.includes(log.topics[0]) && !topics.Swap.includes(log.topics[0])) {
+        return {}
+      }
       try {
         const decodeLog = eventInterface.parseLog(log)
         let appName = ''
