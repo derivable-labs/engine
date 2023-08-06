@@ -83,7 +83,7 @@ export class History {
           entry: 0,
         }
       }
-      if(priceR) {
+      if (priceR) {
         positions[tokenOutAddress].balance = positions[tokenOutAddress].balance.add(amountOut)
       }
 
@@ -100,19 +100,19 @@ export class History {
       if (price) {
         //@ts-ignore
         const indexPrice = parseSqrtSpotPrice(price, this.CURRENT_POOL.pair.token0, this.CURRENT_POOL.pair.token1, this.CURRENT_POOL.pair.quoteTokenIndex)
-        positions[tokenOutAddress].value = add(positions[tokenOutAddress].value, mul(amountOut,indexPrice))
+        positions[tokenOutAddress].value = add(positions[tokenOutAddress].value, mul(amountOut, indexPrice))
         positions[tokenOutAddress].balanceToCalculatePrice = positions[tokenOutAddress].balanceToCalculatePrice.add(amountOut)
       }
     }
 
-    if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber()) ) {
+    if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber())) {
       if (positions[tokenInAddress] && positions[tokenInAddress].entry) {
         const oldEntry = div(mul(positions[tokenInAddress].entry, amountIn), positions[tokenInAddress].balance)
         const oldValue = div(mul(positions[tokenInAddress].value, amountIn), positions[tokenInAddress].balance)
         positions[tokenInAddress] = {
           balance: max(positions[tokenInAddress].balance.sub(amountIn), bn(0)),
           entry: max(sub(positions[tokenInAddress].entry, oldEntry), 0),
-          value: max(sub(positions[tokenInAddress].value, oldValue),  0),
+          value: max(sub(positions[tokenInAddress].value, oldValue), 0),
           balanceToCalculatePrice: max(positions[tokenInAddress].balanceToCalculatePrice.sub(amountIn), bn(0))
         }
       }
@@ -120,11 +120,12 @@ export class History {
     return positions
   }
 
-  formatSwapHistory({logs}: { logs: LogType[] }) {
+  formatSwapHistory({logs, tokens}: { logs: LogType[], tokens: TokenType[] }) {
     try {
       if (!logs || logs.length === 0) {
         return []
       }
+      const pools = this.CURRENT_POOL.pools
 
       const poolAddresses = Object.keys(this.CURRENT_POOL.pools)
       const swapLogs = logs.map((log) => {
@@ -139,7 +140,7 @@ export class History {
           encodeData,
         )
 
-        const {poolIn, poolOut} = formatedData
+        const {poolIn, poolOut, sideIn, sideOut, amountIn, amountOut, price, priceR} = formatedData
 
         if (
           !poolAddresses.includes(poolIn) ||
@@ -148,14 +149,33 @@ export class History {
           return null
         }
 
-        const tokenIn = this.getTokenAddressByPoolAndSide(
+        const tokenInAddress = this.getTokenAddressByPoolAndSide(
           poolIn,
           formatedData.sideIn,
         )
-        const tokenOut = this.getTokenAddressByPoolAndSide(
+        const tokenOutAddress = this.getTokenAddressByPoolAndSide(
           poolOut,
           formatedData.sideOut,
         )
+        const tokenIn = tokens.find((t) => t.address === tokenInAddress)
+        const tokenOut = tokens.find((t) => t.address === tokenOutAddress)
+
+        let entryValue
+        let entryPrice
+        if (([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) || [POOL_IDS.R, POOL_IDS.native].includes(sideOut.toNumber())) && priceR) {
+          const pool = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? pools[poolIn] : pools[poolOut]
+          const amount = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut
+          const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
+          const tokenRQuote = tokens.find((t) => t.address === this.config.stableCoins[0])
+          //@ts-ignore
+          const priceRFormated = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote, 1)
+          entryValue = weiToNumber(amount.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18))
+        }
+
+        if (price) {
+          //@ts-ignore
+          entryPrice = parseSqrtSpotPrice(price, this.CURRENT_POOL.pair.token0, this.CURRENT_POOL.pair.token1, this.CURRENT_POOL.pair.quoteTokenIndex)
+        }
 
         return {
           transactionHash: log.transactionHash,
@@ -164,8 +184,10 @@ export class History {
           logIndex: log.logIndex,
           poolIn,
           poolOut,
-          tokenIn,
-          tokenOut,
+          tokenIn: tokenInAddress,
+          tokenOut: tokenOutAddress,
+          entryValue,
+          entryPrice,
           ...formatedData,
         }
       })
