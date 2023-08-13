@@ -116,8 +116,8 @@ export const ARBITRUM_CONFIG: config = {
 
 export const BASE_CONFIG: config = {
   chainId: 8453,
-  rpcUrl: 'https://basescan.org',
-  rpcToGetLogs: 'https://basescan.org',
+  rpcUrl: 'https://mainnet.base.org',
+  rpcToGetLogs: 'https://mainnet.base.org',
   timePerBlock: 1000,
   nativeToken: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
   addresses: {

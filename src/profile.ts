@@ -4,9 +4,9 @@ import {config, CONFIGS} from "./utils/configs";
 import {JsonRpcProvider} from "@ethersproject/providers";
 import {ethers} from "ethers";
 import {EventDataAbis} from "./utils/constant";
-
 import BnA from './abi/BnA.json'
 import ERC20 from './abi/ERC20.json'
+import TokensInfo from './abi/TokensInfo.json'
 import Events from './abi/Events.json'
 import PairDetail from './abi/PairDetail.json'
 import PairV3Detail from './abi/PairV3Detail.json'
@@ -32,6 +32,7 @@ const abis = {
   Token,
   UTR,
   UTROverride,
+  TokensInfo,
   8453: {
     Helper: Helper8453,
     PoolOverride: PoolOverride8453,
