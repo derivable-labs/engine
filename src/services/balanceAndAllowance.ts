@@ -8,6 +8,8 @@ import {AllowancesType, BalancesType, MaturitiesType} from '../types'
 import {ConfigType} from './setConfig'
 import {DerivableContractAddress} from '../utils/configs'
 import {unpackId} from "../utils/number";
+import {JsonRpcProvider} from "@ethersproject/providers";
+import PairV3DetailAbi from "../abi/PairV3Detail.json";
 
 type BnAReturnType = { balances: BalancesType; allowances: AllowancesType, maturity: MaturitiesType }
 
@@ -16,8 +18,10 @@ export class BnA {
   account?: string
   provider: ethers.providers.Provider
   contractAddresses: Partial<DerivableContractAddress>
+  rpcUrl: string
 
   constructor(config: ConfigType) {
+    this.rpcUrl = config.rpcUrl
     this.chainId = config.chainId
     this.account = config.account
     this.provider = config.provider
@@ -26,9 +30,18 @@ export class BnA {
 
   async getBalanceAndAllowance({tokens}: any): Promise<BnAReturnType> {
     if (this.account) {
+
+      const provider = new JsonRpcProvider(this.rpcUrl)
+      // @ts-ignore
+      provider.setStateOverride({
+        [this.contractAddresses.bnA as string]: {
+          code: BnAAbi.deployedBytecode,
+        },
+      })
+
       const multicall = new Multicall({
         multicallCustomContractAddress: this.contractAddresses.multiCall,
-        ethersProvider: this.provider,
+        ethersProvider: provider,
         tryAggregate: true,
       })
       const erc20Tokens = getNormalAddress(tokens)
@@ -64,7 +77,7 @@ export class BnA {
       {
         reference: 'erc20',
         contractAddress: this.contractAddresses.bnA,
-        abi: BnAAbi,
+        abi: BnAAbi.abi,
         calls: [
           {
             reference: 'bna',
