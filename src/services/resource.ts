@@ -59,6 +59,7 @@ export class Resource {
   UNIV3PAIR: UniV3Pair
   addresses: Partial<DerivableContractAddress>
   profile: Profile
+  stableCoins: string[]
 
   constructor(config: ConfigType, profile: Profile) {
     this.unit = config.unit ?? this.unit
@@ -75,6 +76,7 @@ export class Resource {
     this.overrideProvider = config.overrideProvider
     this.addresses = config.addresses
     this.profile = profile
+    this.stableCoins = (config.stableCoins || []) as string[]
   }
 
   async fetchResourceData(account: string) {
@@ -351,6 +353,8 @@ export class Resource {
         allTokens.push(data.TOKEN_R)
       }
     })
+
+    allTokens.push(...this.stableCoins)
 
     return this.loadStatesData(allTokens, poolData, allUniPools)
   }
