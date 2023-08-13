@@ -3,9 +3,9 @@ import { bn } from '../utils/helper'
 import { UniV2Pair } from './uniV2Pair'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { PoolConfig } from '../types'
-import HelperAbi from '../abi/Helper.json'
 import { ConfigType } from './setConfig'
 import { DerivableContractAddress } from '../utils/configs'
+import {Profile} from "../profile";
 
 // type ConfigType = {
 //   account?: string
@@ -26,7 +26,9 @@ export class CreatePool {
   signer?: ethers.providers.JsonRpcSigner
   UNIV2PAIR: UniV2Pair
   contractAddresses: Partial<DerivableContractAddress>
-  constructor(config: ConfigType) {
+  profile: Profile
+
+  constructor(config: ConfigType, profile: Profile) {
     this.account = config.account
     this.chainId = config.chainId
     this.scanApi = config.scanApi
@@ -34,6 +36,7 @@ export class CreatePool {
     this.overrideProvider = config.overrideProvider
     this.signer = config.signer
     this.contractAddresses = config.addresses
+    this.profile = profile
   }
 
   async callStaticCreatePool({ params, value, gasLimit }: any) {
@@ -108,7 +111,7 @@ export class CreatePool {
   getStateCalHelperContract(provider?: any) {
     return new ethers.Contract(
       this.contractAddresses.stateCalHelper as string,
-      HelperAbi,
+      this.profile.getAbi('Helper'),
       provider || this.provider,
     )
   }

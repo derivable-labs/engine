@@ -2,13 +2,18 @@ import { Engine } from '../src/engine'
 import { getTestConfigs } from './shared/testConfigs'
 import { BigNumber } from 'ethers'
 import { FixedPoint } from '../src/utils/number'
+import {Profile} from "../src/profile";
 
 const testLocal = async () => {
-  const configs = getTestConfigs(42161)
-  const engine = new Engine(configs.account, configs, 42161)
+  const configs = getTestConfigs(8453)
+  const engine = new Engine(configs.account, configs, 8453)
   await engine.RESOURCE.fetchResourceData(
     '0xE3C75f8963E4CA02ea9a281c32b41FdfC248e07f',
   )
+
+  // const a = new Profile(8453, {})
+  // const b = a.getAbi('BnA')
+  // console.log(b);
 
   console.log({
     poolGroups: engine.RESOURCE.poolGroups,

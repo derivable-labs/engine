@@ -16,14 +16,10 @@ import {
 } from '../utils/constant'
 import {CurrentPool} from './currentPool'
 import UtrAbi from '../abi/UTR.json'
-import LogicsAbi from '../abi/Logic.json'
 import UtrOverride from '../abi/UTROverride.json'
-import PoolAbi from '../abi/Pool.json'
-import HelperAbi from '../abi/Helper.json'
-import Erc20Abi from '../abi/ERC20.json'
-import WtapAbi from '../abi/Wrap.json'
 import {JsonRpcProvider} from '@ethersproject/providers'
 import {ConfigType} from './setConfig'
+import {Profile} from "../profile";
 
 // type ConfigType = {
 //   account?: string
@@ -67,8 +63,9 @@ export class Swap {
   UNIV2PAIR: UniV2Pair
   CURRENT_POOL: CurrentPool
   config: ConfigType
+  profile: Profile
 
-  constructor(config: ConfigType & { CURRENT_POOL: CurrentPool }) {
+  constructor(config: ConfigType & { CURRENT_POOL: CurrentPool }, profile: Profile) {
     this.config = config
     this.account = config.account
     this.chainId = config.chainId
@@ -77,6 +74,7 @@ export class Swap {
     this.overrideProvider = config.overrideProvider
     this.signer = config.signer
     this.CURRENT_POOL = config.CURRENT_POOL
+    this.profile = profile
   }
 
   //@ts-ignore
@@ -416,39 +414,6 @@ export class Swap {
   }
 
   getStateCalHelperContract(address: string, provider?: any) {
-    return new ethers.Contract(address, HelperAbi, provider || this.provider)
-  }
-
-  getPoolContract(poolAddress: string, provider?: any) {
-    return new ethers.Contract(poolAddress, PoolAbi, provider || this.provider)
-  }
-
-  getLogicContract(provider?: any) {
-    return new ethers.Contract(
-      <string>this.CURRENT_POOL.logicAddress,
-      LogicsAbi,
-      provider || this.provider,
-    )
-  }
-
-  getWrapContract(provider?: any) {
-    return new ethers.Contract(
-      this.config.addresses.wrapToken as string,
-      WtapAbi,
-      provider || this.provider,
-    )
-  }
-
-  encodePayload(
-    swapType: number,
-    sideIn: BigNumber,
-    sideOut: BigNumber,
-    amount: BigNumber,
-  ) {
-    const abiCoder = new ethers.utils.AbiCoder()
-    return abiCoder.encode(
-      ['uint', 'uint', 'uint', 'uint'],
-      [swapType, sideIn, sideOut, amount],
-    )
+    return new ethers.Contract(address, this.profile.getAbi('Helper'), provider || this.provider)
   }
 }

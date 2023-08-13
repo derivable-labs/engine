@@ -6,8 +6,8 @@ import TokenAbi from '../src/abi/Token.json'
 import {ethers} from "ethers";
 
 const testLocal = async () => {
-  const configs = getTestConfigs(42161)
-  const engine = new Engine(configs.account, configs, 42161)
+  const configs = getTestConfigs(8453)
+  const engine = new Engine(configs.account, configs, 8453)
   await engine.RESOURCE.fetchResourceData(configs.account)
 
   const currentPool = Object.values(engine.RESOURCE.poolGroups)[0]
@@ -15,7 +15,7 @@ const testLocal = async () => {
     ...currentPool,
   })
 
-  const poolOut = '0x1753310cCAbDaD0268b71acB99cA1a294e3A5942'
+  const poolOut = '0xAEAA6C357d3cb5050d5f77C7902cE50e221e669f'
   const provider = new ethers.providers.JsonRpcProvider(configs.rpcUrl)
   // @ts-ignore
   const tokenContract = new ethers.Contract( engine.config.addresses.token, TokenAbi, provider)
@@ -27,10 +27,10 @@ const testLocal = async () => {
       tokenOut: poolOut + '-' + POOL_IDS.C,
       amountOutMin: 0,
       currentBalanceOut,
-      useSweep: true,
+      useSweep: false,
       index_R: bn(ethers.utils.hexZeroPad(
         bn(1).shl(255)
-          .add('0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443')
+          .add('0x4C36388bE6F416A29C8d8Eee81C771cE6bE14B18')
           .toHexString(),
         32,
       ))

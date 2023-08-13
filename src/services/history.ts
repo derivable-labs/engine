@@ -7,16 +7,19 @@ import {ConfigType} from './setConfig'
 import {Resource} from './resource'
 import {add, bn, div, getTopics, max, mul, numberToWei, parseSqrtSpotPrice, sub, weiToNumber} from "../utils/helper";
 import {forEach} from "lodash";
+import {Profile} from "../profile";
 
 export class History {
   account?: string
   CURRENT_POOL: CurrentPool
   config: ConfigType
+  profile: Profile
 
-  constructor(config: ConfigType & { CURRENT_POOL: CurrentPool }) {
+  constructor(config: ConfigType & { CURRENT_POOL: CurrentPool }, profile: Profile) {
     this.config = config
     this.account = config.account
     this.CURRENT_POOL = config.CURRENT_POOL
+    this.profile = profile
   }
 
   generatePositions({tokens, logs}: { tokens: TokenType[], logs: LogType[] }) {
@@ -216,11 +219,11 @@ export class History {
   getSwapAbi = (topic0: string) => {
     const topics = getTopics()
     if (topic0 === topics.Swap[0]) {
-      return EventDataAbis.Swap
+      return this.profile.getEventDataAbi().Swap
     } else if (topic0 === topics.Swap[1]) {
-      return EventDataAbis.Swap1
+      return this.profile.getEventDataAbi().Swap1
     } else {
-      return EventDataAbis.Swap2
+      return this.profile.getEventDataAbi().Swap2
     }
   }
 

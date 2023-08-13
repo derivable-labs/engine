@@ -2,8 +2,8 @@ import { ethers, Wallet } from 'ethers'
 
 const PRIVATE_KEY =
   '0x60f5906de1edfc4d14eb4aea49ed4c06641bbdbd5a56092392308e9730598373'
-const account = '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'
-const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+const account = '0xE3C75f8963E4CA02ea9a281c32b41FdfC248e07f'
+const provider = new ethers.providers.JsonRpcProvider('https://mainnet.base.org')
 const walletPrivateKey = new Wallet(PRIVATE_KEY)
 const wallet = walletPrivateKey.connect(provider)
 
@@ -24,6 +24,13 @@ const TestConfigs = {
     chainId: 42161,
     scanApi: 'https://api.arbiscan.io/api',
     rpcUrl: 'https://arb1.arbitrum.io/rpc',
+    account,
+    signer: wallet,
+  },
+  [8453]: {
+    chainId: 8453,
+    scanApi: 'https://api.basescan.org/api',
+    rpcUrl: 'https://mainnet.base.org',
     account,
     signer: wallet,
   },

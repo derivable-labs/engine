@@ -1,17 +1,7 @@
 import { BigNumber, ethers, utils } from 'ethers'
-import LogicAbi56 from '../abi/56/Logic.json'
-import LogicAbi97 from '../abi/97/Logic.json'
-import LogicAbi31337 from '../abi/31337/Logic.json'
-import LogicAbi42161 from '../abi/31337/Logic.json'
 import { TokenType } from '../types'
 import EventsAbi from "../abi/Events.json";
 
-const LogicAbi = {
-  56: LogicAbi56,
-  97: LogicAbi97,
-  31337: LogicAbi31337,
-  42161: LogicAbi42161,
-}
 export const provider = new ethers.providers.JsonRpcProvider(
   'https://bsc-dataseed.binance.org/',
 )
@@ -63,10 +53,6 @@ export const formatMultiCallBignumber = (data: any) => {
     }
     return item
   })
-}
-
-export const getLogicAbi = (chainId: number) => {
-  return LogicAbi[chainId]
 }
 
 export const getErc1155Token = (addresses: string[]) => {
@@ -230,7 +216,6 @@ export const getTopics = (): { [key: string]: string[] }  => {
     } else {
       topics[events[i].name] = [ethers.utils.id(i)]
     }
-
   }
   return topics
 }

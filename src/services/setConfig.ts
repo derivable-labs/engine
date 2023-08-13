@@ -6,7 +6,7 @@ import {
   DEFAULT_CONFIG,
   DerivableContractAddress,
   TESTNET_CONFIG,
-  config,
+  config, BASE_CONFIG,
 } from '../utils/configs'
 import { Storage } from '../types'
 import { DeepPartial } from '../types/utils'
@@ -115,8 +115,10 @@ export class Derivable {
         return TESTNET_CONFIG
       case 42161:
         return ARBITRUM_CONFIG
+      case 8453:
+        return BASE_CONFIG
       default:
-        return BNB_CONFIG
+        return ARBITRUM_CONFIG
     }
   }
 }

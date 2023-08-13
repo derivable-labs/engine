@@ -1,13 +1,10 @@
 import {BigNumber, ethers} from 'ethers'
 import {
   ddlGenesisBlock,
-  EventDataAbis,
   LOCALSTORAGE_KEY,
   POOL_IDS,
 } from '../utils/constant'
-import EventsAbi from '../abi/Events.json'
 import {Multicall} from 'ethereum-multicall'
-import TokensInfoAbi from '../abi/TokensInfo.json'
 import {
   LogType,
   ParseLogType,
@@ -26,12 +23,12 @@ import {
 } from '../utils/helper'
 import {UniV2Pair} from './uniV2Pair'
 import {JsonRpcProvider} from '@ethersproject/providers'
-import PoolOverride from '../abi/PoolOverride.json'
 import _ from 'lodash'
 import {UniV3Pair} from './uniV3Pair'
 import {ConfigType} from './setConfig'
 import {DerivableContractAddress} from '../utils/configs'
 import {defaultAbiCoder} from "ethers/lib/utils";
+import {Profile} from "../profile";
 
 const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
@@ -61,8 +58,9 @@ export class Resource {
   UNIV2PAIR: UniV2Pair
   UNIV3PAIR: UniV3Pair
   addresses: Partial<DerivableContractAddress>
+  profile: Profile
 
-  constructor(config: ConfigType) {
+  constructor(config: ConfigType, profile: Profile) {
     this.unit = config.unit ?? this.unit
     this.chainId = config.chainId
     this.scanApi = config.scanApi
@@ -76,6 +74,7 @@ export class Resource {
     this.UNIV3PAIR = new UniV3Pair(config)
     this.overrideProvider = config.overrideProvider
     this.addresses = config.addresses
+    this.profile = profile
   }
 
   async fetchResourceData(account: string) {
@@ -563,13 +562,16 @@ export class Resource {
     const stateOverride = {}
     // poolAddresses.forEach((address: string) => {
       stateOverride[this.addresses.logic as string] = {
-        code: PoolOverride.deployedBytecode,
+        code: this.profile.getAbi('PoolOverride').deployedBytecode,
       }
     // })
 
     //@ts-ignore
     this.overrideProvider.setStateOverride({
       ...stateOverride,
+      [this.addresses.tokensInfo as string]: {
+        code: this.profile.getAbi('TokensInfo').deployedBytecode,
+      }
     })
     return this.overrideProvider
   }
@@ -590,7 +592,7 @@ export class Resource {
       {
         reference: 'tokens',
         contractAddress: this.addresses.tokensInfo,
-        abi: TokensInfoAbi,
+        abi: this.profile.getAbi('TokensInfo').abi,
         calls: [
           {
             reference: 'tokenInfos',
@@ -600,7 +602,7 @@ export class Resource {
         ],
       },
     ]
-
+    const poolOverrideAbi =  this.profile.getAbi('PoolOverride').abi
     for (const i in listPools) {
       request.push({
         // @ts-ignore
@@ -608,7 +610,7 @@ export class Resource {
         reference: 'pools-' + listPools[i].poolAddress,
         contractAddress: listPools[i].poolAddress,
         // @ts-ignore
-        abi: PoolOverride.abi,
+        abi: poolOverrideAbi,
         calls: [
           {
             reference: i,
@@ -627,9 +629,10 @@ export class Resource {
   parseMultiCallResponse(multiCallData: any, poolAddresses: string[]) {
     const pools = {}
     const tokens = multiCallData.tokens.callsReturnContext[0].returnValues
+    const poolOverrideAbi = this.profile.getAbi('PoolOverride').abi
     poolAddresses.forEach((poolAddress) => {
       try {
-        const abiInterface = new ethers.utils.Interface(PoolOverride.abi)
+        const abiInterface = new ethers.utils.Interface(poolOverrideAbi)
         const poolStateData =
           multiCallData['pools-' + poolAddress].callsReturnContext
         const data = formatMultiCallBignumber(poolStateData[0].returnValues)
@@ -705,7 +708,7 @@ export class Resource {
   }
 
   parseDdlLogs(ddlLogs: any) {
-    const eventInterface = new ethers.utils.Interface(EventsAbi)
+    const eventInterface = new ethers.utils.Interface(this.profile.getAbi('Events'))
     const topics = getTopics()
     return ddlLogs.map((log: any) => {
       if(!topics.Derivable.includes(log.topics[0]) && !topics.Swap.includes(log.topics[0])) {
@@ -721,7 +724,7 @@ export class Resource {
 
         let data: any = decodeLog
         if (appName === 'PoolCreated') {
-          const poolCreatedData = defaultAbiCoder.decode(EventDataAbis[appName], decodeLog.args.data)
+          const poolCreatedData = defaultAbiCoder.decode(this.profile.getEventDataAbi()[appName], decodeLog.args.data)
           data = {
             ...poolCreatedData,
             TOKEN_R: ethers.utils.getAddress('0x' + decodeLog.args.topic3.slice(-40))

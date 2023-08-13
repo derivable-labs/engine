@@ -4,6 +4,7 @@ import { POOL_IDS } from '../utils/constant'
 import { BigNumber } from 'ethers'
 import { ConfigType } from './setConfig'
 import { PoolType } from '../types'
+import {Profile} from "../profile";
 
 // type ConfigType = {
 //   resource: Resource
@@ -43,9 +44,9 @@ export class CurrentPool {
   quoteId: number
   chainId: number
   config: ConfigType
-  constructor(config: ConfigType) {
+  constructor(config: ConfigType, profile: Profile) {
     this.config = config
-    this.resource = new Resource(config)
+    this.resource = new Resource(config, profile)
     this.poolAddress = config.poolAddress
     this.chainId = config.chainId
     // this.loadState(configs.poolAddress)
