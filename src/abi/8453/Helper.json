@@ -71,6 +71,12 @@
         "internalType": "uint256",
         "name": "price",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "priceR",
+        "type": "uint256"
       }
     ],
     "name": "Swap",
@@ -314,6 +320,11 @@
             "internalType": "address",
             "name": "recipient",
             "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "INDEX_R",
+            "type": "uint256"
           }
         ],
         "internalType": "struct Helper.SwapParams",
