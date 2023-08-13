@@ -72,10 +72,7 @@ export default {
     barValueType?: 'string'
   }): Promise<CandleType[]> {
     const q = route.split('/').join(',')
-    const url = `${CHART_API_ENDPOINT.replace(
-      '{chainId}',
-      chainId || '56',
-    )}candleline4?q=${q}&r=${convertResolution(resolution)}&l=${limit}&t=${to}`
+    const url = `${CHART_API_ENDPOINT[chainId]}candleline4?q=${q}&r=${convertResolution(resolution)}&l=${limit}&t=${to}`
 
     return fetch(url)
       .then((r: any) => r.json())

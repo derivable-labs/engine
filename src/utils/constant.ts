@@ -6,8 +6,11 @@ export const fee10000 = 30
 export const MINI_SECOND_PER_DAY = 86400000
 export const LP_PRICE_UNIT = 10000
 export const TIME_TO_REFRESH_STATE = 30000
-export const CHART_API_ENDPOINT =
-  'https://api-chart-{chainId}.derivable.finance/'
+export const CHART_API_ENDPOINT = {
+  42161: 'https://api-chart-42161.derivable.finance/',
+  8453: 'http://13.229.75.135/'
+}
+
 
 export const LOCALSTORAGE_KEY = {
   DDL_LOGS: 'ddl-log-v1.0',
