@@ -30,6 +30,7 @@ export declare class Resource {
     UNIV3PAIR: UniV3Pair;
     addresses: Partial<DerivableContractAddress>;
     profile: Profile;
+    stableCoins: string[];
     constructor(config: ConfigType, profile: Profile);
     fetchResourceData(account: string): Promise<any>;
     getLastBlockCached(account: string): any;

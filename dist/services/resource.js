@@ -46,6 +46,7 @@ class Resource {
         this.overrideProvider = config.overrideProvider;
         this.addresses = config.addresses;
         this.profile = profile;
+        this.stableCoins = (config.stableCoins || []);
     }
     fetchResourceData(account) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -248,6 +249,7 @@ class Resource {
                 allTokens.push(data.TOKEN_R);
             }
         });
+        allTokens.push(...this.stableCoins);
         return this.loadStatesData(allTokens, poolData, allUniPools);
     }
     /**
