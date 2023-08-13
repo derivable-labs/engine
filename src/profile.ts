@@ -5,6 +5,43 @@ import {JsonRpcProvider} from "@ethersproject/providers";
 import {ethers} from "ethers";
 import {EventDataAbis} from "./utils/constant";
 
+import BnA from './abi/BnA.json'
+import ERC20 from './abi/ERC20.json'
+import Events from './abi/Events.json'
+import PairDetail from './abi/PairDetail.json'
+import PairV3Detail from './abi/PairV3Detail.json'
+import Pool from './abi/Pool.json'
+import ReserveTokenPrice from './abi/ReserveTokenPrice.json'
+import Token from './abi/Token.json'
+import UTR from './abi/UTR.json'
+import UTROverride from './abi/UTROverride.json'
+import Helper8453 from './abi/8453/Helper.json'
+import Helper42161 from './abi/42161/Helper.json'
+import PoolOverride8453 from './abi/8453/PoolOverride.json'
+import PoolOverride42161 from './abi/42161/PoolOverride.json'
+
+
+const abis = {
+  BnA,
+  ERC20,
+  Events,
+  PairDetail,
+  PairV3Detail,
+  Pool,
+  ReserveTokenPrice,
+  Token,
+  UTR,
+  UTROverride,
+  8453: {
+    Helper: Helper8453,
+    PoolOverride: PoolOverride8453,
+  },
+  42161: {
+    Helper: Helper42161,
+    PoolOverride: PoolOverride42161,
+  },
+}
+
 export class Profile {
   chainId: number
   abis: any
@@ -45,18 +82,10 @@ export class Profile {
   }
 
   getAbi(name: string) {
-    return tryRequire('./abi/' + name + '.json') ?  tryRequire('./abi/' + name + '.json') : (tryRequire(`./abi/${this.chainId}/${name}.json`) || [])
+    return abis[name] ?  abis[name] : (abis[this.chainId][name] || [])
   }
 
   getEventDataAbi() {
     return EventDataAbis[this.chainId]
   }
 }
-
-const tryRequire = (path: string) => {
-  try {
-    return require(`${path}`);
-  } catch (err) {
-    return null;
-  }
-};
