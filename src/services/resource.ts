@@ -463,9 +463,9 @@ export class Resource {
         }
         poolGroups[id].basePrice = parseSqrtSpotPrice(
           poolsState[i].spot,
-          pairsInfo[pair].token0,
-          pairsInfo[pair].token1,
-          quoteTokenIndex,
+          baseToken,
+          quoteToken,
+          1,
         )
       }
 
