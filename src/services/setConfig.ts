@@ -17,6 +17,7 @@ export interface ConfigType {
   scanApi?: any
   scanApiKey?: any
   rpcUrl: string
+  gasLimitDefault?: number
   signer?: ethers.providers.JsonRpcSigner
   account?: string
   storage?: Storage

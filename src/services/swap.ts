@@ -35,8 +35,6 @@ import {Profile} from "../profile";
 // TODO: don't hardcode these
 const fee10000 = 30
 
-// TODO: get gasLimit default by chain
-const gasLimit = 50000000
 const ACTION_RECORD_CALL_RESULT = 2
 const ACTION_INJECT_CALL_RESULT = 4
 const AMOUNT_EXACT = 0
@@ -101,13 +99,13 @@ export class Swap {
       const res = await contract.callStatic.exec(...params, {
         from: this.account,
         value,
-        gasLimit: gasLimit || undefined,
+        gasLimit: this.config.gasLimitDefault || undefined,
       })
       const result = []
       for (const i in steps) {
         result.push({...steps[i], amountOut: res[0][i]})
       }
-      return [result, bn(gasLimit).sub(res.gasLeft)]
+      return [result, bn(this.config.gasLimitDefault).sub(res.gasLeft)]
     } catch (e) {
       throw e
     }

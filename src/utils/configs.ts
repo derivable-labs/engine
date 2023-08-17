@@ -15,6 +15,7 @@ export interface config {
   storage?: Storage
   poolAddress?: string
   nativeToken?: string
+  gasLimitDefault?: number
   addresses: Partial<DerivableContractAddress>
   stableCoins: string[]
 }
@@ -91,6 +92,7 @@ export const ARBITRUM_CONFIG: config = {
   rpcToGetLogs: 'https://arb1.arbitrum.io/rpc',
   timePerBlock: 1000,
   nativeToken: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+  gasLimitDefault: 50000000,
   addresses: {
     reserveTokenPrice: '0xBf4CC059DfF52AeFe7f12516e4CA4Bc691D97474',
     uniswapFactory: '0x1F98431c8aD98523631AE4a59f267346ea31F984',
@@ -120,6 +122,7 @@ export const BASE_CONFIG: config = {
   rpcToGetLogs: 'https://mainnet.base.org',
   timePerBlock: 1000,
   nativeToken: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+  gasLimitDefault: 5000000,
   addresses: {
     reserveTokenPrice: '0x0772BD1981f6092329F12FC041B83b2faBBB1A25',
     uniswapFactory: '0x33128a8fC17869897dcE68Ed026d694621f6FDfD',
