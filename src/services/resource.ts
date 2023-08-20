@@ -152,33 +152,40 @@ export class Resource {
       JSON.stringify(newCachedDdlLogs),
     )
     if (account) {
-      const cachedSwapLogs = JSON.parse(
-        this.storage.getItem(
-          this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account,
-        ) || '[]',
-      )
-      const newCacheSwapLogs = [...swapLogs, ...cachedSwapLogs].filter(
-        (log, index, self) => {
-          return (
-            index ===
-            self.findIndex(
-              (t) =>
-                t.logIndex === log.logIndex &&
-                t.transactionHash === log.transactionHash,
-            )
-          )
-        },
-      )
-
-      this.storage.setItem(
-        this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account,
-        headBlock.toString(),
-      )
-      this.storage.setItem(
+      this.cacheNewAccountLogs(
         this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account,
-        JSON.stringify(newCacheSwapLogs),
+        this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account,
+        swapLogs,
+        headBlock
+      )
+      this.cacheNewAccountLogs(
+        this.chainId + '-' + LOCALSTORAGE_KEY.TRANSFER_LOGS + '-' + account,
+        this.chainId + '-' + LOCALSTORAGE_KEY.TRANSFER_BLOCK_LOGS + '-' + account,
+        transferLogs,
+        headBlock
       )
     }
+  }
+
+  cacheNewAccountLogs(key: string, blockKey: string, newLogs: any, headBlock: number) {
+    if (!this.storage || !this.storage.getItem || !this.storage.setItem) return
+    const cachedogs = JSON.parse(
+      this.storage.getItem(key) || '[]',
+    )
+    const newCacheSwapLogs = [...newLogs, ...cachedogs].filter(
+      (log, index, self) => {
+        return (
+          index ===
+          self.findIndex(
+            (t) =>
+              t.logIndex === log.logIndex &&
+              t.transactionHash === log.transactionHash,
+          )
+        )
+      },
+    )
+    this.storage.setItem(blockKey,headBlock.toString())
+    this.storage.setItem(key,JSON.stringify(newCacheSwapLogs))
   }
 
   async getResourceCached(account: string): Promise<ResourceData> {
