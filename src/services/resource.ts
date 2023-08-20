@@ -38,6 +38,7 @@ type ResourceData = {
   pools: PoolsType
   tokens: TokenType[]
   swapLogs: LogType[]
+  transferLogs: LogType[]
   poolGroups: any
 }
 
@@ -114,11 +115,14 @@ export class Resource {
   cacheDdlLog({
                 swapLogs,
                 ddlLogs,
+                //@ts-ignore
+                transferLogs,
                 headBlock,
                 account,
               }: {
     swapLogs: any
     ddlLogs: any
+    transferLogs: any
     headBlock: number
     account: string
   }) {
@@ -182,6 +186,7 @@ export class Resource {
       pools: {},
       tokens: [],
       swapLogs: [],
+      transferLogs: [],
       poolGroups: {},
     }
     if (!this.storage || !this.storage.getItem) return results
@@ -194,14 +199,22 @@ export class Resource {
         this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account,
       ) || '[]',
     )
-    const [ddlLogsParsed, swapLogsParsed] = [
+
+    const transferLogs = JSON.parse(
+      this.storage.getItem(
+        this.chainId + '-' + LOCALSTORAGE_KEY.TRANSFER_LOGS + '-' + account,
+      ) || '[]',
+    )
+    const [ddlLogsParsed, swapLogsParsed, transferLogsParsed] = [
       this.parseDdlLogs(ddlLogs),
       this.parseDdlLogs(swapLogs),
+      this.parseDdlLogs(transferLogs),
     ]
 
     if (ddlLogsParsed && ddlLogsParsed.length > 0) {
       const {tokens, pools, poolGroups} = await this.generatePoolData(
         ddlLogsParsed,
+        transferLogsParsed
       )
       results.tokens = tokens
       results.pools = pools
@@ -217,12 +230,12 @@ export class Resource {
   async getNewResource(account: string): Promise<ResourceData> {
     // TODO: move this part to constructor
     const etherscanConfig = typeof this.scanApi === 'string' ? {
-        url: this.scanApi,
-        maxResults: 1000,
-        rangeThreshold: 0,
-        rateLimitCount: 1,
-        rateLimitDuration: 5000,
-        apiKeys: this.scanApiKey ? [this.scanApiKey] : []
+      url: this.scanApi,
+      maxResults: 1000,
+      rangeThreshold: 0,
+      rateLimitCount: 1,
+      rateLimitDuration: 5000,
+      apiKeys: this.scanApiKey ? [this.scanApiKey] : []
     } : this.scanApi
 
     const provider = new AssistedJsonRpcProvider(
@@ -245,13 +258,13 @@ export class Resource {
 
     return await provider
       .getLogs({
-        fromBlock: lastHeadBlockCached || 0,
+        fromBlock: 0,
         toBlock: MAX_BLOCK,
         topics: filterTopics,
       })
       .then((logs: any) => {
         if (!logs?.length) {
-          return [[], []]
+          return [[], [], []]
         }
         const headBlock = logs[logs.length - 1]?.blockNumber
         const ddlLogs = logs.filter((log: any) => {
@@ -262,30 +275,40 @@ export class Resource {
         const swapLogs = logs.filter((log: any) => {
           return log.address && topics.Swap.includes(log.topics[0])
         })
+        const transferLogs = logs.filter((log: any) => {
+          return log.address && topics.Transfer.includes(log.topics[0])
+        })
         this.cacheDdlLog({
           ddlLogs,
           swapLogs,
+          transferLogs,
           headBlock,
           account,
         })
         return [
           this.parseDdlLogs(ddlLogs),
-          this.parseDdlLogs(swapLogs)
+          this.parseDdlLogs(swapLogs),
+          this.parseDdlLogs(transferLogs)
         ]
       })
-      .then(async ([ddlLogs, swapLogs]: any) => {
+      .then(async ([ddlLogs, swapLogs, transferLogs]: any) => {
         const result: ResourceData = {
           pools: {},
           tokens: [],
           swapLogs: [],
-          poolGroups: {},
+          transferLogs: [],
+          poolGroups: {}
         }
         if (swapLogs && swapLogs.length > 0) {
           result.swapLogs = swapLogs
         }
+        if (transferLogs && transferLogs.length > 0) {
+          result.transferLogs = transferLogs
+        }
         if (ddlLogs && ddlLogs.length > 0) {
           const {tokens, pools, poolGroups} = await this.generatePoolData(
             ddlLogs,
+            transferLogs
           )
           result.tokens = tokens
           result.pools = pools
@@ -296,39 +319,20 @@ export class Resource {
       })
       .catch((e: any) => {
         console.error(e)
-        return {pools: {}, tokens: [], swapLogs: []}
+        return {pools: {}, tokens: [], swapLogs: [], transferLogs: []}
       })
   }
 
   /**
    * parse DDL logs
    * @param logs
+   * @param transferLogs
    */
-  generatePoolData(logs: ParseLogType[]) {
+  generatePoolData(logs: ParseLogType[], transferLogs: ParseLogType[]) {
     const allTokens: string[] = []
     const allUniPools: string[] = []
     const poolData = {}
     const logicData = {}
-    logs.forEach((log) => {
-      if (log.name === 'LogicCreated') {
-        const powers = decodePowers(log.args.powers)
-        logicData[log.address] = {
-          logic: log.address,
-          dTokens: powers.map((value, key) => {
-            return {power: value, index: key}
-          }),
-          baseToken: ethers.utils.getAddress(log.topics[2].slice(0, 42)),
-          baseSymbol: ethers.utils.parseBytes32String(log.args.baseSymbol),
-          quoteSymbol: ethers.utils.parseBytes32String(log.args.quoteSymbol),
-          cToken: ethers.utils.getAddress(log.topics[3].slice(0, 42)),
-          priceToleranceRatio: log.args.priceToleranceRatio,
-          rentRate: log.args.rentRate,
-          deleverageRate: log.args.deleverageRate,
-          powers,
-        }
-      }
-    })
-
     logs.forEach((log) => {
       if (log.name === 'PoolCreated') {
         const data = log.args
@@ -352,6 +356,10 @@ export class Resource {
         allUniPools.push(pair)
         allTokens.push(data.TOKEN_R)
       }
+    })
+
+    transferLogs.forEach((log) => {
+      allTokens.push(log.contractAddress)
     })
 
     allTokens.push(...this.stableCoins)
@@ -414,7 +422,7 @@ export class Resource {
     const poolGroups = {}
 
     for (const i in pools) {
-      if(!poolsState[i])  {
+      if (!poolsState[i]) {
         delete pools[i]
         continue
       }
@@ -565,9 +573,9 @@ export class Resource {
   getPoolOverridedProvider() {
     const stateOverride = {}
     // poolAddresses.forEach((address: string) => {
-      stateOverride[this.addresses.logic as string] = {
-        code: this.profile.getAbi('PoolOverride').deployedBytecode,
-      }
+    stateOverride[this.addresses.logic as string] = {
+      code: this.profile.getAbi('PoolOverride').deployedBytecode,
+    }
     // })
 
     //@ts-ignore
@@ -606,7 +614,7 @@ export class Resource {
         ],
       },
     ]
-    const poolOverrideAbi =  this.profile.getAbi('PoolOverride').abi
+    const poolOverrideAbi = this.profile.getAbi('PoolOverride').abi
     for (const i in listPools) {
       request.push({
         // @ts-ignore
@@ -666,8 +674,8 @@ export class Resource {
     const {R, rA, rB, rC} = pool.states
     const SECONDS_PER_DAY = 86400
     const riskFactor = rC.gt(0) ? div(rA.sub(rB), rC) : '0'
-    const deleverageRiskA = R.isZero() ? 0 : rA.mul(2*this.unit).div(R).toNumber() / this.unit
-    const deleverageRiskB = R.isZero() ? 0 : rB.mul(2*this.unit).div(R).toNumber() / this.unit
+    const deleverageRiskA = R.isZero() ? 0 : rA.mul(2 * this.unit).div(R).toNumber() / this.unit
+    const deleverageRiskB = R.isZero() ? 0 : rB.mul(2 * this.unit).div(R).toNumber() / this.unit
     const dailyInterestRate =
       1 - Math.pow(2, -SECONDS_PER_DAY / pool.INTEREST_HL.toNumber())
     return {
@@ -715,7 +723,7 @@ export class Resource {
     const eventInterface = new ethers.utils.Interface(this.profile.getAbi('Events'))
     const topics = getTopics()
     return ddlLogs.map((log: any) => {
-      if(!topics.Derivable.includes(log.topics[0]) && !topics.Swap.includes(log.topics[0])) {
+      if (!topics.Derivable.includes(log.topics[0]) && !topics.Swap.includes(log.topics[0]) && !topics.Transfer.includes(log.topics[0])) {
         return {}
       }
       try {
@@ -737,6 +745,7 @@ export class Resource {
 
         return {
           address: data.poolAddress,
+          contractAddress: log.address,
           timeStamp: parseInt(log.timeStamp),
           transactionHash: log.transactionHash,
           blockNumber: log.blockNumber,

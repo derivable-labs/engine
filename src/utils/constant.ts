@@ -17,6 +17,8 @@ export const LOCALSTORAGE_KEY = {
   LAST_BLOCK_DDL_LOGS: 'last-block-ddl-log-v1.0',
   SWAP_LOGS: 'swap-log-v1.0',
   SWAP_BLOCK_LOGS: 'last-block-swap-log-v1.0',
+  TRANSFER_LOGS: 'transfer-log-v1.0',
+  TRANSFER_BLOCK_LOGS: 'last-block-transfer-log-v1.0',
 }
 
 export const ddlGenesisBlock = {

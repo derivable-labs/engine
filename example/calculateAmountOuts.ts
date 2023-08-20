@@ -22,7 +22,7 @@ const testLocal = async () => {
   const currentBalanceOut = await tokenContract.balanceOf(configs.account, packId(POOL_IDS.C.toString(), poolOut))
   const steps = [
     {
-      amountIn: bn(numberToWei(0.001)),
+      amountIn: bn(numberToWei(0.0001)),
       tokenIn: NATIVE_ADDRESS,
       tokenOut: poolOut + '-' + POOL_IDS.C,
       amountOutMin: 0,
@@ -31,9 +31,14 @@ const testLocal = async () => {
       index_R: bn(0)
     },
   ]
-
+  // 961641740797182
+  // 963138663855440
+  // 976192888021539
+  // 979755377489193
+  // 982100493385779
   try {
     const res = await engine.SWAP.calculateAmountOuts(steps)
+    console.log(res[0][0].amountOut.toString())
     console.log(res)
   } catch (e) {
     console.log(e)

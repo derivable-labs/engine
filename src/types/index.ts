@@ -7,6 +7,7 @@ export type Storage = {
 
 export type ParseLogType = {
   address: string
+  contractAddress: string
   name: string
   topic: string
   args: any
