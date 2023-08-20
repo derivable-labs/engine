@@ -2,7 +2,7 @@ import {BigNumber, ethers} from 'ethers'
 import {
   ddlGenesisBlock,
   LOCALSTORAGE_KEY,
-  POOL_IDS,
+  POOL_IDS, SECONDS_PER_DAY,
 } from '../utils/constant'
 import {Multicall} from 'ethereum-multicall'
 import {
@@ -19,7 +19,7 @@ import {
   decodePowers,
   div,
   formatMultiCallBignumber,
-  getNormalAddress, getTopics, parseSqrtSpotPrice,
+  getNormalAddress, getTopics, max, mul, parseSqrtSpotPrice, toDailyRate, weiToNumber,
 } from '../utils/helper'
 import {UniV2Pair} from './uniV2Pair'
 import {JsonRpcProvider} from '@ethersproject/providers'
@@ -679,17 +679,33 @@ export class Resource {
 
   calcPoolInfo(pool: PoolType) {
     const {R, rA, rB, rC} = pool.states
-    const SECONDS_PER_DAY = 86400
     const riskFactor = rC.gt(0) ? div(rA.sub(rB), rC) : '0'
     const deleverageRiskA = R.isZero() ? 0 : rA.mul(2 * this.unit).div(R).toNumber() / this.unit
     const deleverageRiskB = R.isZero() ? 0 : rB.mul(2 * this.unit).div(R).toNumber() / this.unit
     const dailyInterestRate =
       1 - Math.pow(2, -SECONDS_PER_DAY / pool.INTEREST_HL.toNumber())
+    let premium:any = {}
+    let maxPremiumRate
+    if(pool.PREMIUM_HL) {
+      // TODO: need to update after have correct PREMIUM_HL
+      maxPremiumRate = toDailyRate(Number(pool.INTEREST_HL.div(10).toString()))
+      const premiumRate = Number(mul((rA.gt(rB) ? rA.sub(rB) : rB.sub(rA)), maxPremiumRate, false))
+      if(rA.eq(rB)) {
+        premium = {A: 0, B: 0, C: 0}
+      } else if(rA.gt(rB)) {
+        premium = {A: div(premiumRate, rA), B: div(-premiumRate, rB.add(rC)), C: div(-premiumRate, weiToNumber(rB.add(rC)))}
+      } else if(rB.gt(rA)) {
+        premium = {A:  div(-premiumRate, rA.add(rC)), B: div(premiumRate, rB), C: div(-premiumRate, rB.add(rC))}
+      }
+    }
+
     return {
+      premium,
       riskFactor,
       deleverageRiskA,
       deleverageRiskB,
       dailyInterestRate,
+      maxPremiumRate
     }
   }
 

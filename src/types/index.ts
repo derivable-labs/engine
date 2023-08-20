@@ -119,6 +119,7 @@ export type PoolType = {
   INIT_TIME: BigNumber
   INTEREST_HL: BigNumber
   HALF_LIFE: BigNumber
+  PREMIUM_HL: BigNumber
   ORACLE: string
   TOKEN_R: string
   pool: string
