@@ -687,8 +687,7 @@ export class Resource {
     let premium:any = {}
     let maxPremiumRate
     if(pool.PREMIUM_HL) {
-      // TODO: need to update after have correct PREMIUM_HL
-      maxPremiumRate = toDailyRate(Number(pool.INTEREST_HL.div(10).toString()))
+      maxPremiumRate = toDailyRate(Number(pool.PREMIUM_HL.toString()))
       const premiumRate = Number(mul((rA.gt(rB) ? rA.sub(rB) : rB.sub(rA)), maxPremiumRate, false))
       if(rA.eq(rB)) {
         premium = {A: 0, B: 0, C: 0}
