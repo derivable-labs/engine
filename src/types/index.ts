@@ -184,6 +184,7 @@ export type SwapStepType = {
   tokenIn: string
   tokenOut: string
   amountIn: BigNumber
+  payloadAmountIn?: BigNumber
   amountOutMin: BigNumber | string | number
   useSweep?: boolean
   currentBalanceOut?: BigNumber
