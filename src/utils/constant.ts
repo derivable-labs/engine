@@ -15,19 +15,17 @@ export const CHART_API_ENDPOINT = {
 
 
 export const LOCALSTORAGE_KEY = {
-  DDL_LOGS: 'ddl-log-v1.0',
-  LAST_BLOCK_DDL_LOGS: 'last-block-ddl-log-v1.0',
-  SWAP_LOGS: 'swap-log-v1.0',
-  SWAP_BLOCK_LOGS: 'last-block-swap-log-v1.0',
-  TRANSFER_LOGS: 'transfer-log-v1.0',
-  TRANSFER_BLOCK_LOGS: 'last-block-transfer-log-v1.0',
+  DDL_LOGS: 'ddl-log-v1.1',
+  LAST_BLOCK_DDL_LOGS: 'last-block-ddl-log-v1.1',
+  SWAP_LOGS: 'swap-log-v1.1',
+  SWAP_BLOCK_LOGS: 'last-block-swap-log-v1.1',
+  TRANSFER_LOGS: 'transfer-log-v1.1',
+  TRANSFER_BLOCK_LOGS: 'last-block-transfer-log-v1.1',
 }
 
 export const ddlGenesisBlock = {
-  56: 23917200,
-  31337: 0,
   42161: 107513624,
-  8453: 2443770,
+  8453: 3290649,
 }
 
 export const POOL_IDS = {

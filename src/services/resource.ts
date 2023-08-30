@@ -265,7 +265,7 @@ export class Resource {
 
     return await provider
       .getLogs({
-        fromBlock: 0,
+        fromBlock: lastHeadBlockCached,
         toBlock: MAX_BLOCK,
         topics: filterTopics,
       })
