@@ -83,7 +83,7 @@ export class History {
           balance: bn(0),
           balanceToCalculatePrice: bn(0), // to calculate entry price, balanceToCalculatePrice = total amountOut
           value: 0, // to calculate entry price, value = amountOut * indexPrice => entry price = total value / total amount out
-          entry: 0,
+          entry: 0, // totalEntryUSD
         }
       }
       if (priceR) {
@@ -97,6 +97,7 @@ export class History {
         //@ts-ignore
         const priceRFormated = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote, 1)
 
+        positions[tokenOutAddress].totalEntryR = add(positions[tokenOutAddress].totalEntryR ?? 0, amountIn)
         positions[tokenOutAddress].entry = add(positions[tokenOutAddress].entry, weiToNumber(amountIn.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18)))
       }
 
