@@ -46,6 +46,7 @@ class History {
         }
     }
     generatePositionBySwapLog(positions, tokens, formatedData) {
+        var _a;
         const pools = this.CURRENT_POOL.pools;
         const poolAddresses = Object.keys(this.CURRENT_POOL.pools);
         const { poolIn, poolOut, sideIn, sideOut, amountOut, amountIn, priceR, price } = formatedData;
@@ -63,7 +64,7 @@ class History {
                     balance: (0, helper_1.bn)(0),
                     balanceToCalculatePrice: (0, helper_1.bn)(0),
                     value: 0,
-                    entry: 0,
+                    entry: 0, // totalEntryUSD
                 };
             }
             if (priceR) {
@@ -75,6 +76,7 @@ class History {
                 const tokenRQuote = tokens.find((t) => t.address === this.config.stableCoins[0]);
                 //@ts-ignore
                 const priceRFormated = (0, helper_1.parseSqrtSpotPrice)(priceR, tokenR, tokenRQuote, 1);
+                positions[tokenOutAddress].totalEntryR = (0, helper_1.add)((_a = positions[tokenOutAddress].totalEntryR) !== null && _a !== void 0 ? _a : 0, amountIn);
                 positions[tokenOutAddress].entry = (0, helper_1.add)(positions[tokenOutAddress].entry, (0, helper_1.weiToNumber)(amountIn.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + ((tokenIn === null || tokenIn === void 0 ? void 0 : tokenIn.decimal) || 18)));
             }
             if (price) {
