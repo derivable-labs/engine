@@ -19,6 +19,10 @@ import Helper8453 from './abi/8453/Helper.json'
 import Helper42161 from './abi/42161/Helper.json'
 import PoolOverride8453 from './abi/8453/PoolOverride.json'
 import PoolOverride42161 from './abi/42161/PoolOverride.json'
+import UTR8453 from './abi/8453/UTR.json'
+import UTR42161 from './abi/42161/UTR.json'
+import UTROverride8453 from './abi/8453/UTROverride.json'
+import UTROverride42161 from './abi/42161/UTROverride.json'
 
 
 const abis = {
@@ -36,10 +40,14 @@ const abis = {
   8453: {
     Helper: Helper8453,
     PoolOverride: PoolOverride8453,
+    UTR: UTR8453,
+    UTROverride: UTROverride8453,
   },
   42161: {
     Helper: Helper42161,
     PoolOverride: PoolOverride42161,
+    UTR: UTR42161,
+    UTROverride: UTROverride42161,
   },
 }
 

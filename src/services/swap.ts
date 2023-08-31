@@ -15,8 +15,6 @@ import {
   ZERO_ADDRESS,
 } from '../utils/constant'
 import {CurrentPool} from './currentPool'
-import UtrAbi from '../abi/UTR.json'
-import UtrOverride from '../abi/UTROverride.json'
 import {JsonRpcProvider} from '@ethersproject/providers'
 import {ConfigType} from './setConfig'
 import {Profile} from "../profile";
@@ -88,12 +86,12 @@ export class Swap {
       // @ts-ignore
       this.overrideProvider.setStateOverride({
         [router]: {
-          code: UtrOverride.deployedBytecode,
+          code: this.profile.getAbi('UTROverride').deployedBytecode,
         },
       })
       const contract = new ethers.Contract(
         router,
-        UtrOverride.abi,
+        this.profile.getAbi('UTROverride').abi,
         this.overrideProvider,
       )
       const res = await contract.callStatic.exec(...params, {
@@ -427,7 +425,7 @@ export class Swap {
   getRouterContract(provider: any) {
     return new ethers.Contract(
       this.config.addresses.router as string,
-      UtrAbi,
+      this.profile.getAbi('UTR'),
       provider,
     )
   }
