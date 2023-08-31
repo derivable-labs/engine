@@ -692,7 +692,7 @@ export class Resource {
       if(rA.eq(rB)) {
         premium = {A: 0, B: 0, C: 0}
       } else if(rA.gt(rB)) {
-        premium = {A: div(premiumRate, rA), B: div(-premiumRate, rB.add(rC)), C: div(-premiumRate, weiToNumber(rB.add(rC)))}
+        premium = {A: div(premiumRate, rA), B: div(-premiumRate, rB.add(rC)), C: div(-premiumRate, rB.add(rC))}
       } else if(rB.gt(rA)) {
         premium = {A:  div(-premiumRate, rA.add(rC)), B: div(premiumRate, rB), C: div(-premiumRate, rB.add(rC))}
       }
