@@ -87,6 +87,11 @@
       {
         "components": [
           {
+            "internalType": "address",
+            "name": "FETCHER",
+            "type": "address"
+          },
+          {
             "internalType": "bytes32",
             "name": "ORACLE",
             "type": "bytes32"
@@ -113,7 +118,7 @@
           },
           {
             "internalType": "uint256",
-            "name": "PREMIUM_RATE",
+            "name": "PREMIUM_HL",
             "type": "uint256"
           },
           {
@@ -307,14 +312,9 @@
             "type": "uint256"
           },
           {
-            "internalType": "uint32",
-            "name": "maturity",
-            "type": "uint32"
-          },
-          {
-            "internalType": "address",
+            "internalType": "bytes",
             "name": "payer",
-            "type": "address"
+            "type": "bytes"
           },
           {
             "internalType": "address",

@@ -84,6 +84,21 @@ export class Swap {
       })
       const {params, value} = await this.convertStepToActions(stepsToSwap)
 
+      const helperContract = this.getStateCalHelperContract()
+      const swapRes = await helperContract.callStatic.swap({
+        "sideIn": "0x01",
+        "poolIn": "0x5fbBF7Da684D829EC04531BFe9B6d3761eF2544F",
+        "sideOut": "0x30",
+        "poolOut": "0x5fbBF7Da684D829EC04531BFe9B6d3761eF2544F",
+        "amountIn": "0x5af3107a4000",
+        "payer": "0xE3C75f8963E4CA02ea9a281c32b41FdfC248e07f",
+        "recipient": "0xE3C75f8963E4CA02ea9a281c32b41FdfC248e07f",
+        "INDEX_R": "0x00"
+      }, {
+        value: "0x5af3107a4000",
+      })
+      console.log(swapRes)
+
       const router = this.config.addresses.router as string
       // @ts-ignore
       this.overrideProvider.setStateOverride({
@@ -93,8 +108,8 @@ export class Swap {
       })
       const contract = new ethers.Contract(
         router,
-        UtrOverride.abi,
-        this.overrideProvider,
+        UtrAbi,
+        this.provider,
       )
       const res = await contract.callStatic.exec(...params, {
         from: this.account,

@@ -10,12 +10,12 @@ const testLocal = async () => {
   const engine = new Engine(configs.account, configs, 8453)
   await engine.RESOURCE.fetchResourceData(configs.account)
 
-  const currentPool = Object.values(engine.RESOURCE.poolGroups)[0]
+  const currentPool = engine.RESOURCE.poolGroups['0x9E37cb775a047Ae99FC5A24dDED834127c4180cD']
   engine.setCurrentPool({
     ...currentPool,
   })
 
-  const poolOut = '0xC013eD851eF0f04c61cfb979f04e2e87BF54d57f'
+  const poolOut = '0x5fbBF7Da684D829EC04531BFe9B6d3761eF2544F'
   const provider = new ethers.providers.JsonRpcProvider(configs.rpcUrl)
   // @ts-ignore
   const tokenContract = new ethers.Contract( engine.config.addresses.token, TokenAbi, provider)
