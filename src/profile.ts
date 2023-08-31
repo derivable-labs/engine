@@ -18,10 +18,10 @@ import UTROverride from './abi/UTROverride.json'
 import Helper8453 from './abi/8453/Helper.json'
 import Helper42161 from './abi/42161/Helper.json'
 import PoolOverride8453 from './abi/8453/PoolOverride.json'
-import PoolOverride42161 from './abi/42161/PoolOverride.json'
 import UTR8453 from './abi/8453/UTR.json'
-import UTR42161 from './abi/42161/UTR.json'
 import UTROverride8453 from './abi/8453/UTROverride.json'
+import PoolOverride42161 from './abi/42161/PoolOverride.json'
+import UTR42161 from './abi/42161/UTR.json'
 import UTROverride42161 from './abi/42161/UTROverride.json'
 
 
@@ -34,8 +34,6 @@ const abis = {
   Pool,
   ReserveTokenPrice,
   Token,
-  UTR,
-  UTROverride,
   TokensInfo,
   8453: {
     Helper: Helper8453,
