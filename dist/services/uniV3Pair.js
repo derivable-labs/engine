@@ -15,7 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UniV3Pair = void 0;
 const ethers_1 = require("ethers");
 const PairV3Detail_json_1 = __importDefault(require("../abi/PairV3Detail.json"));
+const UniswapV3Factory_json_1 = __importDefault(require("../abi/UniswapV3Factory.json"));
+const ERC20_json_1 = __importDefault(require("../abi/ERC20.json"));
 const providers_1 = require("@ethersproject/providers");
+const ethereum_multicall_1 = require("ethereum-multicall");
+const constant_1 = require("../utils/constant");
+const helper_1 = require("../utils/helper");
+const POOL_FEES = [100, 300, 500];
 const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111';
 // type ConfigType = {
 //   chainId: number
@@ -35,6 +41,91 @@ class UniV3Pair {
         this.provider = provider;
         this.rpcUrl = rpcUrl;
         this.pairsV3Info = pairsV3Info;
+        this.addresses = config.addresses;
+    }
+    getLargestPoolAddress({ baseToken, quoteTokens, }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pools = yield this.getPairAddress({ baseToken, quoteTokens });
+            return yield this._getLargestPoolByPools(baseToken, pools);
+        });
+    }
+    /**
+     *
+     * @param baseToken
+     * @param pools
+     * poolsType: {
+     *   [`${baseAddress-quoteAddress-fee}`]: poolAddress
+     * }
+     */
+    _getLargestPoolByPools(baseToken, pools) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const multicall = this._getMulticall();
+            const res = yield multicall.call(this._generatePoolBalanceContext(baseToken, pools));
+            return this._parsePoolBalanceReturnContext(res.results.poolBalances.callsReturnContext);
+        });
+    }
+    _parsePoolBalanceReturnContext(returnContexts) {
+        let poolResults = constant_1.ZERO_ADDRESS;
+        let max = (0, helper_1.bn)(0);
+        returnContexts.forEach((returnContext) => {
+            if ((0, helper_1.bn)(returnContext.returnValues[0].hex).gt(max)) {
+                poolResults = returnContext.reference;
+                max = (0, helper_1.bn)(returnContext.returnValues[0].hex);
+            }
+        });
+        return poolResults;
+    }
+    _generatePoolBalanceContext(baseToken, pools) {
+        const calls = [];
+        for (let i in pools) {
+            calls.push({
+                reference: pools[i],
+                methodName: 'balanceOf',
+                methodParameters: [pools[i]],
+            });
+        }
+        return [{
+                reference: 'poolBalances',
+                contractAddress: baseToken,
+                abi: ERC20_json_1.default,
+                calls
+            }];
+    }
+    getPairAddress({ baseToken, quoteTokens, }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const multicall = this._getMulticall();
+            //@ts-ignore
+            const context = this._generatePoolAddressContext(baseToken, quoteTokens);
+            const res = yield multicall.call(context);
+            return this._parsePoolAddressReturnContext(res.results.poolAddresses['callsReturnContext']);
+        });
+    }
+    _parsePoolAddressReturnContext(returnContexts) {
+        const results = {};
+        returnContexts.forEach((returnContext) => {
+            if (returnContext.returnValues[0] !== constant_1.ZERO_ADDRESS) {
+                results[returnContext.reference] = returnContext.returnValues[0];
+            }
+        });
+        return results;
+    }
+    _generatePoolAddressContext(baseToken, quoteTokens) {
+        const calls = [];
+        POOL_FEES.forEach((fee) => {
+            quoteTokens.forEach((quoteToken) => {
+                calls.push({
+                    reference: `${baseToken}-${quoteToken}-${fee}`,
+                    methodName: 'getPool',
+                    methodParameters: [baseToken, quoteToken, fee],
+                });
+            });
+        });
+        return [{
+                reference: 'poolAddresses',
+                contractAddress: this.addresses.uniswapFactory,
+                abi: UniswapV3Factory_json_1.default,
+                calls
+            }];
     }
     getPairInfo({ pairAddress, flag = FLAG, }) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -89,6 +180,13 @@ class UniV3Pair {
             catch (e) {
                 throw e;
             }
+        });
+    }
+    _getMulticall() {
+        return new ethereum_multicall_1.Multicall({
+            multicallCustomContractAddress: this.addresses.multiCall,
+            ethersProvider: this.provider,
+            tryAggregate: true,
         });
     }
 }
