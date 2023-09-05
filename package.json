@@ -15,6 +15,7 @@
     "example:calcAmountOuts": "npx ts-node --files ./example/calculateAmountOuts.ts",
     "example:history": "npx ts-node --files ./example/history.ts",
     "example:power": "npx ts-node --files ./example/power.ts",
+    "example:getPairAddress": "npx ts-node --files ./example/getPairAddress.ts",
     "pretty": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\""
   },
   "author": "Derivable Labs",
