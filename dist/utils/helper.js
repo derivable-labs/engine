@@ -154,7 +154,7 @@ const parseUq128x128 = (value, unit = 1000) => {
 };
 exports.parseUq128x128 = parseUq128x128;
 const parseSqrtSpotPrice = (value, token0, token1, quoteTokenIndex) => {
-    let price = (0, exports.weiToNumber)(value.mul(value).mul((0, exports.numberToWei)(1, token0.decimal)).shr(256), token1.decimal);
+    let price = (0, exports.weiToNumber)(value.mul(value).mul((0, exports.numberToWei)(1, token0 === null || token0 === void 0 ? void 0 : token0.decimal)).shr(256), token1 === null || token1 === void 0 ? void 0 : token1.decimal);
     if (quoteTokenIndex === 0) {
         price = (0, exports.weiToNumber)((0, exports.bn)((0, exports.numberToWei)(1, 36)).div((0, exports.bn)((0, exports.numberToWei)(price))));
     }

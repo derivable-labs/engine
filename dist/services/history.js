@@ -81,7 +81,7 @@ class History {
             }
             if (price) {
                 //@ts-ignore
-                const indexPrice = (0, helper_1.parseSqrtSpotPrice)(price, this.CURRENT_POOL.pair.token0, this.CURRENT_POOL.pair.token1, this.CURRENT_POOL.pair.quoteTokenIndex);
+                const indexPrice = (0, helper_1.parseSqrtSpotPrice)(price, tokens.find((t) => (t === null || t === void 0 ? void 0 : t.address) === this.CURRENT_POOL.baseToken), tokens.find((t) => (t === null || t === void 0 ? void 0 : t.address) === this.CURRENT_POOL.quoteToken), 1);
                 positions[tokenOutAddress].value = (0, helper_1.add)(positions[tokenOutAddress].value, (0, helper_1.mul)(amountOut, indexPrice));
                 positions[tokenOutAddress].balanceToCalculatePrice = positions[tokenOutAddress].balanceToCalculatePrice.add(amountOut);
             }
