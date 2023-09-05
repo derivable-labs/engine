@@ -164,8 +164,8 @@ export const parseSqrtSpotPrice = (
   quoteTokenIndex: number,
 ) => {
   let price = weiToNumber(
-    value.mul(value).mul(numberToWei(1, token0.decimal)).shr(256),
-    token1.decimal,
+    value.mul(value).mul(numberToWei(1, token0?.decimal)).shr(256),
+    token1?.decimal,
   )
   if (quoteTokenIndex === 0) {
     price = weiToNumber(bn(numberToWei(1, 36)).div(bn(numberToWei(price))))
