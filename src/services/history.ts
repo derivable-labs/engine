@@ -103,7 +103,12 @@ export class History {
 
       if (price) {
         //@ts-ignore
-        const indexPrice = parseSqrtSpotPrice(price, this.CURRENT_POOL.pair.token0, this.CURRENT_POOL.pair.token1, this.CURRENT_POOL.pair.quoteTokenIndex)
+        const indexPrice = parseSqrtSpotPrice(
+          price,
+          tokens.find((t) => t?.address === this.CURRENT_POOL.baseToken) as TokenType,
+          tokens.find((t) => t?.address === this.CURRENT_POOL.quoteToken) as TokenType,
+          1
+        )
         positions[tokenOutAddress].value = add(positions[tokenOutAddress].value, mul(amountOut, indexPrice))
         positions[tokenOutAddress].balanceToCalculatePrice = positions[tokenOutAddress].balanceToCalculatePrice.add(amountOut)
       }
