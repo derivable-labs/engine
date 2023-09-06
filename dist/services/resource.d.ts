@@ -91,7 +91,7 @@ export declare class Resource {
     };
     calcPoolInfo(pool: PoolType): {
         premium: any;
-        riskFactor: string;
+        riskFactor: any;
         deleverageRiskA: number;
         deleverageRiskB: number;
         dailyInterestRate: number;

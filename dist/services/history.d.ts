@@ -62,7 +62,7 @@ export declare class History {
         poolOut: any;
         tokenIn: string;
         tokenOut: string;
-        entryValue: string | undefined;
+        entryValue: any;
         entryPrice: string | undefined;
     } | null)[];
     getTokenAddressByPoolAndSide(poolAddress: string, side: BigNumber): string;

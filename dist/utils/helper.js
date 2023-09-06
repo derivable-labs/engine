@@ -7,23 +7,31 @@ exports.toDailyRate = exports.getTopics = exports.mergeDeep = exports.parseSqrtX
 const ethers_1 = require("ethers");
 const Events_json_1 = __importDefault(require("../abi/Events.json"));
 const constant_1 = require("./constant");
+const mdp = require('move-decimal-point');
 exports.provider = new ethers_1.ethers.providers.JsonRpcProvider('https://bsc-dataseed.binance.org/');
 exports.bn = ethers_1.BigNumber.from;
-const weiToNumber = (wei, decimal = 18) => {
+const weiToNumber = (wei, decimal = 18, decimalToDisplay) => {
     if (!wei || !Number(wei))
         return '0';
     wei = wei.toString();
-    return ethers_1.utils.formatUnits(wei, decimal);
+    const num = mdp(wei, -decimal);
+    if (decimalToDisplay != null) {
+        if (decimalToDisplay > 0) {
+            return num.slice(0, num.indexOf('.') + decimalToDisplay + 1);
+        }
+        return num.slice(0, num.indexOf('.'));
+    }
+    return num;
 };
 exports.weiToNumber = weiToNumber;
 const numberToWei = (number, decimal = 18) => {
+    if (!number)
+        return '0';
     number = number.toString();
-    const arr = number.split('.');
-    if (arr[1] && arr[1].length > decimal) {
-        arr[1] = arr[1].slice(0, decimal);
-        number = arr.join('.');
+    if (Number.isFinite(number)) {
+        number = number.toLocaleString('en-US', { useGrouping: false });
     }
-    return ethers_1.utils.parseUnits(number, decimal).toString();
+    return mdp(number, decimal).split(number.indexOf('.') === -1 ? ',' : '.')[0];
 };
 exports.numberToWei = numberToWei;
 const decodePowers = (powersBytes) => {

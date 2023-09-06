@@ -35,5 +35,5 @@ export declare class PriceDisable {
         cToken: string;
         poolAddress: string;
         cTokenPrice: number;
-    }): Promise<string>;
+    }): Promise<any>;
 }
