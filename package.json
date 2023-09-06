@@ -28,6 +28,7 @@
     "ethers": "^5.5.4",
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.7",
+    "move-decimal-point": "^0.0.4",
     "powerLib": "git+ssh://git@github.com:derivable-labs/power-lib.git#build"
   },
   "devDependencies": {

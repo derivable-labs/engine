@@ -2,6 +2,7 @@ import {BigNumber, ethers, utils} from 'ethers'
 import {TokenType} from '../types'
 import EventsAbi from "../abi/Events.json";
 import {SECONDS_PER_DAY} from "./constant";
+const mdp = require('move-decimal-point');
 
 export const provider = new ethers.providers.JsonRpcProvider(
   'https://bsc-dataseed.binance.org/',
@@ -9,22 +10,30 @@ export const provider = new ethers.providers.JsonRpcProvider(
 
 export const bn = BigNumber.from
 
-export const weiToNumber = (wei: any, decimal: number = 18) => {
+export const weiToNumber = (
+  wei: any,
+  decimal: number = 18,
+  decimalToDisplay?: number
+) => {
   if (!wei || !Number(wei)) return '0'
   wei = wei.toString()
-  return utils.formatUnits(wei, decimal)
+  const num = mdp(wei, -decimal)
+  if (decimalToDisplay != null) {
+    if (decimalToDisplay > 0) {
+      return num.slice(0, num.indexOf('.') + decimalToDisplay + 1)
+    }
+    return num.slice(0, num.indexOf('.'))
+  }
+  return num
 }
 
 export const numberToWei = (number: any, decimal: number = 18) => {
+  if (!number) return '0'
   number = number.toString()
-
-  const arr = number.split('.')
-  if (arr[1] && arr[1].length > decimal) {
-    arr[1] = arr[1].slice(0, decimal)
-    number = arr.join('.')
+  if (Number.isFinite(number)) {
+    number = number.toLocaleString('en-US', { useGrouping: false })
   }
-
-  return utils.parseUnits(number, decimal).toString()
+  return mdp(number, decimal).split(number.indexOf('.') === -1 ? ',' : '.')[0]
 }
 
 export const decodePowers = (powersBytes: string) => {
