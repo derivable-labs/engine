@@ -247,9 +247,10 @@ export class Swap {
   getSwapCallData({step, poolGroup, poolIn, poolOut, idIn, idOut}: {
     step: SwapStepType, poolGroup: any, poolIn: string, poolOut: string, idIn: BigNumber, idOut: BigNumber
   }) {
-    if ((isAddress(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R) ||
+    if (!step.uniPool && (
+      (isAddress(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R) ||
       (isAddress(step.tokenOut) && this.wrapToken(step.tokenOut) !== poolGroup.TOKEN_R)
-    ) {
+    )) {
       throw new Error("Cannot find UniPool to Swap token")
     }
 
