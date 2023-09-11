@@ -15,16 +15,19 @@ const testLocal = async () => {
     ...currentPool,
   })
 
-  const poolOut = '0x5fbBF7Da684D829EC04531BFe9B6d3761eF2544F'
+  const usdc = '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca'
+  const poolOut = '0x44C46037AD3621f95a488d898c1e9CFDa0F58e95'
   const provider = new ethers.providers.JsonRpcProvider(configs.rpcUrl)
   // @ts-ignore
   const tokenContract = new ethers.Contract( engine.config.addresses.token, TokenAbi, provider)
-  const currentBalanceOut = await tokenContract.balanceOf(configs.account, packId(POOL_IDS.C.toString(), poolOut))
+  const currentBalanceOut = await tokenContract.balanceOf(configs.account, packId(POOL_IDS.A.toString(), poolOut))
   const steps = [
     {
-      amountIn: bn(numberToWei(0.0001)),
-      tokenIn: NATIVE_ADDRESS,
-      tokenOut: poolOut + '-' + POOL_IDS.C,
+      uniPool: '0x4C36388bE6F416A29C8d8Eee81C771cE6bE14B18',
+      amountIn: bn('1000000000000000'),
+      payloadAmountIn: bn('0x038d7ea4c68000'),
+      tokenIn: poolOut + '-' + POOL_IDS.A,
+      tokenOut: usdc,
       amountOutMin: 0,
       currentBalanceOut,
       useSweep: false,

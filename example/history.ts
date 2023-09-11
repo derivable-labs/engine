@@ -3,10 +3,10 @@ import { ethers } from 'ethers'
 import { getTestConfigs } from './shared/testConfigs'
 
 const testLocal = async () => {
-  const configs = getTestConfigs(42161)
-  const engine = new Engine(configs.account, configs, 42161)
+  const configs = getTestConfigs(8453)
+  const engine = new Engine(configs.account, configs, 8453)
   await engine.RESOURCE.fetchResourceData(
-    '0xE3C75f8963E4CA02ea9a281c32b41FdfC248e07f',
+    '0x5555a222c465b1873421d844e5d89ed8eb3E5555',
   )
 
   console.log({
@@ -15,7 +15,7 @@ const testLocal = async () => {
     swapLogs: engine.RESOURCE.swapLogs,
   })
 
-  const currentPool = Object.values(engine.RESOURCE.poolGroups)[0]
+  const currentPool = engine.RESOURCE.poolGroups['0x9E37cb775a047Ae99FC5A24dDED834127c4180cD']
   engine.setCurrentPool({
     ...currentPool,
   })
