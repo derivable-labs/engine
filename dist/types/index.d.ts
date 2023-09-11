@@ -191,4 +191,5 @@ export type SwapStepType = {
     useSweep?: boolean;
     currentBalanceOut?: BigNumber;
     index_R?: BigNumber;
+    uniPool?: string;
 };

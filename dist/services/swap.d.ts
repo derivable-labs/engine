@@ -1,5 +1,4 @@
-import { BigNumber, Contract, ethers } from 'ethers';
-import { UniV2Pair } from './uniV2Pair';
+import { BigNumber, ethers } from 'ethers';
 import { SwapStepType } from '../types';
 import { CurrentPool } from './currentPool';
 import { JsonRpcProvider } from '@ethersproject/providers';
@@ -12,7 +11,6 @@ export declare class Swap {
     provider: ethers.providers.Provider;
     overrideProvider: JsonRpcProvider;
     signer?: ethers.providers.JsonRpcSigner;
-    UNIV2PAIR: UniV2Pair;
     CURRENT_POOL: CurrentPool;
     config: ConfigType;
     profile: Profile;
@@ -29,6 +27,7 @@ export declare class Swap {
         useSweep?: boolean | undefined;
         currentBalanceOut?: BigNumber | undefined;
         index_R?: BigNumber | undefined;
+        uniPool?: string | undefined;
     }[])[]>;
     callStaticMultiSwap({ params, value, gasLimit }: any): Promise<any>;
     convertStepToActions(steps: SwapStepType[]): Promise<{
@@ -54,7 +53,7 @@ export declare class Swap {
         populateTxData: Promise<ethers.PopulatedTransaction>[];
     };
     getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut }: {
-        step: any;
+        step: SwapStepType;
         poolGroup: any;
         poolIn: string;
         poolOut: string;
@@ -64,13 +63,14 @@ export declare class Swap {
         inputs: {
             mode: number;
             eip: number;
-            token: any;
+            token: string | undefined;
             id: number | BigNumber;
-            amountIn: any;
-            recipient: string;
+            amountIn: BigNumber;
+            recipient: string | undefined;
         }[];
         populateTxData: Promise<ethers.PopulatedTransaction>[];
     };
+    wrapToken(address: string): string | undefined;
     generateSwapParams(method: string, params: any): Promise<ethers.PopulatedTransaction>;
     getIdByAddress(address: string, TOKEN_R: string): BigNumber;
     getPoolPoolGroup(addressIn: string, addressOut: string): {
@@ -79,6 +79,6 @@ export declare class Swap {
     };
     multiSwap(steps: SwapStepType[], gasLimit?: BigNumber): Promise<any>;
     getAddressByErc1155Address(address: string, TOKEN_R: string): string;
-    getRouterContract(provider: any): Contract;
-    getStateCalHelperContract(provider?: any): Contract;
+    getRouterContract(provider: any): ethers.Contract;
+    getStateCalHelperContract(provider?: any): ethers.Contract;
 }

@@ -13,31 +13,10 @@ exports.Swap = void 0;
 const ethers_1 = require("ethers");
 const helper_1 = require("../utils/helper");
 const constant_1 = require("../utils/constant");
-// type ConfigType = {
-//   account?: string
-//   chainId: number
-//   scanApi: string
-//   provider: ethers.providers.Provider
-//   overrideProvider: JsonRpcProvider
-//   signer?: ethers.providers.JsonRpcSigner
-//   UNIV2PAIR: UniV2Pair
-//   CURRENT_POOL: CurrentPool
-// }
-// TODO: don't hardcode these
-const fee10000 = 30;
-const ACTION_RECORD_CALL_RESULT = 2;
-const ACTION_INJECT_CALL_RESULT = 4;
-const AMOUNT_EXACT = 0;
-const AMOUNT_ALL = 1;
-const TRANSFER_FROM_SENDER = 0;
-const TRANSFER_FROM_ROUTER = 1;
-const TRANSFER_CALL_VALUE = 2;
-const IN_TX_PAYMENT = 4;
-const FROM_ROUTER = 10;
+const utils_1 = require("ethers/lib/utils");
 const PAYMENT = 0;
 const TRANSFER = 1;
 const CALL_VALUE = 2;
-const mode = (x) => ethers_1.ethers.utils.formatBytes32String(x);
 class Swap {
     constructor(config, profile) {
         this.config = config;
@@ -132,7 +111,7 @@ class Swap {
                 if (step.tokenIn === constant_1.NATIVE_ADDRESS) {
                     nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn);
                 }
-                if (step.useSweep && (0, helper_1.isErc1155Address)(step.tokenOut)) {
+                else if (step.useSweep && (0, helper_1.isErc1155Address)(step.tokenOut)) {
                     const { inputs, populateTxData } = this.getSweepCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut });
                     metaDatas.push({
                         code: this.config.addresses.stateCalHelper,
@@ -215,18 +194,25 @@ class Swap {
         };
     }
     getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut }) {
+        if (!step.uniPool && (((0, utils_1.isAddress)(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R) ||
+            ((0, utils_1.isAddress)(step.tokenOut) && this.wrapToken(step.tokenOut) !== poolGroup.TOKEN_R))) {
+            throw new Error("Cannot find UniPool to Swap token");
+        }
         let inputs = [
             {
                 mode: PAYMENT,
                 eip: (0, helper_1.isErc1155Address)(step.tokenIn) ? 1155 : 20,
                 token: (0, helper_1.isErc1155Address)(step.tokenIn)
                     ? this.config.addresses.token
-                    : poolGroup.TOKEN_R,
+                    : step.tokenIn,
                 id: (0, helper_1.isErc1155Address)(step.tokenIn)
                     ? (0, helper_1.packId)(idIn.toString(), poolIn)
                     : 0,
                 amountIn: step.amountIn,
-                recipient: (0, helper_1.isErc1155Address)(step.tokenIn) ? poolIn : poolOut,
+                recipient: (0, utils_1.isAddress)(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R
+                    ? step.uniPool
+                    : (0, helper_1.isErc1155Address)(step.tokenIn)
+                        ? poolIn : poolOut,
             },
         ];
         if (step.tokenIn === constant_1.NATIVE_ADDRESS) {
@@ -241,8 +227,33 @@ class Swap {
                 },
             ];
         }
-        const populateTxData = [
-            this.generateSwapParams('swap', {
+        const populateTxData = [];
+        if ((0, utils_1.isAddress)(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R) {
+            populateTxData.push(this.generateSwapParams('swapAndOpen', {
+                side: idOut,
+                deriPool: poolOut,
+                uniPool: step.uniPool,
+                token: step.tokenIn,
+                amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
+                payer: this.account,
+                recipient: this.account,
+                INDEX_R: step.index_R
+            }));
+        }
+        else if ((0, utils_1.isAddress)(step.tokenOut) && this.wrapToken(step.tokenOut) !== poolGroup.TOKEN_R) {
+            populateTxData.push(this.generateSwapParams('closeAndSwap', {
+                side: idIn,
+                deriPool: poolIn,
+                uniPool: step.uniPool,
+                token: step.tokenOut,
+                amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
+                payer: this.account,
+                recipient: this.account,
+                INDEX_R: step.index_R
+            }));
+        }
+        else {
+            populateTxData.push(this.generateSwapParams('swap', {
                 sideIn: idIn,
                 poolIn: (0, helper_1.isErc1155Address)(step.tokenIn) ? poolIn : poolOut,
                 sideOut: idOut,
@@ -252,12 +263,18 @@ class Swap {
                 payer: this.account,
                 recipient: this.account,
                 INDEX_R: step.index_R
-            })
-        ];
+            }));
+        }
         return {
             inputs,
             populateTxData
         };
+    }
+    wrapToken(address) {
+        if (address === constant_1.NATIVE_ADDRESS) {
+            return this.config.addresses.wrapToken;
+        }
+        return address;
     }
     generateSwapParams(method, params) {
         var _a;
@@ -274,13 +291,17 @@ class Swap {
     }
     getIdByAddress(address, TOKEN_R) {
         try {
-            if (address === TOKEN_R)
+            if ((0, helper_1.isErc1155Address)(address)) {
+                return (0, helper_1.bn)(address.split('-')[1]);
+            }
+            else if (address === TOKEN_R) {
                 return (0, helper_1.bn)(constant_1.POOL_IDS.R);
-            if (address === constant_1.NATIVE_ADDRESS &&
+            }
+            else if (address === constant_1.NATIVE_ADDRESS &&
                 TOKEN_R === this.config.addresses.wrapToken) {
                 return (0, helper_1.bn)(constant_1.POOL_IDS.native);
             }
-            return (0, helper_1.bn)(address.split('-')[1]);
+            return (0, helper_1.bn)(0);
         }
         catch (e) {
             throw new Error('Token id not found');
