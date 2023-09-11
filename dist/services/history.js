@@ -64,7 +64,8 @@ class History {
                     balance: (0, helper_1.bn)(0),
                     balanceToCalculatePrice: (0, helper_1.bn)(0),
                     value: 0,
-                    entry: 0, // totalEntryUSD
+                    entry: 0,
+                    totalEntryR: 0, // totalEntryR
                 };
             }
             if (priceR) {
@@ -89,10 +90,12 @@ class History {
         if ([constant_1.POOL_IDS.A, constant_1.POOL_IDS.B, constant_1.POOL_IDS.C].includes(sideIn.toNumber())) {
             if (positions[tokenInAddress] && positions[tokenInAddress].entry) {
                 const oldEntry = (0, helper_1.div)((0, helper_1.mul)(positions[tokenInAddress].entry, amountIn), positions[tokenInAddress].balance);
+                const oldEntryR = (0, helper_1.div)((0, helper_1.mul)(positions[tokenInAddress].totalEntryR, amountIn), positions[tokenInAddress].balance);
                 const oldValue = (0, helper_1.div)((0, helper_1.mul)(positions[tokenInAddress].value, amountIn), positions[tokenInAddress].balance);
                 positions[tokenInAddress] = {
                     balance: (0, helper_1.max)(positions[tokenInAddress].balance.sub(amountIn), (0, helper_1.bn)(0)),
                     entry: (0, helper_1.max)((0, helper_1.sub)(positions[tokenInAddress].entry, oldEntry), 0),
+                    totalEntryR: (0, helper_1.max)((0, helper_1.sub)(positions[tokenInAddress].totalEntryR, oldEntryR), 0),
                     value: (0, helper_1.max)((0, helper_1.sub)(positions[tokenInAddress].value, oldValue), 0),
                     balanceToCalculatePrice: (0, helper_1.max)(positions[tokenInAddress].balanceToCalculatePrice.sub(amountIn), (0, helper_1.bn)(0))
                 };
