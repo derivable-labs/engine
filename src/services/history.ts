@@ -84,6 +84,7 @@ export class History {
           balanceToCalculatePrice: bn(0), // to calculate entry price, balanceToCalculatePrice = total amountOut
           value: 0, // to calculate entry price, value = amountOut * indexPrice => entry price = total value / total amount out
           entry: 0, // totalEntryUSD
+          totalEntryR: 0, // totalEntryR
         }
       }
       if (priceR) {
@@ -117,10 +118,12 @@ export class History {
     if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber())) {
       if (positions[tokenInAddress] && positions[tokenInAddress].entry) {
         const oldEntry = div(mul(positions[tokenInAddress].entry, amountIn), positions[tokenInAddress].balance)
+        const oldEntryR = div(mul(positions[tokenInAddress].totalEntryR, amountIn), positions[tokenInAddress].balance)
         const oldValue = div(mul(positions[tokenInAddress].value, amountIn), positions[tokenInAddress].balance)
         positions[tokenInAddress] = {
           balance: max(positions[tokenInAddress].balance.sub(amountIn), bn(0)),
           entry: max(sub(positions[tokenInAddress].entry, oldEntry), 0),
+          totalEntryR: max(sub(positions[tokenInAddress].totalEntryR, oldEntryR), 0),
           value: max(sub(positions[tokenInAddress].value, oldValue), 0),
           balanceToCalculatePrice: max(positions[tokenInAddress].balanceToCalculatePrice.sub(amountIn), bn(0))
         }
