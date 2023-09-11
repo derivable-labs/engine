@@ -1,15 +1,11 @@
-import {BigNumber, Contract, ethers} from 'ethers'
-import {UniV2Pair} from './uniV2Pair'
-import {PoolErc1155StepType, StepType, SwapStepType} from '../types'
+import {BigNumber, ethers} from 'ethers'
+import {SwapStepType} from '../types'
 import {
   bn,
   isErc1155Address,
-  numberToWei,
   packId,
-  weiToNumber,
 } from '../utils/helper'
 import {
-  LARGE_VALUE,
   NATIVE_ADDRESS,
   POOL_IDS,
   ZERO_ADDRESS,
@@ -18,36 +14,11 @@ import {CurrentPool} from './currentPool'
 import {JsonRpcProvider} from '@ethersproject/providers'
 import {ConfigType} from './setConfig'
 import {Profile} from "../profile";
+import {isAddress} from "ethers/lib/utils";
 
-// type ConfigType = {
-//   account?: string
-//   chainId: number
-//   scanApi: string
-//   provider: ethers.providers.Provider
-//   overrideProvider: JsonRpcProvider
-//   signer?: ethers.providers.JsonRpcSigner
-//   UNIV2PAIR: UniV2Pair
-//   CURRENT_POOL: CurrentPool
-// }
-
-// TODO: don't hardcode these
-const fee10000 = 30
-
-const ACTION_RECORD_CALL_RESULT = 2
-const ACTION_INJECT_CALL_RESULT = 4
-const AMOUNT_EXACT = 0
-const AMOUNT_ALL = 1
-const TRANSFER_FROM_SENDER = 0
-const TRANSFER_FROM_ROUTER = 1
-const TRANSFER_CALL_VALUE = 2
-const IN_TX_PAYMENT = 4
-
-const FROM_ROUTER = 10
 const PAYMENT = 0
 const TRANSFER = 1
 const CALL_VALUE = 2
-
-const mode = (x: string) => ethers.utils.formatBytes32String(x)
 
 export class Swap {
   account?: string
@@ -56,7 +27,6 @@ export class Swap {
   provider: ethers.providers.Provider
   overrideProvider: JsonRpcProvider
   signer?: ethers.providers.JsonRpcSigner
-  UNIV2PAIR: UniV2Pair
   CURRENT_POOL: CurrentPool
   config: ConfigType
   profile: Profile
@@ -179,9 +149,7 @@ export class Swap {
       const idOut = this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R)
       if (step.tokenIn === NATIVE_ADDRESS) {
         nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn)
-      }
-
-      if (step.useSweep && isErc1155Address(step.tokenOut)) {
+      } else if (step.useSweep && isErc1155Address(step.tokenOut)) {
         const {inputs, populateTxData} = this.getSweepCallData({step, poolGroup, poolIn, poolOut, idIn, idOut})
 
         metaDatas.push({
@@ -253,7 +221,7 @@ export class Swap {
     ]
 
     const populateTxData = [
-      this.generateSwapParams('swap',{
+      this.generateSwapParams('swap', {
         sideIn: idIn,
         poolIn: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
         sideOut: idOut,
@@ -277,20 +245,30 @@ export class Swap {
   }
 
   getSwapCallData({step, poolGroup, poolIn, poolOut, idIn, idOut}: {
-    step: any, poolGroup: any, poolIn: string, poolOut: string, idIn: BigNumber, idOut: BigNumber
+    step: SwapStepType, poolGroup: any, poolIn: string, poolOut: string, idIn: BigNumber, idOut: BigNumber
   }) {
+    if (!step.uniPool && (
+      (isAddress(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R) ||
+      (isAddress(step.tokenOut) && this.wrapToken(step.tokenOut) !== poolGroup.TOKEN_R)
+    )) {
+      throw new Error("Cannot find UniPool to Swap token")
+    }
+
     let inputs = [
       {
         mode: PAYMENT,
         eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
         token: isErc1155Address(step.tokenIn)
           ? this.config.addresses.token
-          : poolGroup.TOKEN_R,
+          : step.tokenIn,
         id: isErc1155Address(step.tokenIn)
           ? packId(idIn.toString(), poolIn)
           : 0,
         amountIn: step.amountIn,
-        recipient: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
+        recipient: isAddress(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R
+          ? step.uniPool
+          : isErc1155Address(step.tokenIn)
+            ? poolIn : poolOut,
       },
     ]
     if (step.tokenIn === NATIVE_ADDRESS) {
@@ -306,23 +284,58 @@ export class Swap {
       ]
     }
 
-    const populateTxData = [
-      this.generateSwapParams('swap', {
-        sideIn: idIn,
-        poolIn: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
-        sideOut: idOut,
-        poolOut: isErc1155Address(step.tokenOut) ? poolOut : poolIn,
-        amountIn: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
-        maturity: 0,
-        payer: this.account,
-        recipient: this.account,
-        INDEX_R: step.index_R
-      })
-    ]
+    const populateTxData = []
+
+    if (isAddress(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R) {
+      populateTxData.push(this.generateSwapParams('swapAndOpen', {
+          side: idOut,
+          deriPool: poolOut,
+          uniPool: step.uniPool,
+          token: step.tokenIn,
+          amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
+          payer: this.account,
+          recipient: this.account,
+          INDEX_R: step.index_R
+        })
+      )
+    } else if (isAddress(step.tokenOut) && this.wrapToken(step.tokenOut) !== poolGroup.TOKEN_R) {
+      populateTxData.push(this.generateSwapParams('closeAndSwap', {
+          side: idIn,
+          deriPool: poolIn,
+          uniPool: step.uniPool,
+          token: step.tokenOut,
+          amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
+          payer: this.account,
+          recipient: this.account,
+          INDEX_R: step.index_R
+        })
+      )
+    } else {
+      populateTxData.push(this.generateSwapParams('swap', {
+          sideIn: idIn,
+          poolIn: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
+          sideOut: idOut,
+          poolOut: isErc1155Address(step.tokenOut) ? poolOut : poolIn,
+          amountIn: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
+          maturity: 0,
+          payer: this.account,
+          recipient: this.account,
+          INDEX_R: step.index_R
+        })
+      )
+    }
     return {
       inputs,
       populateTxData
     }
+  }
+
+  wrapToken(address: string) {
+    if (address === NATIVE_ADDRESS) {
+      return this.config.addresses.wrapToken
+    }
+
+    return address
   }
 
   generateSwapParams(method: string, params: any) {
@@ -343,14 +356,17 @@ export class Swap {
 
   getIdByAddress(address: string, TOKEN_R: string) {
     try {
-      if (address === TOKEN_R) return bn(POOL_IDS.R)
-      if (
+      if (isErc1155Address(address)) {
+        return bn(address.split('-')[1])
+      } else if (address === TOKEN_R) {
+        return bn(POOL_IDS.R)
+      } else if (
         address === NATIVE_ADDRESS &&
         TOKEN_R === this.config.addresses.wrapToken
       ) {
         return bn(POOL_IDS.native)
       }
-      return bn(address.split('-')[1])
+      return bn(0)
     } catch (e) {
       throw new Error('Token id not found')
     }
