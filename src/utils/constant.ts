@@ -24,7 +24,7 @@ export const LOCALSTORAGE_KEY = {
 }
 
 export const ddlGenesisBlock = {
-  42161: 107513624,
+  42161: 130644816,
   8453: 3290649,
 }
 
@@ -46,16 +46,17 @@ export const POOL_IDS = {
 export const EventDataAbis = {
   [42161]: {
     PoolCreated: [
-      'bytes32 ORACLE',
-      'uint k',
-      'uint MARK',
-      'uint INTEREST_HL',
-      'uint PREMIUM_RATE',
-      'uint MATURITY',
-      'uint MATURITY_VEST',
-      'uint MATURITY_RATE',
-      'uint OPEN_RATE',
-      'address poolAddress'
+      'address FETCHER', // config.FETCHER,
+      'bytes32 ORACLE', // config.ORACLE,
+      'uint k', // config.K,
+      'uint MARK', // config.MARK,
+      'uint INTEREST_HL', // config.INTEREST_HL,
+      'uint PREMIUM_HL', // config.PREMIUM_HL,
+      'uint MATURITY', // config.MATURITY,
+      'uint MATURITY_VEST', // config.MATURITY_VEST,
+      'uint MATURITY_RATE', // config.MATURITY_RATE,
+      'uint OPEN_RATE', // config.OPEN_RATE,
+      'address poolAddress' // uint(uint160(pool))
     ],
     Swap: [
       'address payer',
