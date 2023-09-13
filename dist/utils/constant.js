@@ -14,12 +14,12 @@ exports.CHART_API_ENDPOINT = {
     8453: 'https://api-chart-8453.derivable.org/'
 };
 exports.LOCALSTORAGE_KEY = {
-    DDL_LOGS: 'ddl-log-v1.1',
-    LAST_BLOCK_DDL_LOGS: 'last-block-ddl-log-v1.1',
-    SWAP_LOGS: 'swap-log-v1.1',
-    SWAP_BLOCK_LOGS: 'last-block-swap-log-v1.1',
-    TRANSFER_LOGS: 'transfer-log-v1.1',
-    TRANSFER_BLOCK_LOGS: 'last-block-transfer-log-v1.1',
+    DDL_LOGS: 'ddl-log-v1.2',
+    LAST_BLOCK_DDL_LOGS: 'last-block-ddl-log-v1.2',
+    SWAP_LOGS: 'swap-log-v1.2',
+    SWAP_BLOCK_LOGS: 'last-block-swap-log-v1.2',
+    TRANSFER_LOGS: 'transfer-log-v1.2',
+    TRANSFER_BLOCK_LOGS: 'last-block-transfer-log-v1.2',
 };
 exports.ddlGenesisBlock = {
     42161: 130644816,
