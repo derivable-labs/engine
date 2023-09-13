@@ -15,12 +15,12 @@ export const CHART_API_ENDPOINT = {
 
 
 export const LOCALSTORAGE_KEY = {
-  DDL_LOGS: 'ddl-log-v1.1',
-  LAST_BLOCK_DDL_LOGS: 'last-block-ddl-log-v1.1',
-  SWAP_LOGS: 'swap-log-v1.1',
-  SWAP_BLOCK_LOGS: 'last-block-swap-log-v1.1',
-  TRANSFER_LOGS: 'transfer-log-v1.1',
-  TRANSFER_BLOCK_LOGS: 'last-block-transfer-log-v1.1',
+  DDL_LOGS: 'ddl-log-v1.2',
+  LAST_BLOCK_DDL_LOGS: 'last-block-ddl-log-v1.2',
+  SWAP_LOGS: 'swap-log-v1.2',
+  SWAP_BLOCK_LOGS: 'last-block-swap-log-v1.2',
+  TRANSFER_LOGS: 'transfer-log-v1.2',
+  TRANSFER_BLOCK_LOGS: 'last-block-transfer-log-v1.2',
 }
 
 export const ddlGenesisBlock = {
