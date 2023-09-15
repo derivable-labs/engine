@@ -111,7 +111,7 @@ class Swap {
                 if (step.tokenIn === constant_1.NATIVE_ADDRESS) {
                     nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn);
                 }
-                else if (step.useSweep && (0, helper_1.isErc1155Address)(step.tokenOut)) {
+                if (step.useSweep && (0, helper_1.isErc1155Address)(step.tokenOut)) {
                     const { inputs, populateTxData } = this.getSweepCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut });
                     metaDatas.push({
                         code: this.config.addresses.stateCalHelper,
