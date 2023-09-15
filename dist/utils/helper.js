@@ -91,7 +91,7 @@ const getNormalAddress = (addresses) => {
 };
 exports.getNormalAddress = getNormalAddress;
 const formatFloat = (number, decimal = 4) => {
-    number = number.toLocaleString('fullwide', { useGrouping: false });
+    number = number.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
     const arr = number.split('.');
     if (arr.length > 1) {
         arr[1] = arr[1].slice(0, decimal);
@@ -100,15 +100,15 @@ const formatFloat = (number, decimal = 4) => {
 };
 exports.formatFloat = formatFloat;
 const formatPercent = (floatNumber, decimal = 2) => {
-    floatNumber = floatNumber.toLocaleString('fullwide', { useGrouping: false });
+    floatNumber = floatNumber.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
     return (0, exports.formatFloat)((0, exports.weiToNumber)((0, exports.numberToWei)(floatNumber), 16), decimal);
 };
 exports.formatPercent = formatPercent;
 const mul = (a, b, useFullwide = true) => {
     var _a;
     if (useFullwide) {
-        a = a.toLocaleString('fullwide', { useGrouping: false });
-        b = b.toLocaleString('fullwide', { useGrouping: false });
+        a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
+        b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
     }
     const result = (0, exports.weiToNumber)(ethers_1.BigNumber.from((0, exports.numberToWei)(a)).mul((0, exports.numberToWei)(b)), 36);
     const arr = result.split('.');
@@ -117,25 +117,25 @@ const mul = (a, b, useFullwide = true) => {
 };
 exports.mul = mul;
 const sub = (a, b) => {
-    a = a.toLocaleString('fullwide', { useGrouping: false });
-    b = b.toLocaleString('fullwide', { useGrouping: false });
+    a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
+    b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
     return (0, exports.weiToNumber)(ethers_1.BigNumber.from((0, exports.numberToWei)(a)).sub((0, exports.numberToWei)(b)));
 };
 exports.sub = sub;
 const div = (a, b) => {
-    if (b.toLocaleString('fullwide', { useGrouping: false }) == '0') {
-        return (0, exports.weiToNumber)(ethers_1.BigNumber.from((0, exports.numberToWei)((Number(a) / Number(b)).toLocaleString('fullwide', { useGrouping: false }))));
+    if (b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false }) == '0') {
+        return (0, exports.weiToNumber)(ethers_1.BigNumber.from((0, exports.numberToWei)((Number(a) / Number(b)).toLocaleString(['en-US', 'fullwide'], { useGrouping: false }))));
     }
-    a = a.toLocaleString('fullwide', { useGrouping: false });
-    b = b.toLocaleString('fullwide', { useGrouping: false });
+    a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
+    b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
     return (0, exports.weiToNumber)(ethers_1.BigNumber.from((0, exports.numberToWei)(a, 36)).div((0, exports.numberToWei)(b)));
 };
 exports.div = div;
 const max = (a, b) => (0, exports.bn)((0, exports.numberToWei)(a)).gt((0, exports.numberToWei)(b)) ? a : b;
 exports.max = max;
 const add = (a, b) => {
-    a = a.toLocaleString('fullwide', { useGrouping: false });
-    b = b.toLocaleString('fullwide', { useGrouping: false });
+    a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
+    b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
     return (0, exports.weiToNumber)(ethers_1.BigNumber.from((0, exports.numberToWei)(a)).add((0, exports.numberToWei)(b)));
 };
 exports.add = add;
@@ -144,7 +144,7 @@ const detectDecimalFromPrice = (price) => {
         return 4;
     }
     else {
-        price = price.toLocaleString('fullwide', { useGrouping: false });
+        price = price.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
         const rate = !(0, exports.bn)((0, exports.numberToWei)(price)).isZero()
             ? (0, exports.weiToNumber)(ethers_1.BigNumber.from((0, exports.numberToWei)(1, 36)).div((0, exports.numberToWei)(price)).toString())
             : '0';
