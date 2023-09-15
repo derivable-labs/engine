@@ -149,7 +149,9 @@ export class Swap {
       const idOut = this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R)
       if (step.tokenIn === NATIVE_ADDRESS) {
         nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn)
-      } else if (step.useSweep && isErc1155Address(step.tokenOut)) {
+      }
+
+      if (step.useSweep && isErc1155Address(step.tokenOut)) {
         const {inputs, populateTxData} = this.getSweepCallData({step, poolGroup, poolIn, poolOut, idIn, idOut})
 
         metaDatas.push({
