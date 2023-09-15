@@ -688,7 +688,16 @@ export class Resource {
     let maxPremiumRate
     if(pool.PREMIUM_HL) {
       maxPremiumRate = toDailyRate(Number(pool.PREMIUM_HL.toString()))
-      const premiumRate = Number(mul((rA.gt(rB) ? rA.sub(rB) : rB.sub(rA)), maxPremiumRate, false))
+      const [rMax, rMin] = rA.gt(rB) ? [rA, rB] : [rB, rA]
+      const premiumRate = Number(
+        div(
+          mul(
+            rMax,
+            mul(rMax.sub(rMin), maxPremiumRate, false),
+          ),
+          R,
+        )
+      )
       if(rA.eq(rB)) {
         premium = {A: 0, B: 0, C: 0}
       } else if(rA.gt(rB)) {
