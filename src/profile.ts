@@ -48,14 +48,19 @@ const DDL_CONFIGS_URL = `https://raw.githubusercontent.com/derivable-labs/config
 export class Profile {
   chainId: number
   configs: INetworkConfig
+  uniV3Pools: {[key: string]: string}
 
   constructor(chainId: number) {
     this.chainId = chainId
   }
 
   async loadConfig() {
-    const res = await fetch(DDL_CONFIGS_URL + this.chainId + '/network.json').then((r) => r.json())
-    this.configs = res
+    const [networkConfig, uniV3Pools] = await Promise.all([
+      fetch(DDL_CONFIGS_URL + this.chainId + '/network.json').then((r) => r.json()),
+      fetch(DDL_CONFIGS_URL + this.chainId + '/list-univ3-pool.json').then((r) => r.json())
+    ])
+    this.configs = networkConfig
+    this.uniV3Pools = uniV3Pools
   }
 
   getAbi(name: string) {
