@@ -16,23 +16,18 @@ import {
 } from '../types'
 import {
   bn,
-  decodePowers,
   div,
   formatMultiCallBignumber,
-  getNormalAddress, getTopics, max, mul, parseSqrtSpotPrice, toDailyRate, weiToNumber,
+  getNormalAddress, getTopics, mul, parseSqrtSpotPrice, toDailyRate
 } from '../utils/helper'
-import {UniV2Pair} from './uniV2Pair'
 import {JsonRpcProvider} from '@ethersproject/providers'
 import _ from 'lodash'
 import {UniV3Pair} from './uniV3Pair'
-import {ConfigType} from './setConfig'
-import {IDerivableContractAddress, IEngineConfig, INetworkConfig} from '../utils/configs'
+import {IDerivableContractAddress, IEngineConfig} from '../utils/configs'
 import {defaultAbiCoder} from "ethers/lib/utils";
 import {Profile} from "../profile";
-
 const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
-const TOPIC_APP = ethers.utils.formatBytes32String('DDL')
 
 type ResourceData = {
   pools: PoolsType

@@ -3,12 +3,12 @@ import PairV3DetailAbi from '../abi/PairV3Detail.json'
 import UniswapV3FactoryAbi from '../abi/UniswapV3Factory.json'
 import ERC20Abi from '../abi/ERC20.json'
 import {JsonRpcProvider} from '@ethersproject/providers'
-import {ConfigType} from './setConfig'
 import {ContractCallContext, Multicall} from "ethereum-multicall";
-import {DerivableContractAddress} from "../utils/configs";
+import {IDerivableContractAddress, IEngineConfig} from "../utils/configs";
 import {CallReturnContext} from "ethereum-multicall/dist/esm/models/call-return-context";
 import {ZERO_ADDRESS} from "../utils/constant";
 import {bn} from "../utils/helper";
+import {Profile} from "../profile";
 
 const POOL_FEES = [100, 300, 500]
 const FLAG =
@@ -26,20 +26,17 @@ export class UniV3Pair {
   provider: ethers.providers.Provider
   rpcUrl: string
   pairsV3Info: string
-  addresses: Partial<DerivableContractAddress>
+  addresses: Partial<IDerivableContractAddress>
+  profile: Profile
 
-  constructor(config: ConfigType) {
-    const {chainId, scanApi, provider, rpcUrl} = config
-    const {pairsV3Info} = config.addresses
-    if (!pairsV3Info) {
-      throw new Error(`required pairsV3Info contract to be defined!`)
-    }
-    this.chainId = chainId
-    this.scanApi = scanApi
-    this.provider = provider
-    this.rpcUrl = rpcUrl
+  constructor(config: IEngineConfig, profile: Profile) {
+    const pairsV3Info = '0x' + PairV3DetailAbi.deployedBytecode.slice(-40)
+    this.chainId = config.chainId
+    this.scanApi = profile.configs.scanApi
+    this.provider = new JsonRpcProvider(profile.configs.rpc)
+    this.rpcUrl = profile.configs.rpc
     this.pairsV3Info = pairsV3Info
-    this.addresses = config.addresses
+    this.profile = profile
   }
 
   async getLargestPoolAddress({
@@ -137,7 +134,7 @@ export class UniV3Pair {
     })
     return [{
       reference: 'poolAddresses',
-      contractAddress: this.addresses.uniswapFactory,
+      contractAddress: this.profile.configs.uniswap.v3Factory,
       abi: UniswapV3FactoryAbi,
       calls
     }]
@@ -223,7 +220,7 @@ export class UniV3Pair {
 
   _getMulticall() {
     return  new Multicall({
-      multicallCustomContractAddress: this.addresses.multiCall,
+      multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
       ethersProvider: this.provider,
       tryAggregate: true,
     })

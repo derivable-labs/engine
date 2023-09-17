@@ -12,9 +12,9 @@ import {
 } from '../utils/constant'
 import {CurrentPool} from './currentPool'
 import {JsonRpcProvider} from '@ethersproject/providers'
-import {ConfigType} from './setConfig'
 import {Profile} from "../profile";
 import {isAddress} from "ethers/lib/utils";
+import {IDerivableContractAddress, IEngineConfig} from "../utils/configs";
 
 const PAYMENT = 0
 const TRANSFER = 1
@@ -28,19 +28,22 @@ export class Swap {
   overrideProvider: JsonRpcProvider
   signer?: ethers.providers.JsonRpcSigner
   CURRENT_POOL: CurrentPool
-  config: ConfigType
+  config: IEngineConfig
   profile: Profile
+  derivableAdr: IDerivableContractAddress
 
-  constructor(config: ConfigType & { CURRENT_POOL: CurrentPool }, profile: Profile) {
+  constructor(config: IEngineConfig & { CURRENT_POOL: CurrentPool }, profile: Profile) {
     this.config = config
     this.account = config.account
     this.chainId = config.chainId
-    this.scanApi = config.scanApi
-    this.provider = config.provider
-    this.overrideProvider = config.overrideProvider
+    this.scanApi = profile.configs.scanApi
+    this.provider = new JsonRpcProvider(profile.configs.rpc)
+    this.provider = new ethers.providers.JsonRpcProvider(profile.configs.rpc)
+    this.overrideProvider = new JsonRpcProvider(profile.configs.rpc)
     this.signer = config.signer
     this.CURRENT_POOL = config.CURRENT_POOL
     this.profile = profile
+    this.derivableAdr = profile.configs.derivable
   }
 
   //@ts-ignore
@@ -52,7 +55,7 @@ export class Swap {
       })
       const {params, value} = await this.convertStepToActions(stepsToSwap)
 
-      const router = this.config.addresses.router as string
+      const router = this.profile.configs.helperContract.utr as string
       // @ts-ignore
       this.overrideProvider.setStateOverride({
         [router]: {
@@ -67,13 +70,13 @@ export class Swap {
       const res = await contract.callStatic.exec(...params, {
         from: this.account,
         value,
-        gasLimit: this.config.gasLimitDefault || undefined,
+        gasLimit: this.profile.configs.gasLimitDefault || undefined,
       })
       const result = []
       for (const i in steps) {
         result.push({...steps[i], amountOut: res[0][i]})
       }
-      return [result, bn(this.config.gasLimitDefault).sub(res.gasLeft)]
+      return [result, bn(this.profile.configs.gasLimitDefault).sub(res.gasLeft)]
     } catch (e) {
       throw e
     }
@@ -111,7 +114,7 @@ export class Swap {
             ? 0
             : 20,
         token: isErc1155Address(step.tokenOut)
-          ? this.config.addresses.token as string
+          ? this.derivableAdr.token as string
           : step.tokenOut,
         id: isErc1155Address(step.tokenOut)
           ? packId(
@@ -131,7 +134,7 @@ export class Swap {
 
       if (
         (step.tokenIn === NATIVE_ADDRESS || step.tokenOut === NATIVE_ADDRESS) &&
-        poolGroup.TOKEN_R !== this.config.addresses.wrapToken
+        poolGroup.TOKEN_R !== this.profile.configs.wrappedTokenAddress
       ) {
         throw 'This pool do not support swap by native Token'
       }
@@ -155,10 +158,10 @@ export class Swap {
         const {inputs, populateTxData} = this.getSweepCallData({step, poolGroup, poolIn, poolOut, idIn, idOut})
 
         metaDatas.push({
-          code: this.config.addresses.stateCalHelper,
+          code: this.derivableAdr.stateCalHelper,
           inputs,
         }, {
-          code: this.config.addresses.stateCalHelper,
+          code: this.derivableAdr.stateCalHelper,
           inputs: []
         })
 
@@ -166,7 +169,7 @@ export class Swap {
       } else {
         const {inputs, populateTxData} = this.getSwapCallData({step, poolGroup, poolIn, poolOut, idIn, idOut})
         metaDatas.push({
-          code: this.config.addresses.stateCalHelper,
+          code: this.derivableAdr.stateCalHelper,
           inputs,
         })
         promises.push(...populateTxData)
@@ -193,7 +196,7 @@ export class Swap {
       {
         mode: TRANSFER,
         eip: 1155,
-        token: this.config.addresses.token,
+        token: this.derivableAdr.token,
         id: packId(idOut + '', poolOut),
         amountIn: step.currentBalanceOut,
         recipient: stateCalHelper.address,
@@ -212,7 +215,7 @@ export class Swap {
           mode: PAYMENT,
           eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
           token: isErc1155Address(step.tokenIn)
-            ? this.config.addresses.token
+            ? this.derivableAdr.token
             : poolGroup.TOKEN_R,
           id: isErc1155Address(step.tokenIn)
             ? packId(idIn.toString(), poolIn)
@@ -261,7 +264,7 @@ export class Swap {
         mode: PAYMENT,
         eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
         token: isErc1155Address(step.tokenIn)
-          ? this.config.addresses.token
+          ? this.derivableAdr.token
           : step.tokenIn,
         id: isErc1155Address(step.tokenIn)
           ? packId(idIn.toString(), poolIn)
@@ -334,7 +337,7 @@ export class Swap {
 
   wrapToken(address: string) {
     if (address === NATIVE_ADDRESS) {
-      return this.config.addresses.wrapToken
+      return this.profile.configs.wrappedTokenAddress
     }
 
     return address
@@ -364,7 +367,7 @@ export class Swap {
         return bn(POOL_IDS.R)
       } else if (
         address === NATIVE_ADDRESS &&
-        TOKEN_R === this.config.addresses.wrapToken
+        TOKEN_R === this.profile.configs.wrappedTokenAddress
       ) {
         return bn(POOL_IDS.native)
       }
@@ -432,9 +435,9 @@ export class Swap {
     }
     if (
       address === NATIVE_ADDRESS &&
-      TOKEN_R === this.config.addresses.wrapToken
+      TOKEN_R === this.profile.configs.wrappedTokenAddress
     ) {
-      return this.config.addresses.wrapToken
+      return this.profile.configs.wrappedTokenAddress
     }
 
     return address
@@ -442,7 +445,7 @@ export class Swap {
 
   getRouterContract(provider: any) {
     return new ethers.Contract(
-      this.config.addresses.router as string,
+      this.profile.configs.helperContract.utr as string,
       this.profile.getAbi('UTR'),
       provider,
     )
@@ -450,7 +453,7 @@ export class Swap {
 
   getStateCalHelperContract(provider?: any) {
     return new ethers.Contract(
-      this.config.addresses.stateCalHelper as string,
+      this.derivableAdr.stateCalHelper as string,
       this.profile.getAbi('Helper'),
       provider || this.provider
     )

@@ -6,11 +6,10 @@ import {BnA} from './services/balanceAndAllowance'
 import {UniV2Pair} from './services/uniV2Pair'
 import {History} from './services/history'
 import {Swap} from './services/swap'
-import {CurrentPool, PoolData} from './services/currentPool'
+import {CurrentPool} from './services/currentPool'
 import {CreatePool} from './services/createPool'
 import {UniV3Pair} from './services/uniV3Pair'
-import {ConfigType, Derivable} from './services/setConfig'
-import {DEFAULT_CHAIN, IEngineConfig} from './utils/configs'
+import {IEngineConfig} from './utils/configs'
 import {Profile} from "./profile";
 
 
@@ -46,21 +45,21 @@ export class Engine {
 
   async initServices() {
     await this.profile.loadConfig()
-    // this.UNIV2PAIR = new UniV2Pair(this.config)
-    // this.UNIV3PAIR = new UniV3Pair(this.config)
-    // this.BNA = new BnA(this.config)
+    this.UNIV2PAIR = new UniV2Pair(this.enginConfigs, this.profile)
+    this.UNIV3PAIR = new UniV3Pair(this.enginConfigs, this.profile)
+    this.BNA = new BnA(this.enginConfigs, this.profile)
     this.RESOURCE = new Resource(this.enginConfigs, this.profile)
-    // this.PRICE = new Price(this.config)
-    // this.CURRENT_POOL = new CurrentPool(this.config, this.profile)
-    // this.HISTORY = new History({
-    //   ...this.config,
-    //   CURRENT_POOL: this.CURRENT_POOL,
-    // }, this.profile)
-    // this.SWAP = new Swap({
-    //   ...this.config,
-    //   CURRENT_POOL: this.CURRENT_POOL,
-    // }, this.profile)
-    // this.CREATE_POOL = new CreatePool(this.config, this.profile)
+    this.PRICE = new Price(this.enginConfigs, this.profile)
+    this.CURRENT_POOL = new CurrentPool(this.enginConfigs)
+    this.HISTORY = new History({
+      ...this.enginConfigs,
+      CURRENT_POOL: this.CURRENT_POOL,
+    }, this.profile)
+    this.SWAP = new Swap({
+      ...this.enginConfigs,
+      CURRENT_POOL: this.CURRENT_POOL,
+    }, this.profile)
+    this.CREATE_POOL = new CreatePool(this.enginConfigs, this.profile)
   }
 
   setCurrentPool(poolData: any) {

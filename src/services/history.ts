@@ -2,20 +2,18 @@ import {BigNumber, ethers} from 'ethers'
 import {PowerState} from 'powerLib/dist/powerLib'
 import {LogType, TokenType} from '../types'
 import {CurrentPool} from './currentPool'
-import {EventDataAbis, NATIVE_ADDRESS, POOL_IDS} from '../utils/constant'
-import {ConfigType} from './setConfig'
-import {Resource} from './resource'
+import {NATIVE_ADDRESS, POOL_IDS} from '../utils/constant'
 import {add, bn, div, getTopics, max, mul, numberToWei, parseSqrtSpotPrice, sub, weiToNumber} from "../utils/helper";
-import {forEach} from "lodash";
 import {Profile} from "../profile";
+import {IEngineConfig} from "../utils/configs";
 
 export class History {
   account?: string
   CURRENT_POOL: CurrentPool
-  config: ConfigType
+  config: IEngineConfig
   profile: Profile
 
-  constructor(config: ConfigType & { CURRENT_POOL: CurrentPool }, profile: Profile) {
+  constructor(config: IEngineConfig & { CURRENT_POOL: CurrentPool }, profile: Profile) {
     this.config = config
     this.account = config.account
     this.CURRENT_POOL = config.CURRENT_POOL
@@ -94,7 +92,7 @@ export class History {
       if ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) && priceR) {
         const pool = pools[poolIn]
         const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
-        const tokenRQuote = tokens.find((t) => t.address === this.config.stableCoins[0])
+        const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0])
         //@ts-ignore
         const priceRFormated = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote, 1)
 
@@ -178,7 +176,7 @@ export class History {
           const pool = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? pools[poolIn] : pools[poolOut]
           const amount = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut
           const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
-          const tokenRQuote = tokens.find((t) => t.address === this.config.stableCoins[0])
+          const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0])
           //@ts-ignore
           const priceRFormated = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote, 1)
           entryValue = weiToNumber(amount.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18))
