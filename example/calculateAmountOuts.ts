@@ -28,8 +28,7 @@ const testLocal = async () => {
       tokenOut: poolOut + '-' + POOL_IDS.C,
       amountOutMin: 0,
       currentBalanceOut,
-      useSweep: false,
-      index_R: bn(0)
+      useSweep: true
     },
   ]
   // 961641740797182

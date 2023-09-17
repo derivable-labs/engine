@@ -235,7 +235,7 @@ export class Swap {
         maturity: 0,
         payer: this.account,
         recipient: this.account,
-        INDEX_R: step.index_R
+        INDEX_R: this.getIndexR(poolGroup.TOKEN_R)
       }),
       stateCalHelper.populateTransaction.sweep(
         packId(idOut + '', poolOut),
@@ -300,7 +300,7 @@ export class Swap {
           amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
           payer: this.account,
           recipient: this.account,
-          INDEX_R: step.index_R
+          INDEX_R: this.getIndexR(poolGroup.TOKEN_R)
         })
       )
     } else if (isAddress(step.tokenOut) && this.wrapToken(step.tokenOut) !== poolGroup.TOKEN_R) {
@@ -312,7 +312,7 @@ export class Swap {
           amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
           payer: this.account,
           recipient: this.account,
-          INDEX_R: step.index_R
+          INDEX_R: this.getIndexR(poolGroup.TOKEN_R)
         })
       )
     } else {
@@ -325,7 +325,7 @@ export class Swap {
           maturity: 0,
           payer: this.account,
           recipient: this.account,
-          INDEX_R: step.index_R
+          INDEX_R: this.getIndexR(poolGroup.TOKEN_R)
         })
       )
     }
@@ -457,5 +457,15 @@ export class Swap {
       this.profile.getAbi('Helper'),
       provider || this.provider
     )
+  }
+
+  getIndexR(tokenR: string) {
+    const pool = this.profile.uniV3Pools[tokenR + '-' + this.profile.configs.stablecoins[0]]
+    return pool ? bn(
+      ethers.utils.hexZeroPad(
+        bn(1).shl(255).add(pool).toHexString(),
+        32
+      )
+    ) : bn(0)
   }
 }
