@@ -453,6 +453,7 @@ class Resource {
                         methodName: 'compute',
                         methodParameters: [
                             this.addresses.token,
+                            5
                         ],
                     },
                 ],
