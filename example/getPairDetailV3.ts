@@ -4,7 +4,8 @@ import { bn } from '../src/utils/helper'
 
 const test = async () => {
   const configs = getTestConfigs(42161)
-  const engine = new Engine(configs.account, configs, 42161)
+  const engine = new Engine(configs)
+  await engine.initServices()
 
   const pairInfo = await engine.UNIV3PAIR.getPairInfo({
     pairAddress: '0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443',

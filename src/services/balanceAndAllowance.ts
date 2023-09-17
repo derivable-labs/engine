@@ -16,7 +16,6 @@ export class BnA {
   chainId: number
   account?: string
   provider: ethers.providers.Provider
-  contractAddresses: Partial<IDerivableContractAddress>
   rpcUrl: string
   bnAAddress: string
   profile: Profile
@@ -32,17 +31,16 @@ export class BnA {
   async getBalanceAndAllowance({tokens}: any): Promise<BnAReturnType> {
     if (this.account) {
 
-      const provider = new JsonRpcProvider(this.rpcUrl)
       // @ts-ignore
-      provider.setStateOverride({
+      this.provider.setStateOverride({
         [this.bnAAddress as string]: {
           code: BnAAbi.deployedBytecode,
         },
       })
 
       const multicall = new Multicall({
-        multicallCustomContractAddress: this.contractAddresses.multiCall,
-        ethersProvider: provider,
+        multicallCustomContractAddress: this.profile.configs.derivable.multiCall,
+        ethersProvider: this.provider,
         tryAggregate: true,
       })
       const erc20Tokens = getNormalAddress(tokens)
@@ -93,7 +91,7 @@ export class BnA {
       },
       {
         reference: 'erc1155',
-        contractAddress: this.contractAddresses.token,
+        contractAddress: this.profile.configs.derivable.token,
         abi: TokenAbi,
         calls: [
           {

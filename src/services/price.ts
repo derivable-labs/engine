@@ -18,7 +18,7 @@ export class Price {
   profile: Profile
 
   constructor(config: IEngineConfig, profile: Profile) {
-    const reserveTokenPrice = '0x' + ReserveTokenPrice.deployedBytecode.slice(-40)
+    this.reserveTokenPrice = '0x' + ReserveTokenPrice.deployedBytecode.slice(-40)
     this.chainId = config.chainId
     this.scanApi = profile.configs.scanApi
     this.provider = new JsonRpcProvider(profile.configs.rpc)
