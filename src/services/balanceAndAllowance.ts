@@ -39,7 +39,7 @@ export class BnA {
       })
 
       const multicall = new Multicall({
-        multicallCustomContractAddress: this.profile.configs.derivable.multiCall,
+        multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
         ethersProvider: this.provider,
         tryAggregate: true,
       })

@@ -3,7 +3,7 @@ import { getTestConfigs } from './shared/testConfigs'
 import { weiToNumber } from '../src/utils/helper'
 
 const test = async () => {
-  const configs = getTestConfigs(42161)
+  const configs = getTestConfigs(8453)
   const engine = new Engine(configs)
   await engine.initServices()
   await engine.RESOURCE.fetchResourceData(
