@@ -460,10 +460,16 @@ export class Swap {
   }
 
   getIndexR(tokenR: string) {
-    const pool = this.profile.uniV3Pools[tokenR + '-' + this.profile.configs.stablecoins[0]]
-    return pool ? bn(
+    const routeKey = Object.keys(this.profile.routes).find((r) => {
+      return [
+        ...this.profile.configs.stablecoins.map((stablecoin) => stablecoin + '-' + tokenR),
+        ...this.profile.configs.stablecoins.map((stablecoin) => tokenR + '-' + stablecoin)
+      ].includes(r)
+    })
+    const pool = this.profile.routes[routeKey || ''] ? this.profile.routes[routeKey || ''][0] : undefined
+    return pool?.address ? bn(
       ethers.utils.hexZeroPad(
-        bn(1).shl(255).add(pool).toHexString(),
+        bn(1).shl(255).add(pool.address).toHexString(),
         32
       )
     ) : bn(0)
