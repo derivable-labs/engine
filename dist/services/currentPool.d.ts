@@ -1,8 +1,6 @@
 import { Resource } from './resource';
-import { BigNumber } from 'ethers';
-import { ConfigType } from './setConfig';
 import { PoolType } from '../types';
-import { Profile } from "../profile";
+import { IEngineConfig } from "../utils/configs";
 export type PoolData = {
     baseToken: string;
     quoteToken: string;
@@ -24,22 +22,14 @@ export declare class CurrentPool {
     };
     baseToken: string;
     quoteToken: string;
-    cToken: string;
     TOKEN: string;
     dTokens: string[];
-    logicAddress?: string;
-    cTokenPrice: number;
     states: any;
     powers: number[];
     basePrice: string;
     poolAddress?: string;
-    baseId: number;
-    quoteId: number;
     chainId: number;
-    config: ConfigType;
-    constructor(config: ConfigType, profile: Profile);
-    setPoolAddress(address: string): void;
+    config: IEngineConfig;
+    constructor(config: IEngineConfig);
     initCurrentPoolData(poolData: PoolData): void;
-    getTokenByPower(power: number | string): string | undefined;
-    getIdByAddress(address: string): BigNumber;
 }

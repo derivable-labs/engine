@@ -74,7 +74,7 @@ class History {
             if ([constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) && priceR) {
                 const pool = pools[poolIn];
                 const tokenR = tokens.find((t) => t.address === pool.TOKEN_R);
-                const tokenRQuote = tokens.find((t) => t.address === this.config.stableCoins[0]);
+                const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0]);
                 //@ts-ignore
                 const priceRFormated = (0, helper_1.parseSqrtSpotPrice)(priceR, tokenR, tokenRQuote, 1);
                 positions[tokenOutAddress].totalEntryR = (0, helper_1.add)((_a = positions[tokenOutAddress].totalEntryR) !== null && _a !== void 0 ? _a : 0, amountIn);
@@ -129,7 +129,7 @@ class History {
                     const pool = [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) ? pools[poolIn] : pools[poolOut];
                     const amount = [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut;
                     const tokenR = tokens.find((t) => t.address === pool.TOKEN_R);
-                    const tokenRQuote = tokens.find((t) => t.address === this.config.stableCoins[0]);
+                    const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0]);
                     //@ts-ignore
                     const priceRFormated = (0, helper_1.parseSqrtSpotPrice)(priceR, tokenR, tokenRQuote, 1);
                     entryValue = (0, helper_1.weiToNumber)(amount.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + ((tokenIn === null || tokenIn === void 0 ? void 0 : tokenIn.decimal) || 18));

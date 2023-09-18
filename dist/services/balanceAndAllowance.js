@@ -21,26 +21,25 @@ const Token_json_1 = __importDefault(require("../abi/Token.json"));
 const number_1 = require("../utils/number");
 const providers_1 = require("@ethersproject/providers");
 class BnA {
-    constructor(config) {
-        this.rpcUrl = config.rpcUrl;
+    constructor(config, profile) {
         this.chainId = config.chainId;
         this.account = config.account;
-        this.provider = config.provider;
-        this.contractAddresses = config.addresses;
+        this.provider = new providers_1.JsonRpcProvider(profile.configs.rpc);
+        this.bnAAddress = '0x' + BnA_json_1.default.deployedBytecode.slice(-40);
+        this.profile = profile;
     }
     getBalanceAndAllowance({ tokens }) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.account) {
-                const provider = new providers_1.JsonRpcProvider(this.rpcUrl);
                 // @ts-ignore
-                provider.setStateOverride({
-                    [this.contractAddresses.bnA]: {
+                this.provider.setStateOverride({
+                    [this.bnAAddress]: {
                         code: BnA_json_1.default.deployedBytecode,
                     },
                 });
                 const multicall = new ethereum_multicall_1.Multicall({
-                    multicallCustomContractAddress: this.contractAddresses.multiCall,
-                    ethersProvider: provider,
+                    multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
+                    ethersProvider: this.provider,
                     tryAggregate: true,
                 });
                 const erc20Tokens = (0, helper_1.getNormalAddress)(tokens);
@@ -67,7 +66,7 @@ class BnA {
         const request = [
             {
                 reference: 'erc20',
-                contractAddress: this.contractAddresses.bnA,
+                contractAddress: this.bnAAddress,
                 abi: BnA_json_1.default.abi,
                 calls: [
                     {
@@ -76,14 +75,14 @@ class BnA {
                         methodParameters: [
                             erc20Tokens,
                             [this.account],
-                            [this.contractAddresses.router],
+                            [this.profile.configs.helperContract.utr],
                         ],
                     },
                 ],
             },
             {
                 reference: 'erc1155',
-                contractAddress: this.contractAddresses.token,
+                contractAddress: this.profile.configs.derivable.token,
                 abi: Token_json_1.default,
                 calls: [
                     {
@@ -94,7 +93,7 @@ class BnA {
                     {
                         reference: 'isApprovedForAll',
                         methodName: 'isApprovedForAll',
-                        methodParameters: [this.account, this.contractAddresses.router],
+                        methodParameters: [this.account, this.profile.configs.helperContract.utr],
                     },
                 ],
             },

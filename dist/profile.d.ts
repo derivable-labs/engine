@@ -1,12 +1,16 @@
-import { DeepPartial } from "./types/utils";
-import { ConfigType } from "./services/setConfig";
-import { config } from "./utils/configs";
+import { IEngineConfig, INetworkConfig } from "./utils/configs";
 export declare class Profile {
     chainId: number;
-    abis: any;
-    configs: ConfigType;
-    constructor(chainId: number, configs: DeepPartial<ConfigType>);
-    loadConfig(configProp: DeepPartial<config>, chainIdProp: number): ConfigType;
+    env: 'dev' | 'production';
+    configs: INetworkConfig;
+    routes: {
+        [key: string]: {
+            type: string;
+            address: string;
+        }[];
+    };
+    constructor(engineConfig: IEngineConfig);
+    loadConfig(): Promise<void>;
     getAbi(name: string): any;
     getEventDataAbi(): any;
 }

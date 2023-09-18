@@ -12,24 +12,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreatePool = void 0;
 const ethers_1 = require("ethers");
 const helper_1 = require("../utils/helper");
-// type ConfigType = {
-//   account?: string
-//   chainId: number
-//   scanApi: string
-//   provider: ethers.providers.Provider
-//   overrideProvider: JsonRpcProvider
-//   signer?: ethers.providers.JsonRpcSigner
-//   UNIV2PAIR: UniV2Pair
-// }
+const providers_1 = require("@ethersproject/providers");
 class CreatePool {
     constructor(config, profile) {
         this.account = config.account;
         this.chainId = config.chainId;
-        this.scanApi = config.scanApi;
-        this.provider = config.provider;
-        this.overrideProvider = config.overrideProvider;
+        this.scanApi = profile.configs.scanApi;
+        this.provider = new providers_1.JsonRpcProvider(profile.configs.rpc);
+        this.overrideProvider = new providers_1.JsonRpcProvider(profile.configs.rpc);
         this.signer = config.signer;
-        this.contractAddresses = config.addresses;
         this.profile = profile;
     }
     callStaticCreatePool({ params, value, gasLimit }) {
@@ -63,11 +54,11 @@ class CreatePool {
     }
     generateConfig(k, a, b, mark, recipient, oracle, initTime, halfLife) {
         return {
-            utr: this.contractAddresses.router,
+            utr: this.profile.configs.helperContract.utr,
             token: this.contractAddresses.token,
             logic: this.contractAddresses.logic,
             oracle,
-            reserveToken: this.contractAddresses.wrapToken,
+            reserveToken: this.profile.configs.wrappedTokenAddress,
             recipient,
             mark,
             k,

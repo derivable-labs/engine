@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { AllowancesType, BalancesType, MaturitiesType } from '../types';
-import { ConfigType } from './setConfig';
-import { DerivableContractAddress } from '../utils/configs';
+import { IEngineConfig } from '../utils/configs';
+import { Profile } from "../profile";
 type BnAReturnType = {
     balances: BalancesType;
     allowances: AllowancesType;
@@ -11,9 +11,10 @@ export declare class BnA {
     chainId: number;
     account?: string;
     provider: ethers.providers.Provider;
-    contractAddresses: Partial<DerivableContractAddress>;
     rpcUrl: string;
-    constructor(config: ConfigType);
+    bnAAddress: string;
+    profile: Profile;
+    constructor(config: IEngineConfig, profile: Profile);
     getBalanceAndAllowance({ tokens }: any): Promise<BnAReturnType>;
     getBnAMulticallRequest({ erc20Tokens, erc1155Tokens, }: {
         erc20Tokens: string[];

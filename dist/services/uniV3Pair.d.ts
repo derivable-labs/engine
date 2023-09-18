@@ -1,16 +1,17 @@
 import { ethers } from 'ethers';
-import { ConfigType } from './setConfig';
 import { Multicall } from "ethereum-multicall";
-import { DerivableContractAddress } from "../utils/configs";
+import { IDerivableContractAddress, IEngineConfig } from "../utils/configs";
 import { CallReturnContext } from "ethereum-multicall/dist/esm/models/call-return-context";
+import { Profile } from "../profile";
 export declare class UniV3Pair {
     chainId: number;
     scanApi?: string;
     provider: ethers.providers.Provider;
     rpcUrl: string;
     pairsV3Info: string;
-    addresses: Partial<DerivableContractAddress>;
-    constructor(config: ConfigType);
+    addresses: Partial<IDerivableContractAddress>;
+    profile: Profile;
+    constructor(config: IEngineConfig, profile: Profile);
     getLargestPoolAddress({ baseToken, quoteTokens, }: {
         baseToken: string;
         quoteTokens: string[];
@@ -82,7 +83,7 @@ export declare class UniV3Pair {
     _parsePoolAddressReturnContext(returnContexts: CallReturnContext[]): {};
     _generatePoolAddressContext(baseToken: string, quoteTokens: string[]): {
         reference: string;
-        contractAddress: string | undefined;
+        contractAddress: string;
         abi: ({
             inputs: never[];
             stateMutability: string;

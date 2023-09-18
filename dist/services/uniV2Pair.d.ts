@@ -1,12 +1,12 @@
 import { ethers } from 'ethers';
-import { DerivableContractAddress } from '../utils/configs';
-import { ConfigType } from './setConfig';
+import { IEngineConfig } from '../utils/configs';
+import { Profile } from "../profile";
 export declare class UniV2Pair {
     chainId: number;
     scanApi?: string;
+    pairsInfoAddress: string;
     provider: ethers.providers.Provider;
-    constractAddresses: Partial<DerivableContractAddress>;
-    constructor(config: ConfigType);
+    constructor(config: IEngineConfig, profile: Profile);
     getPairInfo({ pairAddress, flag, }: {
         pairAddress: string;
         flag?: string;

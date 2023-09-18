@@ -30,18 +30,14 @@ const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111
 //   rpcUrl: string
 // }
 class UniV3Pair {
-    constructor(config) {
-        const { chainId, scanApi, provider, rpcUrl } = config;
-        const { pairsV3Info } = config.addresses;
-        if (!pairsV3Info) {
-            throw new Error(`required pairsV3Info contract to be defined!`);
-        }
-        this.chainId = chainId;
-        this.scanApi = scanApi;
-        this.provider = provider;
-        this.rpcUrl = rpcUrl;
+    constructor(config, profile) {
+        const pairsV3Info = '0x' + PairV3Detail_json_1.default.deployedBytecode.slice(-40);
+        this.chainId = config.chainId;
+        this.scanApi = profile.configs.scanApi;
+        this.provider = new providers_1.JsonRpcProvider(profile.configs.rpc);
+        this.rpcUrl = profile.configs.rpc;
         this.pairsV3Info = pairsV3Info;
-        this.addresses = config.addresses;
+        this.profile = profile;
     }
     getLargestPoolAddress({ baseToken, quoteTokens, }) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -122,7 +118,7 @@ class UniV3Pair {
         });
         return [{
                 reference: 'poolAddresses',
-                contractAddress: this.addresses.uniswapFactory,
+                contractAddress: this.profile.configs.uniswap.v3Factory,
                 abi: UniswapV3Factory_json_1.default,
                 calls
             }];
@@ -184,7 +180,7 @@ class UniV3Pair {
     }
     _getMulticall() {
         return new ethereum_multicall_1.Multicall({
-            multicallCustomContractAddress: this.addresses.multiCall,
+            multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
             ethersProvider: this.provider,
             tryAggregate: true,
         });

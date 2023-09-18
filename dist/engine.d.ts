@@ -8,21 +8,16 @@ import { History } from './services/history';
 import { Swap } from './services/swap';
 import { CurrentPool } from './services/currentPool';
 import { CreatePool } from './services/createPool';
-import { JsonRpcProvider } from '@ethersproject/providers';
 import { UniV3Pair } from './services/uniV3Pair';
-import { ConfigType } from './services/setConfig';
-import { DeepPartial } from './types/utils';
+import { IEngineConfig } from './utils/configs';
 import { Profile } from "./profile";
 export declare class Engine {
     chainId: number;
     scanApi?: string;
-    scanApiKey?: string;
     rpcUrl: string;
     account?: string;
     signer?: ethers.providers.JsonRpcSigner;
     provider: ethers.providers.Provider;
-    providerToGetLog: ethers.providers.Provider;
-    overrideProvider: JsonRpcProvider;
     storage?: Storage;
     PRICE: Price;
     RESOURCE: Resource;
@@ -32,11 +27,10 @@ export declare class Engine {
     HISTORY: History;
     SWAP: Swap;
     CURRENT_POOL: CurrentPool;
-    currentPoolAddress: string;
     CREATE_POOL: CreatePool;
-    config: ConfigType;
+    enginConfigs: IEngineConfig;
+    constructor(enginConfigs: IEngineConfig, profile?: typeof Profile);
     profile: Profile;
-    constructor(account: string, config: DeepPartial<ConfigType>, chainIdProp?: number);
-    initServices(): void;
+    initServices(): Promise<void>;
     setCurrentPool(poolData: any): void;
 }

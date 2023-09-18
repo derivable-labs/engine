@@ -13,6 +13,7 @@ exports.Swap = void 0;
 const ethers_1 = require("ethers");
 const helper_1 = require("../utils/helper");
 const constant_1 = require("../utils/constant");
+const providers_1 = require("@ethersproject/providers");
 const utils_1 = require("ethers/lib/utils");
 const PAYMENT = 0;
 const TRANSFER = 1;
@@ -22,12 +23,14 @@ class Swap {
         this.config = config;
         this.account = config.account;
         this.chainId = config.chainId;
-        this.scanApi = config.scanApi;
-        this.provider = config.provider;
-        this.overrideProvider = config.overrideProvider;
+        this.scanApi = profile.configs.scanApi;
+        this.provider = new providers_1.JsonRpcProvider(profile.configs.rpc);
+        this.provider = new ethers_1.ethers.providers.JsonRpcProvider(profile.configs.rpc);
+        this.overrideProvider = new providers_1.JsonRpcProvider(profile.configs.rpc);
         this.signer = config.signer;
         this.CURRENT_POOL = config.CURRENT_POOL;
         this.profile = profile;
+        this.derivableAdr = profile.configs.derivable;
     }
     //@ts-ignore
     calculateAmountOuts(steps) {
@@ -39,7 +42,7 @@ class Swap {
                     return Object.assign(Object.assign({}, step), { amountOutMin: 0 });
                 });
                 const { params, value } = yield this.convertStepToActions(stepsToSwap);
-                const router = this.config.addresses.router;
+                const router = this.profile.configs.helperContract.utr;
                 // @ts-ignore
                 this.overrideProvider.setStateOverride({
                     [router]: {
@@ -50,13 +53,13 @@ class Swap {
                 const res = yield contract.callStatic.exec(...params, {
                     from: this.account,
                     value,
-                    gasLimit: this.config.gasLimitDefault || undefined,
+                    gasLimit: this.profile.configs.gasLimitDefault || undefined,
                 });
                 const result = [];
                 for (const i in steps) {
                     result.push(Object.assign(Object.assign({}, steps[i]), { amountOut: res[0][i] }));
                 }
-                return [result, (0, helper_1.bn)(this.config.gasLimitDefault).sub(res.gasLeft)];
+                return [result, (0, helper_1.bn)(this.profile.configs.gasLimitDefault).sub(res.gasLeft)];
             }
             catch (e) {
                 throw e;
@@ -87,7 +90,7 @@ class Swap {
                             ? 0
                             : 20,
                     token: (0, helper_1.isErc1155Address)(step.tokenOut)
-                        ? this.config.addresses.token
+                        ? this.derivableAdr.token
                         : step.tokenOut,
                     id: (0, helper_1.isErc1155Address)(step.tokenOut)
                         ? (0, helper_1.packId)(this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R).toString(), this.getAddressByErc1155Address(step.tokenOut, poolGroup.TOKEN_R))
@@ -101,7 +104,7 @@ class Swap {
             steps.forEach((step) => {
                 const poolGroup = this.getPoolPoolGroup(step.tokenIn, step.tokenOut);
                 if ((step.tokenIn === constant_1.NATIVE_ADDRESS || step.tokenOut === constant_1.NATIVE_ADDRESS) &&
-                    poolGroup.TOKEN_R !== this.config.addresses.wrapToken) {
+                    poolGroup.TOKEN_R !== this.profile.configs.wrappedTokenAddress) {
                     throw 'This pool do not support swap by native Token';
                 }
                 const poolIn = this.getAddressByErc1155Address(step.tokenIn, poolGroup.TOKEN_R);
@@ -114,10 +117,10 @@ class Swap {
                 if (step.useSweep && (0, helper_1.isErc1155Address)(step.tokenOut)) {
                     const { inputs, populateTxData } = this.getSweepCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut });
                     metaDatas.push({
-                        code: this.config.addresses.stateCalHelper,
+                        code: this.derivableAdr.stateCalHelper,
                         inputs,
                     }, {
-                        code: this.config.addresses.stateCalHelper,
+                        code: this.derivableAdr.stateCalHelper,
                         inputs: []
                     });
                     promises.push(...populateTxData);
@@ -125,7 +128,7 @@ class Swap {
                 else {
                     const { inputs, populateTxData } = this.getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut });
                     metaDatas.push({
-                        code: this.config.addresses.stateCalHelper,
+                        code: this.derivableAdr.stateCalHelper,
                         inputs,
                     });
                     promises.push(...populateTxData);
@@ -146,7 +149,7 @@ class Swap {
             {
                 mode: TRANSFER,
                 eip: 1155,
-                token: this.config.addresses.token,
+                token: this.derivableAdr.token,
                 id: (0, helper_1.packId)(idOut + '', poolOut),
                 amountIn: step.currentBalanceOut,
                 recipient: stateCalHelper.address,
@@ -165,7 +168,7 @@ class Swap {
                         mode: PAYMENT,
                         eip: (0, helper_1.isErc1155Address)(step.tokenIn) ? 1155 : 20,
                         token: (0, helper_1.isErc1155Address)(step.tokenIn)
-                            ? this.config.addresses.token
+                            ? this.derivableAdr.token
                             : poolGroup.TOKEN_R,
                         id: (0, helper_1.isErc1155Address)(step.tokenIn)
                             ? (0, helper_1.packId)(idIn.toString(), poolIn)
@@ -184,7 +187,7 @@ class Swap {
                 maturity: 0,
                 payer: this.account,
                 recipient: this.account,
-                INDEX_R: step.index_R
+                INDEX_R: this.getIndexR(poolGroup.TOKEN_R)
             }),
             stateCalHelper.populateTransaction.sweep((0, helper_1.packId)(idOut + '', poolOut), this.account),
         ];
@@ -203,7 +206,7 @@ class Swap {
                 mode: PAYMENT,
                 eip: (0, helper_1.isErc1155Address)(step.tokenIn) ? 1155 : 20,
                 token: (0, helper_1.isErc1155Address)(step.tokenIn)
-                    ? this.config.addresses.token
+                    ? this.derivableAdr.token
                     : step.tokenIn,
                 id: (0, helper_1.isErc1155Address)(step.tokenIn)
                     ? (0, helper_1.packId)(idIn.toString(), poolIn)
@@ -237,7 +240,7 @@ class Swap {
                 amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
                 payer: this.account,
                 recipient: this.account,
-                INDEX_R: step.index_R
+                INDEX_R: this.getIndexR(poolGroup.TOKEN_R)
             }));
         }
         else if ((0, utils_1.isAddress)(step.tokenOut) && this.wrapToken(step.tokenOut) !== poolGroup.TOKEN_R) {
@@ -249,7 +252,7 @@ class Swap {
                 amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
                 payer: this.account,
                 recipient: this.account,
-                INDEX_R: step.index_R
+                INDEX_R: this.getIndexR(poolGroup.TOKEN_R)
             }));
         }
         else {
@@ -262,7 +265,7 @@ class Swap {
                 maturity: 0,
                 payer: this.account,
                 recipient: this.account,
-                INDEX_R: step.index_R
+                INDEX_R: this.getIndexR(poolGroup.TOKEN_R)
             }));
         }
         return {
@@ -272,7 +275,7 @@ class Swap {
     }
     wrapToken(address) {
         if (address === constant_1.NATIVE_ADDRESS) {
-            return this.config.addresses.wrapToken;
+            return this.profile.configs.wrappedTokenAddress;
         }
         return address;
     }
@@ -298,7 +301,7 @@ class Swap {
                 return (0, helper_1.bn)(constant_1.POOL_IDS.R);
             }
             else if (address === constant_1.NATIVE_ADDRESS &&
-                TOKEN_R === this.config.addresses.wrapToken) {
+                TOKEN_R === this.profile.configs.wrappedTokenAddress) {
                 return (0, helper_1.bn)(constant_1.POOL_IDS.native);
             }
             return (0, helper_1.bn)(0);
@@ -359,16 +362,26 @@ class Swap {
             return address.split('-')[0];
         }
         if (address === constant_1.NATIVE_ADDRESS &&
-            TOKEN_R === this.config.addresses.wrapToken) {
-            return this.config.addresses.wrapToken;
+            TOKEN_R === this.profile.configs.wrappedTokenAddress) {
+            return this.profile.configs.wrappedTokenAddress;
         }
         return address;
     }
     getRouterContract(provider) {
-        return new ethers_1.ethers.Contract(this.config.addresses.router, this.profile.getAbi('UTR'), provider);
+        return new ethers_1.ethers.Contract(this.profile.configs.helperContract.utr, this.profile.getAbi('UTR'), provider);
     }
     getStateCalHelperContract(provider) {
-        return new ethers_1.ethers.Contract(this.config.addresses.stateCalHelper, this.profile.getAbi('Helper'), provider || this.provider);
+        return new ethers_1.ethers.Contract(this.derivableAdr.stateCalHelper, this.profile.getAbi('Helper'), provider || this.provider);
+    }
+    getIndexR(tokenR) {
+        const routeKey = Object.keys(this.profile.routes).find((r) => {
+            return [
+                ...this.profile.configs.stablecoins.map((stablecoin) => stablecoin + '-' + tokenR),
+                ...this.profile.configs.stablecoins.map((stablecoin) => tokenR + '-' + stablecoin)
+            ].includes(r);
+        });
+        const pool = this.profile.routes[routeKey || ''] ? this.profile.routes[routeKey || ''][0] : undefined;
+        return (pool === null || pool === void 0 ? void 0 : pool.address) ? (0, helper_1.bn)(ethers_1.ethers.utils.hexZeroPad((0, helper_1.bn)(1).shl(255).add(pool.address).toHexString(), 32)) : (0, helper_1.bn)(0);
     }
 }
 exports.Swap = Swap;

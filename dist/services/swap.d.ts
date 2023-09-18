@@ -2,8 +2,8 @@ import { BigNumber, ethers } from 'ethers';
 import { SwapStepType } from '../types';
 import { CurrentPool } from './currentPool';
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { ConfigType } from './setConfig';
 import { Profile } from "../profile";
+import { IDerivableContractAddress, IEngineConfig } from "../utils/configs";
 export declare class Swap {
     account?: string;
     chainId: number;
@@ -12,9 +12,10 @@ export declare class Swap {
     overrideProvider: JsonRpcProvider;
     signer?: ethers.providers.JsonRpcSigner;
     CURRENT_POOL: CurrentPool;
-    config: ConfigType;
+    config: IEngineConfig;
     profile: Profile;
-    constructor(config: ConfigType & {
+    derivableAdr: IDerivableContractAddress;
+    constructor(config: IEngineConfig & {
         CURRENT_POOL: CurrentPool;
     }, profile: Profile);
     calculateAmountOuts(steps: SwapStepType[]): Promise<(BigNumber | BigNumber[])[] | (BigNumber | {
@@ -26,7 +27,6 @@ export declare class Swap {
         amountOutMin: string | number | BigNumber;
         useSweep?: boolean | undefined;
         currentBalanceOut?: BigNumber | undefined;
-        index_R?: BigNumber | undefined;
         uniPool?: string | undefined;
     }[])[]>;
     callStaticMultiSwap({ params, value, gasLimit }: any): Promise<any>;
@@ -63,14 +63,14 @@ export declare class Swap {
         inputs: {
             mode: number;
             eip: number;
-            token: string | undefined;
+            token: string;
             id: number | BigNumber;
             amountIn: BigNumber;
             recipient: string | undefined;
         }[];
         populateTxData: Promise<ethers.PopulatedTransaction>[];
     };
-    wrapToken(address: string): string | undefined;
+    wrapToken(address: string): string;
     generateSwapParams(method: string, params: any): Promise<ethers.PopulatedTransaction>;
     getIdByAddress(address: string, TOKEN_R: string): BigNumber;
     getPoolPoolGroup(addressIn: string, addressOut: string): {
@@ -81,4 +81,5 @@ export declare class Swap {
     getAddressByErc1155Address(address: string, TOKEN_R: string): string;
     getRouterContract(provider: any): ethers.Contract;
     getStateCalHelperContract(provider?: any): ethers.Contract;
+    getIndexR(tokenR: string): BigNumber;
 }

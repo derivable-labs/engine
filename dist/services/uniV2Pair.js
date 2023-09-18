@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UniV2Pair = void 0;
 const ethers_1 = require("ethers");
 const PairDetail_json_1 = __importDefault(require("../abi/PairDetail.json"));
+const providers_1 = require("@ethersproject/providers");
 const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111';
 // type ConfigType = {
 //   chainId: number
@@ -22,17 +23,23 @@ const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111
 //   provider: ethers.providers.Provider
 // }
 class UniV2Pair {
-    constructor(config) {
-        const { chainId, scanApi, provider } = config;
-        this.constractAddresses = config.addresses;
-        this.chainId = chainId;
-        this.scanApi = scanApi;
-        this.provider = provider;
+    constructor(config, profile) {
+        this.pairsInfoAddress = '0x' + PairDetail_json_1.default.deployedBytecode.slice(-40);
+        this.chainId = config.chainId;
+        this.scanApi = profile.configs.scanApi;
+        const provider = new providers_1.JsonRpcProvider(profile.configs.rpc);
+        // @ts-ignore
+        provider.setStateOverride({
+            [this.pairsInfoAddress]: {
+                code: PairDetail_json_1.default.deployedBytecode,
+            },
+        });
+        this.provider = new providers_1.JsonRpcProvider(profile.configs.rpc);
     }
     getPairInfo({ pairAddress, flag = FLAG, }) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const pairDetailContract = new ethers_1.ethers.Contract(this.constractAddresses.pairsInfo, PairDetail_json_1.default, this.provider);
+                const pairDetailContract = new ethers_1.ethers.Contract(this.pairsInfoAddress, PairDetail_json_1.default.abi, this.provider);
                 const res = yield pairDetailContract.functions.query([pairAddress], flag);
                 return res.details[0];
             }
@@ -44,7 +51,7 @@ class UniV2Pair {
     getPairsInfo({ pairAddresses, flag = FLAG, }) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const pairDetailContract = new ethers_1.ethers.Contract(this.constractAddresses.pairsInfo, PairDetail_json_1.default, this.provider);
+                const pairDetailContract = new ethers_1.ethers.Contract(this.pairsInfoAddress, PairDetail_json_1.default.abi, this.provider);
                 const { details } = yield pairDetailContract.functions.query(pairAddresses, flag);
                 const result = {};
                 for (let i = 0; i < pairAddresses.length; i++) {

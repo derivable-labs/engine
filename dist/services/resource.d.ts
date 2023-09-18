@@ -1,10 +1,8 @@
 import { BigNumber, ethers } from 'ethers';
 import { LogType, ParseLogType, PoolGroupsType, PoolsType, PoolType, Storage, TokenType } from '../types';
-import { UniV2Pair } from './uniV2Pair';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { UniV3Pair } from './uniV3Pair';
-import { ConfigType } from './setConfig';
-import { DerivableContractAddress } from '../utils/configs';
+import { IDerivableContractAddress, IEngineConfig } from '../utils/configs';
 import { Profile } from "../profile";
 type ResourceData = {
     pools: PoolsType;
@@ -27,12 +25,11 @@ export declare class Resource {
     provider: ethers.providers.Provider;
     providerToGetLog: ethers.providers.Provider;
     overrideProvider: JsonRpcProvider;
-    UNIV2PAIR: UniV2Pair;
     UNIV3PAIR: UniV3Pair;
-    addresses: Partial<DerivableContractAddress>;
+    derivableAddress: IDerivableContractAddress;
     profile: Profile;
     stableCoins: string[];
-    constructor(config: ConfigType, profile: Profile);
+    constructor(engineConfigs: IEngineConfig, profile: Profile);
     fetchResourceData(account: string): Promise<any>;
     getLastBlockCached(account: string): any;
     cacheDdlLog({ swapLogs, ddlLogs, transferLogs, headBlock, account, }: {

@@ -17,36 +17,32 @@ const ethers_1 = require("ethers");
 const constant_1 = require("../utils/constant");
 const ethereum_multicall_1 = require("ethereum-multicall");
 const helper_1 = require("../utils/helper");
-const uniV2Pair_1 = require("./uniV2Pair");
+const providers_1 = require("@ethersproject/providers");
 const lodash_1 = __importDefault(require("lodash"));
 const uniV3Pair_1 = require("./uniV3Pair");
 const utils_1 = require("ethers/lib/utils");
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider');
 const MAX_BLOCK = 4294967295;
-const TOPIC_APP = ethers_1.ethers.utils.formatBytes32String('DDL');
 class Resource {
-    constructor(config, profile) {
-        var _a;
+    constructor(engineConfigs, profile) {
         this.poolGroups = {};
         this.pools = {};
         this.tokens = [];
         this.swapLogs = [];
         this.unit = 1000000;
-        this.unit = (_a = config.unit) !== null && _a !== void 0 ? _a : this.unit;
-        this.chainId = config.chainId;
-        this.scanApi = config.scanApi;
-        this.scanApiKey = config.scanApiKey;
-        this.account = config.account;
-        this.storage = config.storage;
-        this.account = config.account;
-        this.providerToGetLog = config.providerToGetLog;
-        this.provider = config.provider;
-        this.UNIV2PAIR = new uniV2Pair_1.UniV2Pair(config);
-        this.UNIV3PAIR = new uniV3Pair_1.UniV3Pair(config);
-        this.overrideProvider = config.overrideProvider;
-        this.addresses = config.addresses;
+        this.chainId = engineConfigs.chainId;
+        this.scanApi = profile.configs.scanApi;
+        this.scanApiKey = engineConfigs.scanApiKey;
+        this.account = engineConfigs.account;
+        this.storage = engineConfigs.storage;
+        this.account = engineConfigs.account;
+        this.providerToGetLog = new ethers_1.ethers.providers.JsonRpcProvider(profile.configs.rpcToGetLogs || profile.configs.rpc);
+        this.provider = new ethers_1.ethers.providers.JsonRpcProvider(profile.configs.rpc);
+        this.UNIV3PAIR = new uniV3Pair_1.UniV3Pair(engineConfigs, profile);
+        this.overrideProvider = new providers_1.JsonRpcProvider(profile.configs.rpc);
+        this.derivableAddress = profile.configs.derivable;
         this.profile = profile;
-        this.stableCoins = (config.stableCoins || []);
+        this.stableCoins = profile.configs.stablecoins;
     }
     fetchResourceData(account) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -177,7 +173,7 @@ class Resource {
                 const ddlLogs = logs.filter((log) => {
                     return log.address
                         && topics.Derivable.includes(log.topics[0])
-                        && log.address === this.addresses.poolFactory;
+                        && log.address === this.derivableAddress.poolFactory;
                 });
                 const swapLogs = logs.filter((log) => {
                     return log.address && topics.Swap.includes(log.topics[0]);
@@ -269,7 +265,7 @@ class Resource {
     uniPools) {
         return __awaiter(this, void 0, void 0, function* () {
             const multicall = new ethereum_multicall_1.Multicall({
-                multicallCustomContractAddress: this.addresses.multiCall,
+                multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
                 ethersProvider: this.getPoolOverridedProvider(),
                 tryAggregate: true,
             });
@@ -403,12 +399,12 @@ class Resource {
     getPoolOverridedProvider() {
         const stateOverride = {};
         // poolAddresses.forEach((address: string) => {
-        stateOverride[this.addresses.logic] = {
+        stateOverride[this.derivableAddress.logic] = {
             code: this.profile.getAbi('PoolOverride').deployedBytecode,
         };
         // })
         //@ts-ignore
-        this.overrideProvider.setStateOverride(Object.assign(Object.assign({}, stateOverride), { [this.addresses.tokensInfo]: {
+        this.overrideProvider.setStateOverride(Object.assign(Object.assign({}, stateOverride), { ['0x' + this.profile.getAbi('TokensInfo').deployedBytecode.slice(-40)]: {
                 code: this.profile.getAbi('TokensInfo').deployedBytecode,
             } }));
         return this.overrideProvider;
@@ -427,7 +423,7 @@ class Resource {
         const request = [
             {
                 reference: 'tokens',
-                contractAddress: this.addresses.tokensInfo,
+                contractAddress: '0x' + this.profile.getAbi('TokensInfo').deployedBytecode.slice(-40),
                 abi: this.profile.getAbi('TokensInfo').abi,
                 calls: [
                     {
@@ -452,7 +448,7 @@ class Resource {
                         reference: i,
                         methodName: 'compute',
                         methodParameters: [
-                            this.addresses.token,
+                            this.derivableAddress.token,
                             5
                         ],
                     },

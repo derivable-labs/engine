@@ -20,18 +20,13 @@ const helper_1 = require("../utils/helper");
 const constant_1 = require("../utils/constant");
 const historyProvider_1 = __importDefault(require("../historyProvider"));
 class Price {
-    constructor(config) {
-        const { chainId, scanApi, provider, rpcUrl } = config;
-        const { reserveTokenPrice } = config.addresses;
-        if (!reserveTokenPrice) {
-            throw new Error(`required pairsV3Info contract to be defined!`);
-        }
-        this.config = config;
-        this.chainId = chainId;
-        this.scanApi = scanApi;
-        this.provider = provider;
-        this.rpcUrl = rpcUrl;
-        this.reserveTokenPrice = reserveTokenPrice;
+    constructor(config, profile) {
+        this.reserveTokenPrice = '0x' + ReserveTokenPrice_json_1.default.deployedBytecode.slice(-40);
+        this.chainId = config.chainId;
+        this.scanApi = profile.configs.scanApi;
+        this.provider = new providers_1.JsonRpcProvider(profile.configs.rpc);
+        this.rpcUrl = profile.configs.rpc;
+        this.profile = profile;
     }
     get24hChange({ baseToken, cToken, quoteToken, chainId, currentPrice, }) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -66,7 +61,7 @@ class Price {
                     },
                 });
                 const pairDetailContract = new ethers_1.ethers.Contract(this.reserveTokenPrice, ReserveTokenPrice_json_1.default.abi, provider);
-                const res = yield pairDetailContract.functions.fetchMarketBatch(tokens, this.config.addresses.uniswapFactory, this.config.stableCoins, this.config.addresses.wrapToken, this.config.stableCoins[0]);
+                const res = yield pairDetailContract.functions.fetchMarketBatch(tokens, this.profile.configs.uniswap.v3Factory, this.profile.configs.stablecoins, this.profile.configs.wrappedTokenAddress, this.profile.configs.stablecoins[0]);
                 const result = {};
                 for (let i in tokens) {
                     result[tokens[i]] = res.sqrtPriceX96[i];

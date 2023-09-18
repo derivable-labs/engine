@@ -2,14 +2,14 @@ import { BigNumber } from 'ethers';
 import { PowerState } from 'powerLib/dist/powerLib';
 import { LogType, TokenType } from '../types';
 import { CurrentPool } from './currentPool';
-import { ConfigType } from './setConfig';
 import { Profile } from "../profile";
+import { IEngineConfig } from "../utils/configs";
 export declare class History {
     account?: string;
     CURRENT_POOL: CurrentPool;
-    config: ConfigType;
+    config: IEngineConfig;
     profile: Profile;
-    constructor(config: ConfigType & {
+    constructor(config: IEngineConfig & {
         CURRENT_POOL: CurrentPool;
     }, profile: Profile);
     generatePositions({ tokens, logs }: {

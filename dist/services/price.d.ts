@@ -1,14 +1,16 @@
 import { ethers } from 'ethers';
-import { ConfigType } from './setConfig';
 import { TokenType } from "../types";
+import { IEngineConfig } from "../utils/configs";
+import { Profile } from "../profile";
 export declare class Price {
     chainId: number;
     scanApi?: string;
     provider: ethers.providers.Provider;
     rpcUrl: string;
     reserveTokenPrice: string;
-    config: ConfigType;
-    constructor(config: ConfigType);
+    config: IEngineConfig;
+    profile: Profile;
+    constructor(config: IEngineConfig, profile: Profile);
     get24hChange({ baseToken, cToken, quoteToken, chainId, currentPrice, }: {
         baseToken: TokenType;
         cToken: string;
