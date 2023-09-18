@@ -16,7 +16,7 @@ import {
 } from '../types'
 import {
   bn,
-  decodePowers,
+  decompoundRate,
   div,
   formatMultiCallBignumber,
   getNormalAddress, getTopics, max, mul, parseSqrtSpotPrice, toDailyRate, weiToNumber,
@@ -683,8 +683,8 @@ export class Resource {
     const riskFactor = rC.gt(0) ? div(rA.sub(rB), rC) : '0'
     const deleverageRiskA = R.isZero() ? 0 : rA.mul(2 * this.unit).div(R).toNumber() / this.unit
     const deleverageRiskB = R.isZero() ? 0 : rB.mul(2 * this.unit).div(R).toNumber() / this.unit
-    const dailyInterestRate =
-      1 - Math.pow(2, -SECONDS_PER_DAY / pool.INTEREST_HL.toNumber())
+    const compoundInterestRate = 1 - Math.pow(2, -SECONDS_PER_DAY / pool.INTEREST_HL.toNumber())
+    const dailyInterestRate = decompoundRate(compoundInterestRate, pool.k.toNumber()/2)
     let premium:any = {}
     let maxPremiumRate
     if(pool.PREMIUM_HL) {
