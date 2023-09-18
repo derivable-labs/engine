@@ -1,7 +1,7 @@
 import { Storage } from '../types';
 import { ethers } from 'ethers';
 export interface IEngineConfig {
-    env?: 'dev' | 'production';
+    env?: 'development' | 'production';
     account?: string;
     signer?: ethers.providers.JsonRpcSigner;
     scanApiKey?: string;

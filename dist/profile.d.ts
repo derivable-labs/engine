@@ -1,7 +1,7 @@
 import { IEngineConfig, INetworkConfig } from "./utils/configs";
 export declare class Profile {
     chainId: number;
-    env: 'dev' | 'production';
+    env: 'development' | 'production';
     configs: INetworkConfig;
     routes: {
         [key: string]: {

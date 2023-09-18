@@ -56,7 +56,7 @@ const abis = {
     },
 };
 const DDL_CONFIGS_URL = {
-    'dev': `https://raw.githubusercontent.com/derivable-labs/configs/dev/`,
+    'development': `https://raw.githubusercontent.com/derivable-labs/configs/dev/`,
     'production': `https://raw.githubusercontent.com/derivable-labs/configs/main/`,
 };
 class Profile {
