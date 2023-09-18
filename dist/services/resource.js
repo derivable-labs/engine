@@ -486,12 +486,12 @@ class Resource {
         const riskFactor = rC.gt(0) ? (0, helper_1.div)(rA.sub(rB), rC) : '0';
         const deleverageRiskA = R.isZero() ? 0 : rA.mul(2 * this.unit).div(R).toNumber() / this.unit;
         const deleverageRiskB = R.isZero() ? 0 : rB.mul(2 * this.unit).div(R).toNumber() / this.unit;
-        const compoundInterestRate = 1 - Math.pow(2, -constant_1.SECONDS_PER_DAY / pool.INTEREST_HL.toNumber());
-        const dailyInterestRate = (0, helper_1.decompoundRate)(compoundInterestRate, pool.k.toNumber() / 2);
+        const power = pool.k.toNumber() / 2;
+        const dailyInterestRate = (0, helper_1.decompoundRate)((0, helper_1.toDailyRate)(pool.INTEREST_HL.toNumber()), power);
         let premium = {};
         let maxPremiumRate;
         if (pool.PREMIUM_HL) {
-            maxPremiumRate = (0, helper_1.toDailyRate)(Number(pool.PREMIUM_HL.toString()));
+            maxPremiumRate = (0, helper_1.decompoundRate)((0, helper_1.toDailyRate)(pool.PREMIUM_HL.toNumber()), power);
             const [rMax, rMin] = rA.gt(rB) ? [rA, rB] : [rB, rA];
             const premiumRate = Number((0, helper_1.div)((0, helper_1.mul)(rMax, (0, helper_1.mul)(rMax.sub(rMin), maxPremiumRate, false)), R));
             if (rA.eq(rB)) {
