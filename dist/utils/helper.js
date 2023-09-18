@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toDailyRate = exports.getTopics = exports.mergeDeep = exports.parseSqrtX96 = exports.parseSqrtSpotPrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.max = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
+exports.decompoundRate = exports.compoundRate = exports.toDailyRate = exports.getTopics = exports.mergeDeep = exports.parseSqrtX96 = exports.parseSqrtSpotPrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.max = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
 const ethers_1 = require("ethers");
 const Events_json_1 = __importDefault(require("../abi/Events.json"));
 const constant_1 = require("./constant");
@@ -221,4 +221,12 @@ function toDailyRate(HALF_LIFE, precision = 4) {
     return Math.round(rate * Math.pow(10, precision)) / Math.pow(10, precision);
 }
 exports.toDailyRate = toDailyRate;
+function compoundRate(r, p) {
+    return 1 - Math.pow((1 - r), p);
+}
+exports.compoundRate = compoundRate;
+function decompoundRate(c, p) {
+    return 1 - Math.pow((1 - c), (1 / p));
+}
+exports.decompoundRate = decompoundRate;
 //# sourceMappingURL=helper.js.map
