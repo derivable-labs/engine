@@ -38,7 +38,7 @@ export class Engine {
     this.enginConfigs = enginConfigs
     this.account = enginConfigs.account
     // this.providerToGetLog = this.config.providerToGetLog
-    this.profile = new profile(enginConfigs.chainId)
+    this.profile = new profile(enginConfigs)
   }
 
   profile: Profile
