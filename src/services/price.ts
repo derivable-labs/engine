@@ -1,12 +1,12 @@
 import { ethers } from 'ethers'
 import ReserveTokenPrice from '../abi/ReserveTokenPrice.json'
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { ConfigType } from './setConfig'
-import { fixed128ToFloat } from '../utils/number'
-import {bn, div, formatPercent, numberToWei, sub, weiToNumber} from '../utils/helper'
+import {div, formatPercent, sub} from '../utils/helper'
 import {TokenType} from "../types";
 import {MINI_SECOND_PER_DAY} from "../utils/constant";
 import historyProvider from "../historyProvider";
+import {IEngineConfig} from "../utils/configs";
+import {Profile} from "../profile";
 
 export class Price {
   chainId: number
@@ -14,20 +14,16 @@ export class Price {
   provider: ethers.providers.Provider
   rpcUrl: string
   reserveTokenPrice: string
-  config: ConfigType
+  config: IEngineConfig
+  profile: Profile
 
-  constructor(config: ConfigType) {
-    const { chainId, scanApi, provider, rpcUrl } = config
-    const { reserveTokenPrice } = config.addresses
-    if (!reserveTokenPrice) {
-      throw new Error(`required pairsV3Info contract to be defined!`)
-    }
-    this.config = config
-    this.chainId = chainId
-    this.scanApi = scanApi
-    this.provider = provider
-    this.rpcUrl = rpcUrl
-    this.reserveTokenPrice = reserveTokenPrice
+  constructor(config: IEngineConfig, profile: Profile) {
+    this.reserveTokenPrice = '0x' + ReserveTokenPrice.deployedBytecode.slice(-40)
+    this.chainId = config.chainId
+    this.scanApi = profile.configs.scanApi
+    this.provider = new JsonRpcProvider(profile.configs.rpc)
+    this.rpcUrl = profile.configs.rpc
+    this.profile = profile
   }
 
 
@@ -83,10 +79,10 @@ export class Price {
 
       const res = await pairDetailContract.functions.fetchMarketBatch(
         tokens,
-        this.config.addresses.uniswapFactory,
-        this.config.stableCoins,
-        this.config.addresses.wrapToken,
-        this.config.stableCoins[0],
+        this.profile.configs.uniswap.v3Factory,
+        this.profile.configs.stablecoins,
+        this.profile.configs.wrappedTokenAddress,
+        this.profile.configs.stablecoins[0],
       )
 
       const result = {}

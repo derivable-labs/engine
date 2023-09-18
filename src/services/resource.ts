@@ -19,20 +19,16 @@ import {
   decompoundRate,
   div,
   formatMultiCallBignumber,
-  getNormalAddress, getTopics, max, mul, parseSqrtSpotPrice, toDailyRate, weiToNumber,
+  getNormalAddress, getTopics, mul, parseSqrtSpotPrice, toDailyRate
 } from '../utils/helper'
-import {UniV2Pair} from './uniV2Pair'
 import {JsonRpcProvider} from '@ethersproject/providers'
 import _ from 'lodash'
 import {UniV3Pair} from './uniV3Pair'
-import {ConfigType} from './setConfig'
-import {DerivableContractAddress} from '../utils/configs'
+import {IDerivableContractAddress, IEngineConfig} from '../utils/configs'
 import {defaultAbiCoder} from "ethers/lib/utils";
 import {Profile} from "../profile";
-
 const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
-const TOPIC_APP = ethers.utils.formatBytes32String('DDL')
 
 type ResourceData = {
   pools: PoolsType
@@ -56,28 +52,25 @@ export class Resource {
   provider: ethers.providers.Provider
   providerToGetLog: ethers.providers.Provider
   overrideProvider: JsonRpcProvider
-  UNIV2PAIR: UniV2Pair
   UNIV3PAIR: UniV3Pair
-  addresses: Partial<DerivableContractAddress>
+  derivableAddress: IDerivableContractAddress
   profile: Profile
   stableCoins: string[]
 
-  constructor(config: ConfigType, profile: Profile) {
-    this.unit = config.unit ?? this.unit
-    this.chainId = config.chainId
-    this.scanApi = config.scanApi
-    this.scanApiKey = config.scanApiKey
-    this.account = config.account
-    this.storage = config.storage
-    this.account = config.account
-    this.providerToGetLog = config.providerToGetLog
-    this.provider = config.provider
-    this.UNIV2PAIR = new UniV2Pair(config)
-    this.UNIV3PAIR = new UniV3Pair(config)
-    this.overrideProvider = config.overrideProvider
-    this.addresses = config.addresses
+  constructor(engineConfigs: IEngineConfig, profile: Profile) {
+    this.chainId = engineConfigs.chainId
+    this.scanApi = profile.configs.scanApi
+    this.scanApiKey = engineConfigs.scanApiKey
+    this.account = engineConfigs.account
+    this.storage = engineConfigs.storage
+    this.account = engineConfigs.account
+    this.providerToGetLog = new ethers.providers.JsonRpcProvider(profile.configs.rpcToGetLogs || profile.configs.rpc)
+    this.provider = new ethers.providers.JsonRpcProvider(profile.configs.rpc)
+    this.UNIV3PAIR = new UniV3Pair(engineConfigs, profile)
+    this.overrideProvider = new JsonRpcProvider(profile.configs.rpc)
+    this.derivableAddress = profile.configs.derivable
     this.profile = profile
-    this.stableCoins = (config.stableCoins || []) as string[]
+    this.stableCoins = profile.configs.stablecoins
   }
 
   async fetchResourceData(account: string) {
@@ -277,7 +270,7 @@ export class Resource {
         const ddlLogs = logs.filter((log: any) => {
           return log.address
             && topics.Derivable.includes(log.topics[0])
-            && log.address === this.addresses.poolFactory
+            && log.address === this.derivableAddress.poolFactory
         })
         const swapLogs = logs.filter((log: any) => {
           return log.address && topics.Swap.includes(log.topics[0])
@@ -392,7 +385,7 @@ export class Resource {
     poolGroups: any
   }> {
     const multicall = new Multicall({
-      multicallCustomContractAddress: this.addresses.multiCall,
+      multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
       ethersProvider: this.getPoolOverridedProvider(),
       tryAggregate: true,
     })
@@ -580,7 +573,7 @@ export class Resource {
   getPoolOverridedProvider() {
     const stateOverride = {}
     // poolAddresses.forEach((address: string) => {
-    stateOverride[this.addresses.logic as string] = {
+    stateOverride[this.derivableAddress.logic as string] = {
       code: this.profile.getAbi('PoolOverride').deployedBytecode,
     }
     // })
@@ -588,7 +581,7 @@ export class Resource {
     //@ts-ignore
     this.overrideProvider.setStateOverride({
       ...stateOverride,
-      [this.addresses.tokensInfo as string]: {
+      ['0x' + this.profile.getAbi('TokensInfo').deployedBytecode.slice(-40) as string]: {
         code: this.profile.getAbi('TokensInfo').deployedBytecode,
       }
     })
@@ -610,7 +603,7 @@ export class Resource {
     const request: any = [
       {
         reference: 'tokens',
-        contractAddress: this.addresses.tokensInfo,
+        contractAddress: '0x' + this.profile.getAbi('TokensInfo').deployedBytecode.slice(-40),
         abi: this.profile.getAbi('TokensInfo').abi,
         calls: [
           {
@@ -635,7 +628,7 @@ export class Resource {
             reference: i,
             methodName: 'compute',
             methodParameters: [
-              this.addresses.token,
+              this.derivableAddress.token,
               5
             ],
           },

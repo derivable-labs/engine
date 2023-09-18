@@ -1,7 +1,8 @@
 import { ethers } from 'ethers'
 import PairDetailAbi from '../abi/PairDetail.json'
-import { DerivableContractAddress } from '../utils/configs'
-import { ConfigType } from './setConfig'
+import { IEngineConfig} from '../utils/configs'
+import {Profile} from "../profile";
+import {JsonRpcProvider} from "@ethersproject/providers";
 
 const FLAG =
   '0x0000110000000000000000000000000000000000000000000000000000000111'
@@ -14,14 +15,22 @@ const FLAG =
 export class UniV2Pair {
   chainId: number
   scanApi?: string
+  pairsInfoAddress: string
   provider: ethers.providers.Provider
-  constractAddresses: Partial<DerivableContractAddress>
-  constructor(config: ConfigType) {
-    const { chainId, scanApi, provider } = config
-    this.constractAddresses = config.addresses
-    this.chainId = chainId
-    this.scanApi = scanApi
-    this.provider = provider
+  constructor(config: IEngineConfig, profile: Profile) {
+    this.pairsInfoAddress = '0x' + PairDetailAbi.deployedBytecode.slice(-40)
+    this.chainId = config.chainId
+    this.scanApi = profile.configs.scanApi
+
+    const provider = new JsonRpcProvider(profile.configs.rpc)
+    // @ts-ignore
+    provider.setStateOverride({
+      [this.pairsInfoAddress]: {
+        code: PairDetailAbi.deployedBytecode,
+      },
+    })
+
+    this.provider = new JsonRpcProvider(profile.configs.rpc)
   }
 
   async getPairInfo({
@@ -33,8 +42,8 @@ export class UniV2Pair {
   }) {
     try {
       const pairDetailContract = new ethers.Contract(
-        this.constractAddresses.pairsInfo as string,
-        PairDetailAbi,
+        this.pairsInfoAddress as string,
+        PairDetailAbi.abi,
         this.provider,
       )
 
@@ -54,8 +63,8 @@ export class UniV2Pair {
   }) {
     try {
       const pairDetailContract = new ethers.Contract(
-        this.constractAddresses.pairsInfo as string,
-        PairDetailAbi,
+        this.pairsInfoAddress as string,
+        PairDetailAbi.abi,
         this.provider,
       )
 

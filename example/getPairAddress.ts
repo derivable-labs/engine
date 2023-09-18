@@ -4,7 +4,8 @@ import { bn } from '../src/utils/helper'
 
 const test = async () => {
   const configs = getTestConfigs(42161)
-  const engine = new Engine(configs.account, configs, 42161)
+  const engine = new Engine(configs)
+  await engine.initServices()
 
   const pairAddress = await engine.UNIV3PAIR.getLargestPoolAddress({
     baseToken: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',

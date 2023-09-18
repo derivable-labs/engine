@@ -5,11 +5,10 @@ import {LARGE_VALUE} from '../utils/constant'
 import BnAAbi from '../abi/BnA.json'
 import TokenAbi from '../abi/Token.json'
 import {AllowancesType, BalancesType, MaturitiesType} from '../types'
-import {ConfigType} from './setConfig'
-import {DerivableContractAddress} from '../utils/configs'
+import {IDerivableContractAddress, IEngineConfig} from '../utils/configs'
 import {unpackId} from "../utils/number";
 import {JsonRpcProvider} from "@ethersproject/providers";
-import PairV3DetailAbi from "../abi/PairV3Detail.json";
+import {Profile} from "../profile";
 
 type BnAReturnType = { balances: BalancesType; allowances: AllowancesType, maturity: MaturitiesType }
 
@@ -17,31 +16,31 @@ export class BnA {
   chainId: number
   account?: string
   provider: ethers.providers.Provider
-  contractAddresses: Partial<DerivableContractAddress>
   rpcUrl: string
+  bnAAddress: string
+  profile: Profile
 
-  constructor(config: ConfigType) {
-    this.rpcUrl = config.rpcUrl
+  constructor(config: IEngineConfig, profile: Profile) {
     this.chainId = config.chainId
     this.account = config.account
-    this.provider = config.provider
-    this.contractAddresses = config.addresses
+    this.provider = new JsonRpcProvider(profile.configs.rpc)
+    this.bnAAddress = '0x' + BnAAbi.deployedBytecode.slice(-40)
+    this.profile = profile
   }
 
   async getBalanceAndAllowance({tokens}: any): Promise<BnAReturnType> {
     if (this.account) {
 
-      const provider = new JsonRpcProvider(this.rpcUrl)
       // @ts-ignore
-      provider.setStateOverride({
-        [this.contractAddresses.bnA as string]: {
+      this.provider.setStateOverride({
+        [this.bnAAddress as string]: {
           code: BnAAbi.deployedBytecode,
         },
       })
 
       const multicall = new Multicall({
-        multicallCustomContractAddress: this.contractAddresses.multiCall,
-        ethersProvider: provider,
+        multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
+        ethersProvider: this.provider,
         tryAggregate: true,
       })
       const erc20Tokens = getNormalAddress(tokens)
@@ -76,7 +75,7 @@ export class BnA {
     const request: any = [
       {
         reference: 'erc20',
-        contractAddress: this.contractAddresses.bnA,
+        contractAddress: this.bnAAddress,
         abi: BnAAbi.abi,
         calls: [
           {
@@ -85,14 +84,14 @@ export class BnA {
             methodParameters: [
               erc20Tokens,
               [this.account],
-              [this.contractAddresses.router],
+              [this.profile.configs.helperContract.utr],
             ],
           },
         ],
       },
       {
         reference: 'erc1155',
-        contractAddress: this.contractAddresses.token,
+        contractAddress: this.profile.configs.derivable.token,
         abi: TokenAbi,
         calls: [
           {
@@ -103,7 +102,7 @@ export class BnA {
           {
             reference: 'isApprovedForAll',
             methodName: 'isApprovedForAll',
-            methodParameters: [this.account, this.contractAddresses.router],
+            methodParameters: [this.account, this.profile.configs.helperContract.utr],
           },
         ],
       },

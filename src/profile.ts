@@ -1,8 +1,4 @@
-import {DeepPartial} from "./types/utils";
-import {ConfigType} from "./services/setConfig";
-import {config, CONFIGS} from "./utils/configs";
-import {JsonRpcProvider} from "@ethersproject/providers";
-import {ethers} from "ethers";
+import {IEngineConfig, INetworkConfig} from "./utils/configs";
 import {EventDataAbis} from "./utils/constant";
 import BnA from './abi/BnA.json'
 import ERC20 from './abi/ERC20.json'
@@ -13,8 +9,6 @@ import PairV3Detail from './abi/PairV3Detail.json'
 import Pool from './abi/Pool.json'
 import ReserveTokenPrice from './abi/ReserveTokenPrice.json'
 import Token from './abi/Token.json'
-import UTR from './abi/UTR.json'
-import UTROverride from './abi/UTROverride.json'
 import Helper8453 from './abi/8453/Helper.json'
 import Helper42161 from './abi/42161/Helper.json'
 import PoolOverride8453 from './abi/8453/PoolOverride.json'
@@ -23,7 +17,7 @@ import UTROverride8453 from './abi/8453/UTROverride.json'
 import PoolOverride42161 from './abi/42161/PoolOverride.json'
 import UTR42161 from './abi/42161/UTR.json'
 import UTROverride42161 from './abi/42161/UTROverride.json'
-
+import fetch from "node-fetch";
 
 const abis = {
   BnA,
@@ -49,47 +43,35 @@ const abis = {
   },
 }
 
+const DDL_CONFIGS_URL = {
+  'dev': `https://raw.githubusercontent.com/derivable-labs/configs/dev/`,
+  'production': `https://raw.githubusercontent.com/derivable-labs/configs/main/`,
+}
+
 export class Profile {
   chainId: number
-  abis: any
-  configs: ConfigType
-
-  constructor(chainId: number, configs: DeepPartial<ConfigType>) {
-    this.chainId = chainId
-    this.configs = this.loadConfig(configs, chainId)
+  env: 'dev' | 'production'
+  configs: INetworkConfig
+  routes: {
+    [key: string]: {type: string, address: string}[]
   }
 
-  loadConfig(
-    configProp: DeepPartial<config>,
-    chainIdProp: number,
-  ): ConfigType {
-    const defaultConfig = CONFIGS[chainIdProp]
-    const config = {
-      ...defaultConfig,
-      ...configProp,
-      addresses: {
-        ...defaultConfig.addresses,
-        ...configProp.addresses,
-      },
-    }
+  constructor(engineConfig: IEngineConfig) {
+    this.chainId = engineConfig.chainId
+    this.env = engineConfig.env || 'production'
+  }
 
-    // const config = mergeDeep(this.loadDefaultConfig(chainIdProp), configProp)
-    const overrideProvider = new JsonRpcProvider(config.rpcUrl)
-    const provider = new ethers.providers.JsonRpcProvider(config.rpcUrl)
-    const providerToGetLog = new ethers.providers.JsonRpcProvider(
-      config.rpcToGetLogs,
-    )
-
-    return {
-      ...config,
-      overrideProvider,
-      provider,
-      providerToGetLog,
-    }
+  async loadConfig() {
+    const [networkConfig, uniV3Pools] = await Promise.all([
+      fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/network.json').then((r) => r.json()),
+      fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/routes.json').then((r) => r.json())
+    ])
+    this.configs = networkConfig
+    this.routes = uniV3Pools
   }
 
   getAbi(name: string) {
-    return abis[name] ?  abis[name] : (abis[this.chainId][name] || [])
+    return abis[name] ? abis[name] : (abis[this.chainId][name] || [])
   }
 
   getEventDataAbi() {

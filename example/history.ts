@@ -3,8 +3,10 @@ import { ethers } from 'ethers'
 import { getTestConfigs } from './shared/testConfigs'
 
 const testLocal = async () => {
-  const configs = getTestConfigs(42161)
-  const engine = new Engine(configs.account, configs, 42161)
+  const configs = getTestConfigs(8453)
+  const engine = new Engine(configs)
+  await engine.initServices()
+
   await engine.RESOURCE.fetchResourceData(
     '0xE3C75f8963E4CA02ea9a281c32b41FdfC248e07f',
   )

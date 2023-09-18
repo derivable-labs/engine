@@ -7,7 +7,7 @@ import TokenAbi from "../src/abi/Token.json";
 
 const testLocal = async () => {
   const configs = getTestConfigs(42161)
-  const engine = new Engine(configs.account, configs, 42161)
+  const engine = new Engine(configs)
   await engine.RESOURCE.fetchResourceData(engine.account || '')
 
   const currentPool = Object.values(engine.RESOURCE.poolGroups)[0]

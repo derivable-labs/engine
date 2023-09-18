@@ -1,21 +1,9 @@
 import { BigNumber, ethers } from 'ethers'
 import { bn } from '../utils/helper'
-import { UniV2Pair } from './uniV2Pair'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { PoolConfig } from '../types'
-import { ConfigType } from './setConfig'
-import { DerivableContractAddress } from '../utils/configs'
+import {IDerivableContractAddress, IEngineConfig} from '../utils/configs'
 import {Profile} from "../profile";
-
-// type ConfigType = {
-//   account?: string
-//   chainId: number
-//   scanApi: string
-//   provider: ethers.providers.Provider
-//   overrideProvider: JsonRpcProvider
-//   signer?: ethers.providers.JsonRpcSigner
-//   UNIV2PAIR: UniV2Pair
-// }
 
 export class CreatePool {
   account?: string
@@ -24,18 +12,16 @@ export class CreatePool {
   provider: ethers.providers.Provider
   overrideProvider: JsonRpcProvider
   signer?: ethers.providers.JsonRpcSigner
-  UNIV2PAIR: UniV2Pair
-  contractAddresses: Partial<DerivableContractAddress>
+  contractAddresses: Partial<IDerivableContractAddress>
   profile: Profile
 
-  constructor(config: ConfigType, profile: Profile) {
+  constructor(config: IEngineConfig, profile: Profile) {
     this.account = config.account
     this.chainId = config.chainId
-    this.scanApi = config.scanApi
-    this.provider = config.provider
-    this.overrideProvider = config.overrideProvider
+    this.scanApi = profile.configs.scanApi
+    this.provider = new JsonRpcProvider(profile.configs.rpc)
+    this.overrideProvider = new JsonRpcProvider(profile.configs.rpc)
     this.signer = config.signer
-    this.contractAddresses = config.addresses
     this.profile = profile
   }
 
@@ -93,11 +79,11 @@ export class CreatePool {
     halfLife: number,
   ) {
     return {
-      utr: this.contractAddresses.router,
+      utr: this.profile.configs.helperContract.utr,
       token: this.contractAddresses.token,
       logic: this.contractAddresses.logic,
       oracle,
-      reserveToken: this.contractAddresses.wrapToken,
+      reserveToken: this.profile.configs.wrappedTokenAddress,
       recipient,
       mark,
       k,
