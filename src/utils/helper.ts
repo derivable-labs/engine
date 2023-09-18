@@ -239,3 +239,11 @@ export function toDailyRate(HALF_LIFE: number, precision = 4) {
   const rate = 1 - 2 ** (-SECONDS_PER_DAY / HALF_LIFE)
   return Math.round(rate * 10 ** precision) / 10 ** precision
 }
+
+export function compoundRate(r: number, p: number): number {
+  return 1 - (1-r)**p
+}
+
+export function decompoundRate(c: number, p: number): number {
+  return 1 - (1-c)**(1/p)
+}
