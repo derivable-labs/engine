@@ -44,13 +44,13 @@ const abis = {
 }
 
 const DDL_CONFIGS_URL = {
-  'dev': `https://raw.githubusercontent.com/derivable-labs/configs/dev/`,
+  'development': `https://raw.githubusercontent.com/derivable-labs/configs/dev/`,
   'production': `https://raw.githubusercontent.com/derivable-labs/configs/main/`,
 }
 
 export class Profile {
   chainId: number
-  env: 'dev' | 'production'
+  env: 'development' | 'production'
   configs: INetworkConfig
   routes: {
     [key: string]: {type: string, address: string}[]

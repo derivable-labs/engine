@@ -26,7 +26,7 @@ const TestConfigs = {
     rpcUrl: 'https://arb1.arbitrum.io/rpc',
     account,
     signer: wallet,
-    env: 'dev'
+    env: 'development'
   },
   [8453]: {
     chainId: 8453,
@@ -34,7 +34,7 @@ const TestConfigs = {
     rpcUrl: 'https://mainnet.base.org',
     account,
     signer: wallet,
-    env: 'dev'
+    env: 'development'
   },
 }
 
