@@ -8,7 +8,7 @@ const testLocal = async () => {
   await engine.initServices()
 
   await engine.RESOURCE.fetchResourceData(
-    '0xE3C75f8963E4CA02ea9a281c32b41FdfC248e07f',
+    '0x5555a222c465b1873421d844e5d89ed8eb3E5555',
   )
 
   console.log({
