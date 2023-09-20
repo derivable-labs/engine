@@ -6,17 +6,20 @@ import {NATIVE_ADDRESS, POOL_IDS} from '../utils/constant'
 import {add, bn, div, getTopics, max, mul, numberToWei, parseSqrtSpotPrice, sub, weiToNumber} from "../utils/helper";
 import {Profile} from "../profile";
 import {IEngineConfig} from "../utils/configs";
+import {Resource} from "./resource";
 
 export class History {
   account?: string
   CURRENT_POOL: CurrentPool
+  RESOURCE: Resource
   config: IEngineConfig
   profile: Profile
 
-  constructor(config: IEngineConfig & { CURRENT_POOL: CurrentPool }, profile: Profile) {
+  constructor(config: IEngineConfig & { RESOURCE: Resource, CURRENT_POOL: CurrentPool }, profile: Profile) {
     this.config = config
     this.account = config.account
     this.CURRENT_POOL = config.CURRENT_POOL
+    this.RESOURCE = config.RESOURCE
     this.profile = profile
   }
 
@@ -52,8 +55,8 @@ export class History {
   }
 
   generatePositionBySwapLog(positions: any, tokens: TokenType[], formatedData: any) {
-    const pools = this.CURRENT_POOL.pools
-    const poolAddresses = Object.keys(this.CURRENT_POOL.pools)
+    const pools = this.RESOURCE.pools
+    const poolAddresses = Object.keys(this.RESOURCE.pools)
 
     const {poolIn, poolOut, sideIn, sideOut, amountOut, amountIn, priceR, price} = formatedData
 
@@ -213,7 +216,7 @@ export class History {
   }
 
   getTokenAddressByPoolAndSide(poolAddress: string, side: BigNumber) {
-    const pool = this.CURRENT_POOL.pools[poolAddress]
+    const pool = this.RESOURCE.pools[poolAddress]
     if (side.eq(POOL_IDS.native)) {
       return NATIVE_ADDRESS
     }
