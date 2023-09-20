@@ -21,6 +21,7 @@ class History {
         this.config = config;
         this.account = config.account;
         this.CURRENT_POOL = config.CURRENT_POOL;
+        this.RESOURCE = config.RESOURCE;
         this.profile = profile;
     }
     generatePositions({ tokens, logs }) {
@@ -47,8 +48,8 @@ class History {
     }
     generatePositionBySwapLog(positions, tokens, formatedData) {
         var _a;
-        const pools = this.CURRENT_POOL.pools;
-        const poolAddresses = Object.keys(this.CURRENT_POOL.pools);
+        const pools = this.RESOURCE.pools;
+        const poolAddresses = Object.keys(this.RESOURCE.pools);
         const { poolIn, poolOut, sideIn, sideOut, amountOut, amountIn, priceR, price } = formatedData;
         if (!poolAddresses.includes(poolIn) ||
             !poolAddresses.includes(poolOut)) {
@@ -151,7 +152,7 @@ class History {
         }
     }
     getTokenAddressByPoolAndSide(poolAddress, side) {
-        const pool = this.CURRENT_POOL.pools[poolAddress];
+        const pool = this.RESOURCE.pools[poolAddress];
         if (side.eq(constant_1.POOL_IDS.native)) {
             return constant_1.NATIVE_ADDRESS;
         }

@@ -4,12 +4,15 @@ import { LogType, TokenType } from '../types';
 import { CurrentPool } from './currentPool';
 import { Profile } from "../profile";
 import { IEngineConfig } from "../utils/configs";
+import { Resource } from "./resource";
 export declare class History {
     account?: string;
     CURRENT_POOL: CurrentPool;
+    RESOURCE: Resource;
     config: IEngineConfig;
     profile: Profile;
     constructor(config: IEngineConfig & {
+        RESOURCE: Resource;
         CURRENT_POOL: CurrentPool;
     }, profile: Profile);
     generatePositions({ tokens, logs }: {
