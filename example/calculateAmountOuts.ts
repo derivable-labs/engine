@@ -23,12 +23,12 @@ const testLocal = async () => {
   const currentBalanceOut = await tokenContract.balanceOf(configs.account, packId(POOL_IDS.C.toString(), poolOut))
   const steps = [
     {
-      amountIn: bn(numberToWei(0.0001)),
-      tokenIn: NATIVE_ADDRESS,
+      amountIn: bn(numberToWei(0.01, 6)),
+      tokenIn: "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
       tokenOut: poolOut + '-' + POOL_IDS.C,
       amountOutMin: 0,
       currentBalanceOut,
-      useSweep: true
+      useSweep: false
     },
   ]
   // 961641740797182
