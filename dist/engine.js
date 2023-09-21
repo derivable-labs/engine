@@ -36,7 +36,7 @@ class Engine {
             this.RESOURCE = new resource_1.Resource(this.enginConfigs, this.profile);
             this.PRICE = new price_1.Price(this.enginConfigs, this.profile);
             this.CURRENT_POOL = new currentPool_1.CurrentPool(this.enginConfigs);
-            this.HISTORY = new history_1.History(Object.assign(Object.assign({}, this.enginConfigs), { RESOURCE: this.RESOURCE, CURRENT_POOL: this.CURRENT_POOL }), this.profile);
+            this.HISTORY = new history_1.History(Object.assign(Object.assign({}, this.enginConfigs), { RESOURCE: this.RESOURCE }), this.profile);
             this.SWAP = new swap_1.Swap(Object.assign(Object.assign({}, this.enginConfigs), { CURRENT_POOL: this.CURRENT_POOL }), this.profile);
             this.CREATE_POOL = new createPool_1.CreatePool(this.enginConfigs, this.profile);
         });

@@ -20,7 +20,6 @@ class History {
         };
         this.config = config;
         this.account = config.account;
-        this.CURRENT_POOL = config.CURRENT_POOL;
         this.RESOURCE = config.RESOURCE;
         this.profile = profile;
     }
@@ -82,8 +81,10 @@ class History {
                 positions[tokenOutAddress].entry = (0, helper_1.add)(positions[tokenOutAddress].entry, (0, helper_1.weiToNumber)(amountIn.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + ((tokenIn === null || tokenIn === void 0 ? void 0 : tokenIn.decimal) || 18)));
             }
             if (price) {
+                const pool = pools[poolOut];
+                const { baseToken, quoteToken } = pool;
                 //@ts-ignore
-                const indexPrice = (0, helper_1.parseSqrtSpotPrice)(price, tokens.find((t) => (t === null || t === void 0 ? void 0 : t.address) === this.CURRENT_POOL.baseToken), tokens.find((t) => (t === null || t === void 0 ? void 0 : t.address) === this.CURRENT_POOL.quoteToken), 1);
+                const indexPrice = (0, helper_1.parseSqrtSpotPrice)(price, tokens.find((t) => (t === null || t === void 0 ? void 0 : t.address) === baseToken), tokens.find((t) => (t === null || t === void 0 ? void 0 : t.address) === quoteToken), 1);
                 positions[tokenOutAddress].value = (0, helper_1.add)(positions[tokenOutAddress].value, (0, helper_1.mul)(amountOut, indexPrice));
                 positions[tokenOutAddress].balanceToCalculatePrice = positions[tokenOutAddress].balanceToCalculatePrice.add(amountOut);
             }
@@ -109,8 +110,8 @@ class History {
             if (!logs || logs.length === 0) {
                 return [];
             }
-            const pools = this.CURRENT_POOL.pools;
-            const poolAddresses = Object.keys(this.CURRENT_POOL.pools);
+            const pools = this.RESOURCE.pools;
+            const poolAddresses = Object.keys(this.RESOURCE.pools);
             const swapLogs = logs.map((log) => {
                 const abi = this.getSwapAbi(log.topics[0]);
                 const encodeData = ethers_1.ethers.utils.defaultAbiCoder.encode(abi, log.args.args);
@@ -136,8 +137,11 @@ class History {
                     entryValue = (0, helper_1.weiToNumber)(amount.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + ((tokenIn === null || tokenIn === void 0 ? void 0 : tokenIn.decimal) || 18));
                 }
                 if (price) {
+                    const pool = pools[poolOut];
+                    const { baseToken, quoteToken } = pool;
                     //@ts-ignore
-                    entryPrice = (0, helper_1.parseSqrtSpotPrice)(price, this.CURRENT_POOL.pair.token0, this.CURRENT_POOL.pair.token1, this.CURRENT_POOL.pair.quoteTokenIndex);
+                    entryPrice = (0, helper_1.parseSqrtSpotPrice)(price, baseToken, quoteToken, 1);
+                    console.log('entryPrice', entryPrice);
                 }
                 return Object.assign({ transactionHash: log.transactionHash, timeStamp: log.timeStamp, blockNumber: log.blockNumber, logIndex: log.logIndex, poolIn,
                     poolOut, tokenIn: tokenInAddress, tokenOut: tokenOutAddress, entryValue,
