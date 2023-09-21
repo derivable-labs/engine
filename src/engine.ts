@@ -57,7 +57,7 @@ export class Engine {
     }, this.profile)
     this.SWAP = new Swap({
       ...this.enginConfigs,
-      CURRENT_POOL: this.CURRENT_POOL,
+      RESOURCE: this.RESOURCE,
     }, this.profile)
     this.CREATE_POOL = new CreatePool(this.enginConfigs, this.profile)
   }
