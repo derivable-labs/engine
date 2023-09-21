@@ -66,7 +66,7 @@ export declare class Swap {
             token: string;
             id: number | BigNumber;
             amountIn: BigNumber;
-            recipient: string | undefined;
+            recipient: string;
         }[];
         populateTxData: Promise<ethers.PopulatedTransaction>[];
     };
@@ -82,4 +82,5 @@ export declare class Swap {
     getRouterContract(provider: any): ethers.Contract;
     getStateCalHelperContract(provider?: any): ethers.Contract;
     getIndexR(tokenR: string): BigNumber;
+    getUniPool(tokenIn: string, tokenR: string): string;
 }
