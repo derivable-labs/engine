@@ -189,7 +189,6 @@ export class History {
           const { baseToken, quoteToken } = pool
           //@ts-ignore
           entryPrice = parseSqrtSpotPrice(price, baseToken, quoteToken, 1)
-          console.log('entryPrice', entryPrice)
         }
 
         return {
