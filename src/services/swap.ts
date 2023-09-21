@@ -1,5 +1,5 @@
 import {BigNumber, ethers} from 'ethers'
-import {PoolType, SwapStepType} from '../types'
+import {SwapStepType} from '../types'
 import {
   bn,
   isErc1155Address,
@@ -14,6 +14,7 @@ import {JsonRpcProvider} from '@ethersproject/providers'
 import {Profile} from "../profile";
 import {isAddress} from "ethers/lib/utils";
 import {IDerivableContractAddress, IEngineConfig} from "../utils/configs";
+import { Resource } from './resource'
 
 const PAYMENT = 0
 const TRANSFER = 1
@@ -26,12 +27,12 @@ export class Swap {
   provider: ethers.providers.Provider
   overrideProvider: JsonRpcProvider
   signer?: ethers.providers.JsonRpcSigner
-  pools: { [key: string]: PoolType }
+  RESOURCE: Resource
   config: IEngineConfig
   profile: Profile
   derivableAdr: IDerivableContractAddress
 
-  constructor(config: IEngineConfig & { pools: { [key: string]: PoolType } }, profile: Profile) {
+  constructor(config: IEngineConfig & { RESOURCE: Resource }, profile: Profile) {
     this.config = config
     this.account = config.account
     this.chainId = config.chainId
@@ -40,7 +41,7 @@ export class Swap {
     this.provider = new ethers.providers.JsonRpcProvider(profile.configs.rpc)
     this.overrideProvider = new JsonRpcProvider(profile.configs.rpc)
     this.signer = config.signer
-    this.pools = config.pools
+    this.RESOURCE = config.RESOURCE
     this.profile = profile
     this.derivableAdr = profile.configs.derivable
   }
@@ -378,11 +379,11 @@ export class Swap {
 
   getPoolPoolGroup(addressIn: string, addressOut: string) {
     const poolIn = isErc1155Address(addressIn)
-      ? this.pools[addressIn.split('-')[0]]
+      ? this.RESOURCE.pools[addressIn.split('-')[0]]
       : null
 
     const poolOut = isErc1155Address(addressOut)
-      ? this.pools[addressOut.split('-')[0]]
+      ? this.RESOURCE.pools[addressOut.split('-')[0]]
       : null
 
     if (!poolIn && !poolOut) {
