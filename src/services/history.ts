@@ -1,7 +1,6 @@
 import {BigNumber, ethers} from 'ethers'
 import {PowerState} from 'powerLib/dist/powerLib'
-import {LogType, TokenType} from '../types'
-import {CurrentPool} from './currentPool'
+import {LogType, PoolType, TokenType} from '../types'
 import {NATIVE_ADDRESS, POOL_IDS} from '../utils/constant'
 import {add, bn, div, getTopics, max, mul, numberToWei, parseSqrtSpotPrice, sub, weiToNumber} from "../utils/helper";
 import {Profile} from "../profile";
@@ -10,15 +9,13 @@ import {Resource} from "./resource";
 
 export class History {
   account?: string
-  CURRENT_POOL: CurrentPool
   RESOURCE: Resource
   config: IEngineConfig
   profile: Profile
 
-  constructor(config: IEngineConfig & { RESOURCE: Resource, CURRENT_POOL: CurrentPool }, profile: Profile) {
+  constructor(config: IEngineConfig & { RESOURCE: Resource }, profile: Profile) {
     this.config = config
     this.account = config.account
-    this.CURRENT_POOL = config.CURRENT_POOL
     this.RESOURCE = config.RESOURCE
     this.profile = profile
   }
@@ -104,11 +101,13 @@ export class History {
       }
 
       if (price) {
+        const pool = pools[poolOut]
+        const { baseToken, quoteToken } = pool
         //@ts-ignore
         const indexPrice = parseSqrtSpotPrice(
           price,
-          tokens.find((t) => t?.address === this.CURRENT_POOL.baseToken) as TokenType,
-          tokens.find((t) => t?.address === this.CURRENT_POOL.quoteToken) as TokenType,
+          tokens.find((t) => t?.address === baseToken) as TokenType,
+          tokens.find((t) => t?.address === quoteToken) as TokenType,
           1
         )
         positions[tokenOutAddress].value = add(positions[tokenOutAddress].value, mul(amountOut, indexPrice))
@@ -138,9 +137,9 @@ export class History {
       if (!logs || logs.length === 0) {
         return []
       }
-      const pools = this.CURRENT_POOL.pools
+      const pools = this.RESOURCE.pools
 
-      const poolAddresses = Object.keys(this.CURRENT_POOL.pools)
+      const poolAddresses = Object.keys(this.RESOURCE.pools)
       const swapLogs = logs.map((log) => {
         const abi = this.getSwapAbi(log.topics[0])
 
@@ -186,8 +185,11 @@ export class History {
         }
 
         if (price) {
+          const pool = pools[poolOut]
+          const { baseToken, quoteToken } = pool
           //@ts-ignore
-          entryPrice = parseSqrtSpotPrice(price, this.CURRENT_POOL.pair.token0, this.CURRENT_POOL.pair.token1, this.CURRENT_POOL.pair.quoteTokenIndex)
+          entryPrice = parseSqrtSpotPrice(price, baseToken, quoteToken, 1)
+          console.log('entryPrice', entryPrice)
         }
 
         return {

@@ -54,7 +54,6 @@ export class Engine {
     this.HISTORY = new History({
       ...this.enginConfigs,
       RESOURCE: this.RESOURCE,
-      CURRENT_POOL: this.CURRENT_POOL,
     }, this.profile)
     this.SWAP = new Swap({
       ...this.enginConfigs,
