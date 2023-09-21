@@ -70,7 +70,7 @@ export class Swap {
       const res = await contract.callStatic.exec(...params, {
         from: this.account,
         value,
-        gasLimit: this.profile.configs.gasLimitDefault || undefined,
+        gasLimit: this.profile.configs.gasLimitDefault,
       })
       const result = []
       for (const i in steps) {
@@ -252,13 +252,6 @@ export class Swap {
   getSwapCallData({step, poolGroup, poolIn, poolOut, idIn, idOut}: {
     step: SwapStepType, poolGroup: any, poolIn: string, poolOut: string, idIn: BigNumber, idOut: BigNumber
   }) {
-    if (!step.uniPool && (
-      (isAddress(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R) ||
-      (isAddress(step.tokenOut) && this.wrapToken(step.tokenOut) !== poolGroup.TOKEN_R)
-    )) {
-      throw new Error("Cannot find UniPool to Swap token")
-    }
-
     let inputs = [
       {
         mode: PAYMENT,
@@ -271,7 +264,7 @@ export class Swap {
           : 0,
         amountIn: step.amountIn,
         recipient: isAddress(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R
-          ? step.uniPool
+          ? this.getUniPool(step.tokenIn, poolGroup.TOKEN_R)
           : isErc1155Address(step.tokenIn)
             ? poolIn : poolOut,
       },
@@ -295,7 +288,7 @@ export class Swap {
       populateTxData.push(this.generateSwapParams('swapAndOpen', {
           side: idOut,
           deriPool: poolOut,
-          uniPool: step.uniPool,
+          uniPool: this.getUniPool(step.tokenIn, poolGroup.TOKEN_R),
           token: step.tokenIn,
           amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
           payer: this.account,
@@ -307,7 +300,7 @@ export class Swap {
       populateTxData.push(this.generateSwapParams('closeAndSwap', {
           side: idIn,
           deriPool: poolIn,
-          uniPool: step.uniPool,
+          uniPool: this.getUniPool(step.tokenOut, poolGroup.TOKEN_R),
           token: step.tokenOut,
           amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
           payer: this.account,
@@ -473,5 +466,16 @@ export class Swap {
         32
       )
     ) : bn(0)
+  }
+
+  getUniPool(tokenIn: string, tokenR: string) {
+    const routeKey = Object.keys(this.profile.routes).find((r) => {
+      return r === tokenR + '-' + tokenIn || r === tokenIn + '-' + tokenR
+    })
+    if(!this.profile.routes[routeKey || ''] || !this.profile.routes[routeKey || ''][0].address) {
+      console.error(`Can't find router, please select other token`)
+      throw `Can't find router, please select other token`
+    }
+    return this.profile.routes[routeKey || ''][0].address
   }
 }
