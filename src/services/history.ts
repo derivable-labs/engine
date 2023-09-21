@@ -174,10 +174,11 @@ export class History {
 
         let entryValue
         let entryPrice
+        const pool = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? pools[poolIn] : pools[poolOut]
+        const { TOKEN_R, baseToken, quoteToken } = pool
         if (([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) || [POOL_IDS.R, POOL_IDS.native].includes(sideOut.toNumber())) && priceR) {
-          const pool = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? pools[poolIn] : pools[poolOut]
           const amount = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut
-          const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
+          const tokenR = tokens.find((t) => t.address === TOKEN_R)
           const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0])
           //@ts-ignore
           const priceRFormated = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote, 1)
@@ -185,10 +186,12 @@ export class History {
         }
 
         if (price) {
-          const pool = pools[poolOut]
-          const { baseToken, quoteToken } = pool
-          //@ts-ignore
-          entryPrice = parseSqrtSpotPrice(price, baseToken, quoteToken, 1)
+          entryPrice = parseSqrtSpotPrice(
+            price,
+            tokens.find((t) => t?.address === baseToken) as TokenType,
+            tokens.find((t) => t?.address === quoteToken) as TokenType,
+            1
+          )
         }
 
         return {
