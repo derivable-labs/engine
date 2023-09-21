@@ -127,20 +127,18 @@ class History {
                 const tokenOut = tokens.find((t) => t.address === tokenOutAddress);
                 let entryValue;
                 let entryPrice;
+                const pool = [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) ? pools[poolIn] : pools[poolOut];
+                const { TOKEN_R, baseToken, quoteToken } = pool;
                 if (([constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) || [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideOut.toNumber())) && priceR) {
-                    const pool = [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) ? pools[poolIn] : pools[poolOut];
                     const amount = [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut;
-                    const tokenR = tokens.find((t) => t.address === pool.TOKEN_R);
+                    const tokenR = tokens.find((t) => t.address === TOKEN_R);
                     const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0]);
                     //@ts-ignore
                     const priceRFormated = (0, helper_1.parseSqrtSpotPrice)(priceR, tokenR, tokenRQuote, 1);
                     entryValue = (0, helper_1.weiToNumber)(amount.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + ((tokenIn === null || tokenIn === void 0 ? void 0 : tokenIn.decimal) || 18));
                 }
                 if (price) {
-                    const pool = pools[poolOut];
-                    const { baseToken, quoteToken } = pool;
-                    //@ts-ignore
-                    entryPrice = (0, helper_1.parseSqrtSpotPrice)(price, baseToken, quoteToken, 1);
+                    entryPrice = (0, helper_1.parseSqrtSpotPrice)(price, tokens.find((t) => (t === null || t === void 0 ? void 0 : t.address) === baseToken), tokens.find((t) => (t === null || t === void 0 ? void 0 : t.address) === quoteToken), 1);
                 }
                 return Object.assign({ transactionHash: log.transactionHash, timeStamp: log.timeStamp, blockNumber: log.blockNumber, logIndex: log.logIndex, poolIn,
                     poolOut, tokenIn: tokenInAddress, tokenOut: tokenOutAddress, entryValue,
