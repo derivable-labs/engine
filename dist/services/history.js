@@ -141,7 +141,6 @@ class History {
                     const { baseToken, quoteToken } = pool;
                     //@ts-ignore
                     entryPrice = (0, helper_1.parseSqrtSpotPrice)(price, baseToken, quoteToken, 1);
-                    console.log('entryPrice', entryPrice);
                 }
                 return Object.assign({ transactionHash: log.transactionHash, timeStamp: log.timeStamp, blockNumber: log.blockNumber, logIndex: log.logIndex, poolIn,
                     poolOut, tokenIn: tokenInAddress, tokenOut: tokenOutAddress, entryValue,
