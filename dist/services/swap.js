@@ -28,7 +28,7 @@ class Swap {
         this.provider = new ethers_1.ethers.providers.JsonRpcProvider(profile.configs.rpc);
         this.overrideProvider = new providers_1.JsonRpcProvider(profile.configs.rpc);
         this.signer = config.signer;
-        this.pools = config.pools;
+        this.RESOURCE = config.RESOURCE;
         this.profile = profile;
         this.derivableAdr = profile.configs.derivable;
     }
@@ -312,10 +312,10 @@ class Swap {
     }
     getPoolPoolGroup(addressIn, addressOut) {
         const poolIn = (0, helper_1.isErc1155Address)(addressIn)
-            ? this.pools[addressIn.split('-')[0]]
+            ? this.RESOURCE.pools[addressIn.split('-')[0]]
             : null;
         const poolOut = (0, helper_1.isErc1155Address)(addressOut)
-            ? this.pools[addressOut.split('-')[0]]
+            ? this.RESOURCE.pools[addressOut.split('-')[0]]
             : null;
         if (!poolIn && !poolOut) {
             throw 'Cannot detect pool to swap';

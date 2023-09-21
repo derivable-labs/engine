@@ -1,8 +1,9 @@
 import { BigNumber, ethers } from 'ethers';
-import { PoolType, SwapStepType } from '../types';
+import { SwapStepType } from '../types';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { Profile } from "../profile";
 import { IDerivableContractAddress, IEngineConfig } from "../utils/configs";
+import { Resource } from './resource';
 export declare class Swap {
     account?: string;
     chainId: number;
@@ -10,16 +11,12 @@ export declare class Swap {
     provider: ethers.providers.Provider;
     overrideProvider: JsonRpcProvider;
     signer?: ethers.providers.JsonRpcSigner;
-    pools: {
-        [key: string]: PoolType;
-    };
+    RESOURCE: Resource;
     config: IEngineConfig;
     profile: Profile;
     derivableAdr: IDerivableContractAddress;
     constructor(config: IEngineConfig & {
-        pools: {
-            [key: string]: PoolType;
-        };
+        RESOURCE: Resource;
     }, profile: Profile);
     calculateAmountOuts(steps: SwapStepType[]): Promise<(BigNumber | BigNumber[])[] | (BigNumber | {
         amountOut: any;
