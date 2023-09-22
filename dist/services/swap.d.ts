@@ -42,14 +42,21 @@ export declare class Swap {
         idIn: BigNumber;
         idOut: BigNumber;
     }): {
-        inputs: {
+        inputs: ({
             mode: number;
             eip: number;
-            token: any;
+            token: string;
             id: number | BigNumber;
+            amountIn: BigNumber;
+            recipient: string;
+        } | {
+            mode: number;
+            eip: number;
+            token: string;
+            id: BigNumber;
             amountIn: any;
             recipient: string;
-        }[];
+        })[];
         populateTxData: Promise<ethers.PopulatedTransaction>[];
     };
     getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut }: {
