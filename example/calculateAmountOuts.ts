@@ -20,22 +20,18 @@ const testLocal = async () => {
   const provider = new ethers.providers.JsonRpcProvider(configs.rpcUrl)
   // @ts-ignore
   const tokenContract = new ethers.Contract( engine.profile.configs.derivable.token, TokenAbi, provider)
-  const currentBalanceOut = await tokenContract.balanceOf(configs.account, packId(POOL_IDS.C.toString(), poolOut))
+  const currentBalanceOut = await tokenContract.balanceOf(configs.account, packId(POOL_IDS.A.toString(), poolOut))
   const steps = [
     {
       amountIn: bn(numberToWei(0.01, 6)),
       tokenIn: "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
-      tokenOut: poolOut + '-' + POOL_IDS.C,
+      tokenOut: poolOut + '-' + POOL_IDS.A,
       amountOutMin: 0,
       currentBalanceOut,
-      useSweep: false
+      useSweep: true
     },
   ]
-  // 961641740797182
-  // 963138663855440
-  // 976192888021539
-  // 979755377489193
-  // 982100493385779
+
   try {
     const res = await engine.SWAP.calculateAmountOuts(steps)
     console.log(res[0][0].amountOut.toString())

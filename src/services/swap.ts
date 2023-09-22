@@ -192,6 +192,8 @@ export class Swap {
   }) {
     const stateCalHelper = this.getStateCalHelperContract()
 
+    const swapCallData = this.getSwapCallData({step, poolGroup, poolIn, poolOut, idIn, idOut})
+
     let inputs = [
       {
         mode: TRANSFER,
@@ -201,42 +203,11 @@ export class Swap {
         amountIn: step.currentBalanceOut,
         recipient: stateCalHelper.address,
       },
-      step.tokenIn === NATIVE_ADDRESS ?
-        {
-          mode: CALL_VALUE,
-          token: ZERO_ADDRESS,
-          eip: 0,
-          id: 0,
-          amountIn: step.amountIn,
-          recipient: ZERO_ADDRESS,
-        }
-        :
-        {
-          mode: PAYMENT,
-          eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
-          token: isErc1155Address(step.tokenIn)
-            ? this.derivableAdr.token
-            : poolGroup.TOKEN_R,
-          id: isErc1155Address(step.tokenIn)
-            ? packId(idIn.toString(), poolIn)
-            : 0,
-          amountIn: step.amountIn,
-          recipient: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
-        },
+      ...swapCallData.inputs
     ]
 
     const populateTxData = [
-      this.generateSwapParams('swap', {
-        sideIn: idIn,
-        poolIn: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
-        sideOut: idOut,
-        poolOut: isErc1155Address(step.tokenOut) ? poolOut : poolIn,
-        amountIn: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
-        maturity: 0,
-        payer: this.account,
-        recipient: this.account,
-        INDEX_R: this.getIndexR(poolGroup.TOKEN_R)
-      }),
+      ...swapCallData.populateTxData,
       stateCalHelper.populateTransaction.sweep(
         packId(idOut + '', poolOut),
         this.account
