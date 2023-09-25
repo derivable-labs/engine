@@ -494,10 +494,20 @@ class Resource {
                 premium = { A: 0, B: 0, C: 0 };
             }
             else if (rA.gt(rB)) {
-                premium = { A: (0, helper_1.div)(premiumRate, rA), B: (0, helper_1.div)(-premiumRate, rB.add(rC)), C: (0, helper_1.div)(-premiumRate, rB.add(rC)) };
+                const receivingRate = (0, helper_1.div)(-premiumRate, rB.add(rC));
+                premium = {
+                    A: (0, helper_1.div)(premiumRate, rA),
+                    B: receivingRate,
+                    C: receivingRate,
+                };
             }
             else if (rB.gt(rA)) {
-                premium = { A: (0, helper_1.div)(-premiumRate, rA.add(rC)), B: (0, helper_1.div)(premiumRate, rB), C: (0, helper_1.div)(-premiumRate, rB.add(rC)) };
+                const receivingRate = (0, helper_1.div)(-premiumRate, rA.add(rC));
+                premium = {
+                    B: (0, helper_1.div)(premiumRate, rB),
+                    A: receivingRate,
+                    C: receivingRate,
+                };
             }
         }
         return {

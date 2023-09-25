@@ -213,12 +213,11 @@ const getTopics = () => {
     return topics;
 };
 exports.getTopics = getTopics;
-function toDailyRate(HALF_LIFE, precision = 4) {
+function toDailyRate(HALF_LIFE) {
     if (HALF_LIFE == 0) {
         return 0;
     }
-    const rate = 1 - Math.pow(2, (-constant_1.SECONDS_PER_DAY / HALF_LIFE));
-    return Math.round(rate * Math.pow(10, precision)) / Math.pow(10, precision);
+    return 1 - Math.pow(2, (-constant_1.SECONDS_PER_DAY / HALF_LIFE));
 }
 exports.toDailyRate = toDailyRate;
 function compoundRate(r, p) {
