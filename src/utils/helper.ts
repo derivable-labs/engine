@@ -232,12 +232,11 @@ export const getTopics = (): { [key: string]: string[] } => {
   return topics
 }
 
-export function toDailyRate(HALF_LIFE: number, precision = 4) {
+export function toDailyRate(HALF_LIFE: number) {
   if (HALF_LIFE == 0) {
     return 0
   }
-  const rate = 1 - 2 ** (-SECONDS_PER_DAY / HALF_LIFE)
-  return Math.round(rate * 10 ** precision) / 10 ** precision
+  return 1 - 2 ** (-SECONDS_PER_DAY / HALF_LIFE)
 }
 
 export function compoundRate(r: number, p: number): number {
