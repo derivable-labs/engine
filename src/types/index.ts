@@ -27,59 +27,23 @@ export type LogType = {
 }
 
 export type StatesType = {
-  twapBase: BigNumber
-  twapLP: BigNumber
-  spotBase: BigNumber
-  spotLP: BigNumber
   R: BigNumber
+  a: BigNumber
+  b: BigNumber
   rA: BigNumber
   rB: BigNumber
   rC: BigNumber
   sA: BigNumber
   sB: BigNumber
   sC: BigNumber
-  Rc: BigNumber
-  Rb: BigNumber
-  Rq: BigNumber
-  priceScaleTimestamp: number
-  priceScaleLong: BigNumber
-  priceScaleShort: BigNumber
-  oracleStore: {
-    basePriceCumulative: BigNumber
-    blockTimestamp: number
-    baseTWAP: {
-      _x: BigNumber
-    }
+  twap: BigNumber
+  spot: BigNumber
+  state: {
+    R: BigNumber
+    a: BigNumber
+    b: BigNumber
   }
-  oracleStoreUpdated: {
-    basePriceCumulative: BigNumber
-    blockTimestamp: number
-    baseTWAP: {
-      _x: BigNumber
-    }
-  }
-  twap: {
-    base: {
-      _x: BigNumber
-    }
-    LP: {
-      _x: BigNumber
-    }
-  }
-  spot: {
-    base: {
-      _x: BigNumber
-    }
-    LP: {
-      _x: BigNumber
-    }
-  }
-  totalSupplies: BigNumber[]
-  rDcNeutral: BigNumber
-  rDcLong: BigNumber
-  rDcShort: BigNumber
-  rentRateLong: BigNumber
-  rentRateShort: BigNumber
+  config: any
 }
 
 export type PoolConfig = {
