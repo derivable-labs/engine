@@ -19,7 +19,8 @@ import {
   decompoundRate,
   div,
   formatMultiCallBignumber,
-  getNormalAddress, getTopics, mul, parseSqrtSpotPrice, toDailyRate
+  getNormalAddress, getTopics, mul, parseSqrtSpotPrice, toDailyRate,
+  kx,
 } from '../utils/helper'
 import {JsonRpcProvider} from '@ethersproject/providers'
 import _ from 'lodash'
@@ -29,6 +30,8 @@ import {defaultAbiCoder} from "ethers/lib/utils";
 import {Profile} from "../profile";
 const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
+
+const { A, B, C } = POOL_IDS
 
 type ResourceData = {
   pools: PoolsType
@@ -672,16 +675,26 @@ export class Resource {
   }
 
   calcPoolInfo(pool: PoolType) {
-    const {R, rA, rB, rC} = pool.states
+    const { MARK, states } = pool
+    const {R, rA, rB, rC, a, b, spot } = states
     const riskFactor = rC.gt(0) ? div(rA.sub(rB), rC) : '0'
     const deleverageRiskA = R.isZero() ? 0 : rA.mul(2 * this.unit).div(R).toNumber() / this.unit
     const deleverageRiskB = R.isZero() ? 0 : rB.mul(2 * this.unit).div(R).toNumber() / this.unit
-    const power = pool.k.toNumber()/2
-    const dailyInterestRate = decompoundRate(toDailyRate(pool.INTEREST_HL.toNumber()), power)
-    let premium:any = {}
-    let maxPremiumRate
-    if(pool.PREMIUM_HL) {
-      maxPremiumRate = decompoundRate(toDailyRate(pool.PREMIUM_HL.toNumber()), power)
+    const k = pool.k.toNumber()
+    const sides = {
+      [A]: {} as any,
+      [B]: {} as any,
+      [C]: {} as any,
+    }
+    sides[A].k = Math.min(k, kx(k, R, a, spot, MARK))
+    sides[B].k = -Math.min(k, kx(-k, R, b, spot, MARK))
+    sides[B].k = rA.mul(Math.round(sides[A].k * this.unit)).add(
+                 rB.mul(Math.round(sides[B].k * this.unit))
+                ).div(rA.add(rB)).toNumber() / this.unit
+
+    let interestRate = toDailyRate(pool.INTEREST_HL.toNumber())
+    let maxPremiumRate = toDailyRate(pool.PREMIUM_HL.toNumber())
+    if (maxPremiumRate > 0) {
       const [rMax, rMin] = rA.gt(rB) ? [rA, rB] : [rB, rA]
       const premiumRate = Number(
         div(
@@ -692,32 +705,43 @@ export class Resource {
           R,
         )
       )
-      if(rA.eq(rB)) {
-        premium = {A: 0, B: 0, C: 0}
-      } else if(rA.gt(rB)) {
-        const receivingRate = div(-premiumRate, rB.add(rC))
-        premium = {
-          A: div(premiumRate, rA),
-          B: receivingRate,
-          C: receivingRate,
-        }
+      if(rA.gt(rB)) {
+        const receivingRate = Number(div(premiumRate, rB.add(rC)))
+        sides[A].premium = Number(div(premiumRate, rA))
+        sides[B].premium = -receivingRate
+        sides[C].premium = receivingRate
       } else if(rB.gt(rA)) {
-        const receivingRate = div(-premiumRate, rA.add(rC))
-        premium = {
-          B: div(premiumRate, rB),
-          A: receivingRate,
-          C: receivingRate,
-        }
+        const receivingRate = Number(div(premiumRate, rA.add(rC)))
+        sides[B].premium = Number(div(premiumRate, rB))
+        sides[A].premium = -receivingRate
+        sides[C].premium = receivingRate
+      } else {
+        sides[A].premium = 0
+        sides[B].premium = 0
+        sides[C].premium = 0
+      }
+
+      // decompound the premium
+      maxPremiumRate = decompoundRate(maxPremiumRate, k/2) / (k/2)
+      for (const side of [A, B]) {
+        sides[side].premium = decompoundRate(sides[side].premium, sides[side].k/2) / (k/2)
       }
     }
 
+    // decompound the interest
+    for (const side of [A, B]) {
+      sides[side].interest = decompoundRate(interestRate, sides[side].k/2) / (k/2)
+    }
+    sides[C].interest = rA.add(rB).mul(Math.round(this.unit * interestRate)).div(rC).toNumber() / this.unit
+    interestRate = decompoundRate(interestRate, k/2) / (k/2)
+
     return {
-      premium,
+      sides,
       riskFactor,
       deleverageRiskA,
       deleverageRiskB,
-      dailyInterestRate,
-      maxPremiumRate
+      interestRate,
+      maxPremiumRate,
     }
   }
 

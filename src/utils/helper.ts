@@ -246,3 +246,26 @@ export function compoundRate(r: number, p: number): number {
 export function decompoundRate(c: number, p: number): number {
   return 1 - (1-c)**(1/p)
 }
+
+export const kx = (
+  k: number,
+  R: BigNumber,
+  v: BigNumber,
+  spot: BigNumber,
+  MARK: BigNumber,
+  PRECISION: number = 1000000,
+): number => {
+  try {
+    const xk = Math.pow(spot.mul(PRECISION).div(MARK).toNumber() / PRECISION, k)
+    const vxk4 = v
+      .mul(Math.round(xk * PRECISION))
+      .shl(2)
+      .div(PRECISION)
+    const denom = vxk4.gt(R) ? vxk4.sub(R) : R.sub(vxk4)
+    const num = R.mul(k)
+    return num.mul(PRECISION).div(denom).toNumber() / PRECISION
+  } catch (err) {
+    console.warn(err)
+    return 0
+  }
+}
