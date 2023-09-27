@@ -2,7 +2,7 @@ import { Engine } from '../src/engine'
 import { getTestConfigs } from './shared/testConfigs'
 
 const testLocal = async () => {
-  const configs = getTestConfigs(8453)
+  const configs = getTestConfigs(42161)
   const engine = new Engine(configs)
   await engine.initServices()
   await engine.RESOURCE.fetchResourceData(

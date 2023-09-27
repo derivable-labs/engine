@@ -1,4 +1,4 @@
-import {BigNumber, ethers} from 'ethers'
+import {BigNumber, Contract, ethers} from 'ethers'
 import {
   ddlGenesisBlock,
   LOCALSTORAGE_KEY,
@@ -399,6 +399,11 @@ export class Resource {
       normalTokens,
       listPools,
     )
+
+    const contract = new Contract('0xe1d0E38465F84B1e3C86054A55B51618664674c2', this.profile.getAbi('PoolOverride').abi, this.getPoolOverridedProvider())
+    const computeData = await contract.compute(this.profile.configs.derivable.token, 5)
+    console.log(computeData)
+
     const [{results}, pairsInfo] = await Promise.all([
       multicall.call(context),
       this.UNIV3PAIR.getPairsInfo({
