@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.decompoundRate = exports.compoundRate = exports.toDailyRate = exports.getTopics = exports.mergeDeep = exports.parseSqrtX96 = exports.parseSqrtSpotPrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.max = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
+exports.kx = exports.decompoundRate = exports.compoundRate = exports.toDailyRate = exports.getTopics = exports.mergeDeep = exports.parseSqrtX96 = exports.parseSqrtSpotPrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.max = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
 const ethers_1 = require("ethers");
 const Events_json_1 = __importDefault(require("../abi/Events.json"));
 const constant_1 = require("./constant");
@@ -228,4 +228,21 @@ function decompoundRate(c, p) {
     return 1 - Math.pow((1 - c), (1 / p));
 }
 exports.decompoundRate = decompoundRate;
+const kx = (k, R, v, spot, MARK, PRECISION = 1000000) => {
+    try {
+        const xk = Math.pow(spot.mul(PRECISION).div(MARK).toNumber() / PRECISION, k);
+        const vxk4 = v
+            .mul(Math.round(xk * PRECISION))
+            .shl(2)
+            .div(PRECISION);
+        const denom = vxk4.gt(R) ? vxk4.sub(R) : R.sub(vxk4);
+        const num = R.mul(k);
+        return num.mul(PRECISION).div(denom).toNumber() / PRECISION;
+    }
+    catch (err) {
+        console.warn(err);
+        return 0;
+    }
+};
+exports.kx = kx;
 //# sourceMappingURL=helper.js.map

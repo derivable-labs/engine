@@ -32,3 +32,4 @@ export declare const getTopics: () => {
 export declare function toDailyRate(HALF_LIFE: number): number;
 export declare function compoundRate(r: number, p: number): number;
 export declare function decompoundRate(c: number, p: number): number;
+export declare const kx: (k: number, R: BigNumber, v: BigNumber, spot: BigNumber, MARK: BigNumber, PRECISION?: number) => number;

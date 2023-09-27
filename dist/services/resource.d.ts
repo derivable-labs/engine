@@ -87,12 +87,14 @@ export declare class Resource {
         poolsState: {};
     };
     calcPoolInfo(pool: PoolType): {
-        premium: any;
+        sides: {
+            [x: number]: any;
+        };
         riskFactor: any;
         deleverageRiskA: number;
         deleverageRiskB: number;
-        dailyInterestRate: number;
-        maxPremiumRate: number | undefined;
+        interestRate: number;
+        maxPremiumRate: number;
     };
     getRdc(pools: any): {
         supplyDetails: any;

@@ -23,6 +23,7 @@ const uniV3Pair_1 = require("./uniV3Pair");
 const utils_1 = require("ethers/lib/utils");
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider');
 const MAX_BLOCK = 4294967295;
+const { A, B, C } = constant_1.POOL_IDS;
 class Resource {
     constructor(engineConfigs, profile) {
         this.poolGroups = {};
@@ -478,45 +479,61 @@ class Resource {
         return { tokens, poolsState: pools };
     }
     calcPoolInfo(pool) {
-        const { R, rA, rB, rC } = pool.states;
+        const { MARK, states } = pool;
+        const { R, rA, rB, rC, a, b, spot } = states;
         const riskFactor = rC.gt(0) ? (0, helper_1.div)(rA.sub(rB), rC) : '0';
         const deleverageRiskA = R.isZero() ? 0 : rA.mul(2 * this.unit).div(R).toNumber() / this.unit;
         const deleverageRiskB = R.isZero() ? 0 : rB.mul(2 * this.unit).div(R).toNumber() / this.unit;
-        const power = pool.k.toNumber() / 2;
-        const dailyInterestRate = (0, helper_1.decompoundRate)((0, helper_1.toDailyRate)(pool.INTEREST_HL.toNumber()), power);
-        let premium = {};
-        let maxPremiumRate;
-        if (pool.PREMIUM_HL) {
-            maxPremiumRate = (0, helper_1.decompoundRate)((0, helper_1.toDailyRate)(pool.PREMIUM_HL.toNumber()), power);
+        const k = pool.k.toNumber();
+        const sides = {
+            [A]: {},
+            [B]: {},
+            [C]: {},
+        };
+        sides[A].k = Math.min(k, (0, helper_1.kx)(k, R, a, spot, MARK));
+        sides[B].k = -Math.min(k, (0, helper_1.kx)(-k, R, b, spot, MARK));
+        sides[B].k = rA.mul(Math.round(sides[A].k * this.unit)).add(rB.mul(Math.round(sides[B].k * this.unit))).div(rA.add(rB)).toNumber() / this.unit;
+        let interestRate = (0, helper_1.toDailyRate)(pool.INTEREST_HL.toNumber());
+        let maxPremiumRate = (0, helper_1.toDailyRate)(pool.PREMIUM_HL.toNumber());
+        if (maxPremiumRate > 0) {
             const [rMax, rMin] = rA.gt(rB) ? [rA, rB] : [rB, rA];
             const premiumRate = Number((0, helper_1.div)((0, helper_1.mul)(rMax, (0, helper_1.mul)(rMax.sub(rMin), maxPremiumRate, false)), R));
-            if (rA.eq(rB)) {
-                premium = { A: 0, B: 0, C: 0 };
-            }
-            else if (rA.gt(rB)) {
-                const receivingRate = (0, helper_1.div)(-premiumRate, rB.add(rC));
-                premium = {
-                    A: (0, helper_1.div)(premiumRate, rA),
-                    B: receivingRate,
-                    C: receivingRate,
-                };
+            if (rA.gt(rB)) {
+                const receivingRate = Number((0, helper_1.div)(premiumRate, rB.add(rC)));
+                sides[A].premium = Number((0, helper_1.div)(premiumRate, rA));
+                sides[B].premium = -receivingRate;
+                sides[C].premium = receivingRate;
             }
             else if (rB.gt(rA)) {
-                const receivingRate = (0, helper_1.div)(-premiumRate, rA.add(rC));
-                premium = {
-                    B: (0, helper_1.div)(premiumRate, rB),
-                    A: receivingRate,
-                    C: receivingRate,
-                };
+                const receivingRate = Number((0, helper_1.div)(premiumRate, rA.add(rC)));
+                sides[B].premium = Number((0, helper_1.div)(premiumRate, rB));
+                sides[A].premium = -receivingRate;
+                sides[C].premium = receivingRate;
+            }
+            else {
+                sides[A].premium = 0;
+                sides[B].premium = 0;
+                sides[C].premium = 0;
+            }
+            // decompound the premium
+            maxPremiumRate = (0, helper_1.decompoundRate)(maxPremiumRate, k / 2) / (k / 2);
+            for (const side of [A, B]) {
+                sides[side].premium = (0, helper_1.decompoundRate)(sides[side].premium, sides[side].k / 2) / (k / 2);
             }
         }
+        // decompound the interest
+        for (const side of [A, B]) {
+            sides[side].interest = (0, helper_1.decompoundRate)(interestRate, sides[side].k / 2) / (k / 2);
+        }
+        sides[C].interest = rA.add(rB).mul(Math.round(this.unit * interestRate)).div(rC).toNumber() / this.unit;
+        interestRate = (0, helper_1.decompoundRate)(interestRate, k / 2) / (k / 2);
         return {
-            premium,
+            sides,
             riskFactor,
             deleverageRiskA,
             deleverageRiskB,
-            dailyInterestRate,
-            maxPremiumRate
+            interestRate,
+            maxPremiumRate,
         };
     }
     getRdc(pools) {
