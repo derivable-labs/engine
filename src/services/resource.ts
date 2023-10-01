@@ -228,6 +228,9 @@ export class Resource {
     if (swapLogsParsed && swapLogsParsed.length > 0) {
       results.swapLogs = swapLogsParsed
     }
+    if (transferLogsParsed && transferLogsParsed.length > 0) {
+      results.transferLogs = transferLogsParsed
+    }
     this.pools = {...results.pools, ...this.pools}
     return results
   }
