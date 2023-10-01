@@ -2,10 +2,23 @@ import {BigNumber, ethers} from 'ethers'
 import {PowerState} from 'powerLib/dist/powerLib'
 import {LogType, PoolType, TokenType} from '../types'
 import {NATIVE_ADDRESS, POOL_IDS} from '../utils/constant'
-import {add, bn, div, getTopics, max, mul, numberToWei, parseSqrtSpotPrice, sub, weiToNumber} from "../utils/helper";
+import {
+  add,
+  bn,
+  div,
+  formatMultiCallBignumber,
+  getTopics,
+  max,
+  mul,
+  numberToWei,
+  parseSqrtSpotPrice,
+  sub,
+  weiToNumber
+} from "../utils/helper";
 import {Profile} from "../profile";
 import {IEngineConfig} from "../utils/configs";
 import {Resource} from "./resource";
+import Erc20 from "../abi/ERC20.json";
 
 export class History {
   account?: string
@@ -102,7 +115,7 @@ export class History {
 
       if (price) {
         const pool = pools[poolOut]
-        const { baseToken, quoteToken } = pool
+        const {baseToken, quoteToken} = pool
         //@ts-ignore
         const indexPrice = parseSqrtSpotPrice(
           price,
@@ -132,25 +145,23 @@ export class History {
     return positions
   }
 
-  formatSwapHistory({logs, tokens}: { logs: LogType[], tokens: TokenType[] }) {
+  formatSwapHistory({transferLogs, swapLogs, tokens}: {
+    transferLogs: LogType[],
+    swapLogs: LogType[],
+    tokens: TokenType[]
+  }) {
+    console.log(transferLogs)
     try {
-      if (!logs || logs.length === 0) {
+      if (!swapLogs || swapLogs.length === 0) {
         return []
       }
       const pools = this.RESOURCE.pools
 
-      const poolAddresses = Object.keys(this.RESOURCE.pools)
-      const swapLogs = logs.map((log) => {
-        const abi = this.getSwapAbi(log.topics[0])
 
-        const encodeData = ethers.utils.defaultAbiCoder.encode(
-          abi,
-          log.args.args,
-        )
-        const formatedData = ethers.utils.defaultAbiCoder.decode(
-          abi,
-          encodeData,
-        )
+      const poolAddresses = Object.keys(this.RESOURCE.pools)
+      const _swapLogs = swapLogs.map((log) => {
+        const abi = this.getSwapAbi(log.topics[0])
+        const formatedData = this.decodeSwapLog(abi, log.args.args)
 
         const {poolIn, poolOut, sideIn, sideOut, amountIn, amountOut, price, priceR} = formatedData
 
@@ -161,11 +172,11 @@ export class History {
           return null
         }
 
-        const tokenInAddress = this.getTokenAddressByPoolAndSide(
+        let tokenInAddress = this.getTokenAddressByPoolAndSide(
           poolIn,
           formatedData.sideIn,
         )
-        const tokenOutAddress = this.getTokenAddressByPoolAndSide(
+        let tokenOutAddress = this.getTokenAddressByPoolAndSide(
           poolOut,
           formatedData.sideOut,
         )
@@ -175,7 +186,7 @@ export class History {
         let entryValue
         let entryPrice
         const pool = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? pools[poolIn] : pools[poolOut]
-        const { TOKEN_R, baseToken, quoteToken } = pool
+        const {TOKEN_R, baseToken, quoteToken} = pool
         if (([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) || [POOL_IDS.R, POOL_IDS.native].includes(sideOut.toNumber())) && priceR) {
           const amount = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut
           const tokenR = tokens.find((t) => t.address === TOKEN_R)
@@ -194,6 +205,19 @@ export class History {
           )
         }
 
+        const _transferLog = transferLogs.find((l) => l.transactionHash === log.transactionHash)
+        const anyTokenHistoryData: any = {}
+        if (_transferLog) {
+          const _transferData = this.decodeTransferLog(_transferLog.data, _transferLog.topics)
+          if(this.account === _transferData.from) {
+            anyTokenHistoryData.tokenIn = _transferLog.contractAddress
+            anyTokenHistoryData.amountIn = _transferData.value
+          } else if(this.account === _transferData.to) {
+            anyTokenHistoryData.tokenOut = _transferLog.contractAddress
+            anyTokenHistoryData.amountOut = _transferData.value
+          }
+        }
+
         return {
           transactionHash: log.transactionHash,
           timeStamp: log.timeStamp,
@@ -206,11 +230,12 @@ export class History {
           entryValue,
           entryPrice,
           ...formatedData,
+          ...anyTokenHistoryData
         }
       })
 
       return (
-        swapLogs
+        _swapLogs
           .filter((l) => l !== null)
           .sort((a, b) => b!.blockNumber - a!.blockNumber || b!.logIndex - a!.logIndex)
       )
@@ -241,13 +266,13 @@ export class History {
     }
   }
 
-  calculateLeverage(powerState: PowerState, balances: any, powers: number[]) {
-    const _balances = {}
-    for (let i in balances) {
-      if (powers[i]) {
-        _balances[powers[i]] = balances[i]
-      }
-    }
-    return powerState.calculateCompExposure(_balances)
+  decodeTransferLog(data: string, topics: string[]) {
+    const abiInterface = new ethers.utils.Interface(Erc20)
+    return abiInterface.decodeEventLog('Transfer', data, topics)
+  }
+
+  decodeSwapLog(abi: any, args: any) {
+    const encodeData = ethers.utils.defaultAbiCoder.encode(abi, args)
+    return ethers.utils.defaultAbiCoder.decode(abi, encodeData)
   }
 }
