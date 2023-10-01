@@ -1,9 +1,13 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.History = void 0;
 const ethers_1 = require("ethers");
 const constant_1 = require("../utils/constant");
 const helper_1 = require("../utils/helper");
+const ERC20_json_1 = __importDefault(require("../abi/ERC20.json"));
 class History {
     constructor(config, profile) {
         this.getSwapAbi = (topic0) => {
@@ -105,24 +109,24 @@ class History {
         }
         return positions;
     }
-    formatSwapHistory({ logs, tokens }) {
+    formatSwapHistory({ transferLogs, swapLogs, tokens }) {
+        console.log(transferLogs);
         try {
-            if (!logs || logs.length === 0) {
+            if (!swapLogs || swapLogs.length === 0) {
                 return [];
             }
             const pools = this.RESOURCE.pools;
             const poolAddresses = Object.keys(this.RESOURCE.pools);
-            const swapLogs = logs.map((log) => {
+            const _swapLogs = swapLogs.map((log) => {
                 const abi = this.getSwapAbi(log.topics[0]);
-                const encodeData = ethers_1.ethers.utils.defaultAbiCoder.encode(abi, log.args.args);
-                const formatedData = ethers_1.ethers.utils.defaultAbiCoder.decode(abi, encodeData);
+                const formatedData = this.decodeSwapLog(abi, log.args.args);
                 const { poolIn, poolOut, sideIn, sideOut, amountIn, amountOut, price, priceR } = formatedData;
                 if (!poolAddresses.includes(poolIn) ||
                     !poolAddresses.includes(poolOut)) {
                     return null;
                 }
-                const tokenInAddress = this.getTokenAddressByPoolAndSide(poolIn, formatedData.sideIn);
-                const tokenOutAddress = this.getTokenAddressByPoolAndSide(poolOut, formatedData.sideOut);
+                let tokenInAddress = this.getTokenAddressByPoolAndSide(poolIn, formatedData.sideIn);
+                let tokenOutAddress = this.getTokenAddressByPoolAndSide(poolOut, formatedData.sideOut);
                 const tokenIn = tokens.find((t) => t.address === tokenInAddress);
                 const tokenOut = tokens.find((t) => t.address === tokenOutAddress);
                 let entryValue;
@@ -140,11 +144,24 @@ class History {
                 if (price) {
                     entryPrice = (0, helper_1.parseSqrtSpotPrice)(price, tokens.find((t) => (t === null || t === void 0 ? void 0 : t.address) === baseToken), tokens.find((t) => (t === null || t === void 0 ? void 0 : t.address) === quoteToken), 1);
                 }
-                return Object.assign({ transactionHash: log.transactionHash, timeStamp: log.timeStamp, blockNumber: log.blockNumber, logIndex: log.logIndex, poolIn,
+                const _transferLog = transferLogs.find((l) => l.transactionHash === log.transactionHash);
+                const anyTokenHistoryData = {};
+                if (_transferLog) {
+                    const _transferData = this.decodeTransferLog(_transferLog.data, _transferLog.topics);
+                    if (this.account === _transferData.from) {
+                        anyTokenHistoryData.tokenIn = _transferLog.contractAddress;
+                        anyTokenHistoryData.amountIn = _transferData.value;
+                    }
+                    else if (this.account === _transferData.to) {
+                        anyTokenHistoryData.tokenOut = _transferLog.contractAddress;
+                        anyTokenHistoryData.amountOut = _transferData.value;
+                    }
+                }
+                return Object.assign(Object.assign({ transactionHash: log.transactionHash, timeStamp: log.timeStamp, blockNumber: log.blockNumber, logIndex: log.logIndex, poolIn,
                     poolOut, tokenIn: tokenInAddress, tokenOut: tokenOutAddress, entryValue,
-                    entryPrice }, formatedData);
+                    entryPrice }, formatedData), anyTokenHistoryData);
             });
-            return (swapLogs
+            return (_swapLogs
                 .filter((l) => l !== null)
                 .sort((a, b) => b.blockNumber - a.blockNumber || b.logIndex - a.logIndex));
         }
@@ -162,14 +179,13 @@ class History {
         }
         return poolAddress + '-' + side.toString();
     }
-    calculateLeverage(powerState, balances, powers) {
-        const _balances = {};
-        for (let i in balances) {
-            if (powers[i]) {
-                _balances[powers[i]] = balances[i];
-            }
-        }
-        return powerState.calculateCompExposure(_balances);
+    decodeTransferLog(data, topics) {
+        const abiInterface = new ethers_1.ethers.utils.Interface(ERC20_json_1.default);
+        return abiInterface.decodeEventLog('Transfer', data, topics);
+    }
+    decodeSwapLog(abi, args) {
+        const encodeData = ethers_1.ethers.utils.defaultAbiCoder.encode(abi, args);
+        return ethers_1.ethers.utils.defaultAbiCoder.decode(abi, encodeData);
     }
 }
 exports.History = History;

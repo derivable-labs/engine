@@ -30,6 +30,7 @@ class Resource {
         this.pools = {};
         this.tokens = [];
         this.swapLogs = [];
+        this.transferLogs = [];
         this.unit = 1000000;
         this.chainId = engineConfigs.chainId;
         this.scanApi = profile.configs.scanApi;
@@ -58,6 +59,7 @@ class Resource {
             this.pools = Object.assign(Object.assign({}, resultCached.pools), newResource.pools);
             this.tokens = [...resultCached.tokens, ...newResource.tokens];
             this.swapLogs = [...resultCached.swapLogs, ...newResource.swapLogs];
+            this.transferLogs = [...resultCached.transferLogs, ...newResource.transferLogs];
         });
     }
     getLastBlockCached(account) {
@@ -130,6 +132,9 @@ class Resource {
             }
             if (swapLogsParsed && swapLogsParsed.length > 0) {
                 results.swapLogs = swapLogsParsed;
+            }
+            if (transferLogsParsed && transferLogsParsed.length > 0) {
+                results.transferLogs = transferLogsParsed;
             }
             this.pools = Object.assign(Object.assign({}, results.pools), this.pools);
             return results;
@@ -590,6 +595,7 @@ class Resource {
                     logIndex: log.transactionHash + '-' + log.logIndex,
                     name: appName,
                     topics: log.topics,
+                    data: log.data,
                     args: Object.assign({}, data),
                 };
             }

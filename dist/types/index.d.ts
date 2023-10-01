@@ -12,6 +12,7 @@ export type ParseLogType = {
     topics: string[];
 };
 export type LogType = {
+    contractAddress: string;
     address: string;
     timeStamp: number;
     transactionHash: string;
@@ -20,6 +21,7 @@ export type LogType = {
     logIndex: number;
     name: string;
     topics: string[];
+    data: string;
     args: any;
 };
 export type StatesType = {

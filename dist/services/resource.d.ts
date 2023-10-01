@@ -16,6 +16,7 @@ export declare class Resource {
     pools: PoolsType;
     tokens: TokenType[];
     swapLogs: LogType[];
+    transferLogs: LogType[];
     unit: number;
     chainId: number;
     scanApi?: any;
