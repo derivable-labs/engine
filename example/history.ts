@@ -8,7 +8,7 @@ const testLocal = async () => {
   await engine.initServices()
 
   await engine.RESOURCE.fetchResourceData(
-    '0x5555a222c465b1873421d844e5d89ed8eb3E5555',
+    '0xE3C75f8963E4CA02ea9a281c32b41FdfC248e07f',
   )
 
   console.log({
@@ -17,14 +17,15 @@ const testLocal = async () => {
     swapLogs: engine.RESOURCE.swapLogs,
   })
 
-  const currentPool = Object.values(engine.RESOURCE.poolGroups)[0]
+  const currentPool = engine.RESOURCE.poolGroups['0x9E37cb775a047Ae99FC5A24dDED834127c4180cD']
   engine.setCurrentPool({
     ...currentPool,
   })
 
   const swapTxs = engine?.HISTORY.formatSwapHistory({
     tokens: engine.RESOURCE.tokens,
-    logs: JSON.parse(JSON.stringify(engine.RESOURCE.swapLogs)),
+    transferLogs: JSON.parse(JSON.stringify(engine.RESOURCE.transferLogs)),
+    swapLogs: JSON.parse(JSON.stringify(engine.RESOURCE.swapLogs)),
   })
   console.log(swapTxs)
 

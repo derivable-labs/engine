@@ -46,6 +46,7 @@ export class Resource {
   pools: PoolsType = {}
   tokens: TokenType[] = []
   swapLogs: LogType[] = []
+  transferLogs: LogType[] = []
   unit: number = 1000000
   chainId: number
   scanApi?: any
@@ -87,6 +88,7 @@ export class Resource {
     this.pools = {...resultCached.pools, ...newResource.pools}
     this.tokens = [...resultCached.tokens, ...newResource.tokens]
     this.swapLogs = [...resultCached.swapLogs, ...newResource.swapLogs]
+    this.transferLogs = [...resultCached.transferLogs, ...newResource.transferLogs]
   }
 
   getLastBlockCached(account: string) {
@@ -225,6 +227,9 @@ export class Resource {
     }
     if (swapLogsParsed && swapLogsParsed.length > 0) {
       results.swapLogs = swapLogsParsed
+    }
+    if (transferLogsParsed && transferLogsParsed.length > 0) {
+      results.transferLogs = transferLogsParsed
     }
     this.pools = {...results.pools, ...this.pools}
     return results
@@ -812,6 +817,7 @@ export class Resource {
           logIndex: log.transactionHash + '-' + log.logIndex,
           name: appName,
           topics: log.topics,
+          data: log.data,
           args: {
             ...data,
           },
