@@ -110,7 +110,6 @@ class History {
         return positions;
     }
     formatSwapHistory({ transferLogs, swapLogs, tokens }) {
-        console.log(transferLogs);
         try {
             if (!swapLogs || swapLogs.length === 0) {
                 return [];
