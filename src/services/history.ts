@@ -150,7 +150,6 @@ export class History {
     swapLogs: LogType[],
     tokens: TokenType[]
   }) {
-    console.log(transferLogs)
     try {
       if (!swapLogs || swapLogs.length === 0) {
         return []
