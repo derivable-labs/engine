@@ -1,9 +1,10 @@
 import { numberToWei, weiToNumber } from './utils/helper'
 import { TokenType } from './types'
-import { CHART_API_ENDPOINT } from './utils/constant'
 import fetch from 'node-fetch'
 
 const history = {}
+
+const CHART_API_ENDPOINT = 'https://api-chart-{chartId}.derivable.org/'
 
 const convertResolution = (oldResolution: string) => {
   if (oldResolution.includes('D')) {
@@ -72,7 +73,7 @@ export default {
     barValueType?: 'string'
   }): Promise<CandleType[]> {
     const q = route.split('/').join(',')
-    const url = `${CHART_API_ENDPOINT[chainId]}candleline4?q=${q}&r=${convertResolution(resolution)}&l=${limit}&t=${to}`
+    const url = `${CHART_API_ENDPOINT.replaceAll('{chartId}', chainId)}candleline4?q=${q}&r=${convertResolution(resolution)}&l=${limit}&t=${to}`
 
     return fetch(url)
       .then((r: any) => r.json())
