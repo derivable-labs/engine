@@ -4,16 +4,7 @@ export const LARGE_VALUE =
   '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const NATIVE_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
-export const fee10000 = 30
 export const MINI_SECOND_PER_DAY = 86400000
-export const LP_PRICE_UNIT = 10000
-export const TIME_TO_REFRESH_STATE = 30000
-export const CHART_API_ENDPOINT = {
-  42161: 'https://api-chart-42161.derivable.org/',
-  8453: 'https://api-chart-8453.derivable.org/'
-}
-
-
 export const LOCALSTORAGE_KEY = {
   DDL_LOGS: 'ddl-log-v1.2',
   LAST_BLOCK_DDL_LOGS: 'last-block-ddl-log-v1.2',
@@ -21,11 +12,6 @@ export const LOCALSTORAGE_KEY = {
   SWAP_BLOCK_LOGS: 'last-block-swap-log-v1.2',
   TRANSFER_LOGS: 'transfer-log-v1.2',
   TRANSFER_BLOCK_LOGS: 'last-block-transfer-log-v1.2',
-}
-
-export const ddlGenesisBlock = {
-  42161: 130644816,
-  8453: 3290649,
 }
 
 export const POOL_IDS = {
@@ -44,101 +30,50 @@ export const POOL_IDS = {
 }
 
 export const EventDataAbis = {
-  [42161]: {
-    PoolCreated: [
-      'address FETCHER', // config.FETCHER,
-      'bytes32 ORACLE', // config.ORACLE,
-      'uint k', // config.K,
-      'uint MARK', // config.MARK,
-      'uint INTEREST_HL', // config.INTEREST_HL,
-      'uint PREMIUM_HL', // config.PREMIUM_HL,
-      'uint MATURITY', // config.MATURITY,
-      'uint MATURITY_VEST', // config.MATURITY_VEST,
-      'uint MATURITY_RATE', // config.MATURITY_RATE,
-      'uint OPEN_RATE', // config.OPEN_RATE,
-      'address poolAddress' // uint(uint160(pool))
-    ],
-    Swap: [
-      'address payer',
-      'address poolIn',
-      'address poolOut',
-      'address recipient',
-      'uint sideIn',
-      'uint sideOut',
-      'uint amountIn',
-      'uint amountOut',
-    ],
-    Swap1: [
-      'address payer',
-      'address poolIn',
-      'address poolOut',
-      'address recipient',
-      'uint sideIn',
-      'uint sideOut',
-      'uint amountIn',
-      'uint amountOut',
-      'uint price',
-    ],
-    Swap2: [
-      'address payer',
-      'address poolIn',
-      'address poolOut',
-      'address recipient',
-      'uint sideIn',
-      'uint sideOut',
-      'uint amountIn',
-      'uint amountOut',
-      'uint price',
-      'uint priceR',
-    ],
-  },
-  [8453]: {
-    PoolCreated: [
-      'address FETCHER', // config.FETCHER,
-      'bytes32 ORACLE', // config.ORACLE,
-      'uint k', // config.K,
-      'uint MARK', // config.MARK,
-      'uint INTEREST_HL', // config.INTEREST_HL,
-      'uint PREMIUM_HL', // config.PREMIUM_HL,
-      'uint MATURITY', // config.MATURITY,
-      'uint MATURITY_VEST', // config.MATURITY_VEST,
-      'uint MATURITY_RATE', // config.MATURITY_RATE,
-      'uint OPEN_RATE', // config.OPEN_RATE,
-      'address poolAddress' // uint(uint160(pool))
-    ],
-    Swap: [
-      'address payer',
-      'address poolIn',
-      'address poolOut',
-      'address recipient',
-      'uint sideIn',
-      'uint sideOut',
-      'uint amountIn',
-      'uint amountOut',
-    ],
-    Swap1: [
-      'address payer',
-      'address poolIn',
-      'address poolOut',
-      'address recipient',
-      'uint sideIn',
-      'uint sideOut',
-      'uint amountIn',
-      'uint amountOut',
-      'uint price',
-    ],
-    Swap2: [
-      'address payer',
-      'address poolIn',
-      'address poolOut',
-      'address recipient',
-      'uint sideIn',
-      'uint sideOut',
-      'uint amountIn',
-      'uint amountOut',
-      'uint price',
-      'uint priceR',
-    ],
-  }
-
+  PoolCreated: [
+    'address FETCHER', // config.FETCHER,
+    'bytes32 ORACLE', // config.ORACLE,
+    'uint k', // config.K,
+    'uint MARK', // config.MARK,
+    'uint INTEREST_HL', // config.INTEREST_HL,
+    'uint PREMIUM_HL', // config.PREMIUM_HL,
+    'uint MATURITY', // config.MATURITY,
+    'uint MATURITY_VEST', // config.MATURITY_VEST,
+    'uint MATURITY_RATE', // config.MATURITY_RATE,
+    'uint OPEN_RATE', // config.OPEN_RATE,
+    'address poolAddress' // uint(uint160(pool))
+  ],
+  Swap: [
+    'address payer',
+    'address poolIn',
+    'address poolOut',
+    'address recipient',
+    'uint sideIn',
+    'uint sideOut',
+    'uint amountIn',
+    'uint amountOut',
+  ],
+  Swap1: [
+    'address payer',
+    'address poolIn',
+    'address poolOut',
+    'address recipient',
+    'uint sideIn',
+    'uint sideOut',
+    'uint amountIn',
+    'uint amountOut',
+    'uint price',
+  ],
+  Swap2: [
+    'address payer',
+    'address poolIn',
+    'address poolOut',
+    'address recipient',
+    'uint sideIn',
+    'uint sideOut',
+    'uint amountIn',
+    'uint amountOut',
+    'uint price',
+    'uint priceR',
+  ],
 }
