@@ -15,10 +15,11 @@ const TestConfigs = {
     account,
     signer: wallet,
   },
-  [421613]: {
-    chainId: 421613,
+  [56]: {
+    chainId: 56,
     account,
     signer: wallet,
+    env: 'development'
   },
   [42161]: {
     chainId: 42161,

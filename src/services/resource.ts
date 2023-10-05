@@ -1,9 +1,5 @@
 import {BigNumber, ethers} from 'ethers'
-import {
-  ddlGenesisBlock,
-  LOCALSTORAGE_KEY,
-  POOL_IDS, SECONDS_PER_DAY,
-} from '../utils/constant'
+import {LOCALSTORAGE_KEY, POOL_IDS} from '../utils/constant'
 import {Multicall} from 'ethereum-multicall'
 import {
   LogType,
@@ -28,10 +24,11 @@ import {UniV3Pair} from './uniV3Pair'
 import {IDerivableContractAddress, IEngineConfig} from '../utils/configs'
 import {defaultAbiCoder} from "ethers/lib/utils";
 import {Profile} from "../profile";
+
 const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
 
-const { A, B, C } = POOL_IDS
+const {A, B, C} = POOL_IDS
 
 type ResourceData = {
   pools: PoolsType
@@ -93,14 +90,14 @@ export class Resource {
 
   getLastBlockCached(account: string) {
     if (!this.storage || !this.storage.getItem)
-      return ddlGenesisBlock[this.chainId]
+      return this.profile.configs.startBock
     const lastDDlBlock =
       Number(
         this.storage.getItem(
           this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS,
         ),
-      ) || ddlGenesisBlock[this.chainId] - 1
-    let lastWalletBlock = ddlGenesisBlock[this.chainId] - 1
+      ) || this.profile.configs.startBock - 1
+    let lastWalletBlock = this.profile.configs.startBock - 1
     const walletBlockCached = this.storage.getItem(
       this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account,
     )
@@ -182,8 +179,8 @@ export class Resource {
         )
       },
     )
-    this.storage.setItem(blockKey,headBlock.toString())
-    this.storage.setItem(key,JSON.stringify(newCacheSwapLogs))
+    this.storage.setItem(blockKey, headBlock.toString())
+    this.storage.setItem(key, JSON.stringify(newCacheSwapLogs))
   }
 
   async getResourceCached(account: string): Promise<ResourceData> {
@@ -680,8 +677,8 @@ export class Resource {
   }
 
   calcPoolInfo(pool: PoolType) {
-    const { MARK, states } = pool
-    const {R, rA, rB, rC, a, b, spot } = states
+    const {MARK, states} = pool
+    const {R, rA, rB, rC, a, b, spot} = states
     const riskFactor = rC.gt(0) ? div(rA.sub(rB), rC) : '0'
     const deleverageRiskA = R.isZero() ? 0 : rA.mul(2 * this.unit).div(R).toNumber() / this.unit
     const deleverageRiskB = R.isZero() ? 0 : rB.mul(2 * this.unit).div(R).toNumber() / this.unit
@@ -694,8 +691,8 @@ export class Resource {
     sides[A].k = Math.min(k, kx(k, R, a, spot, MARK))
     sides[B].k = -Math.min(k, kx(-k, R, b, spot, MARK))
     sides[B].k = rA.mul(Math.round(sides[A].k * this.unit)).add(
-                 rB.mul(Math.round(sides[B].k * this.unit))
-                ).div(rA.add(rB)).toNumber() / this.unit
+      rB.mul(Math.round(sides[B].k * this.unit))
+    ).div(rA.add(rB)).toNumber() / this.unit
 
     let interestRate = toDailyRate(pool.INTEREST_HL.toNumber())
     let maxPremiumRate = toDailyRate(pool.PREMIUM_HL.toNumber())
@@ -710,12 +707,12 @@ export class Resource {
           R,
         )
       )
-      if(rA.gt(rB)) {
+      if (rA.gt(rB)) {
         const receivingRate = Number(div(premiumRate, rB.add(rC)))
         sides[A].premium = Number(div(premiumRate, rA))
         sides[B].premium = -receivingRate
         sides[C].premium = receivingRate
-      } else if(rB.gt(rA)) {
+      } else if (rB.gt(rA)) {
         const receivingRate = Number(div(premiumRate, rA.add(rC)))
         sides[B].premium = Number(div(premiumRate, rB))
         sides[A].premium = -receivingRate
@@ -727,18 +724,18 @@ export class Resource {
       }
 
       // decompound the premium
-      maxPremiumRate = decompoundRate(maxPremiumRate, k/2) / (k/2)
+      maxPremiumRate = decompoundRate(maxPremiumRate, k / 2) / (k / 2)
       for (const side of [A, B]) {
-        sides[side].premium = decompoundRate(sides[side].premium, sides[side].k/2) / (k/2)
+        sides[side].premium = decompoundRate(sides[side].premium, sides[side].k / 2) / (k / 2)
       }
     }
 
     // decompound the interest
     for (const side of [A, B]) {
-      sides[side].interest = decompoundRate(interestRate, sides[side].k/2) / (k/2)
+      sides[side].interest = decompoundRate(interestRate, sides[side].k / 2) / (k / 2)
     }
     sides[C].interest = rA.add(rB).mul(Math.round(this.unit * interestRate)).div(rC).toNumber() / this.unit
-    interestRate = decompoundRate(interestRate, k/2) / (k/2)
+    interestRate = decompoundRate(interestRate, k / 2) / (k / 2)
 
     return {
       sides,

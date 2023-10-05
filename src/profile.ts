@@ -9,14 +9,10 @@ import PairV3Detail from './abi/PairV3Detail.json'
 import Pool from './abi/Pool.json'
 import ReserveTokenPrice from './abi/ReserveTokenPrice.json'
 import Token from './abi/Token.json'
-import Helper8453 from './abi/8453/Helper.json'
-import Helper42161 from './abi/42161/Helper.json'
-import PoolOverride8453 from './abi/8453/PoolOverride.json'
-import UTR8453 from './abi/8453/UTR.json'
-import UTROverride8453 from './abi/8453/UTROverride.json'
-import PoolOverride42161 from './abi/42161/PoolOverride.json'
-import UTR42161 from './abi/42161/UTR.json'
-import UTROverride42161 from './abi/42161/UTROverride.json'
+import Helper from './abi/Helper.json'
+import PoolOverride from './abi/PoolOverride.json'
+import UTR from './abi/UTR.json'
+import UTROverride from './abi/UTROverride.json'
 import fetch from "node-fetch";
 
 const abis = {
@@ -29,18 +25,10 @@ const abis = {
   ReserveTokenPrice,
   Token,
   TokensInfo,
-  8453: {
-    Helper: Helper8453,
-    PoolOverride: PoolOverride8453,
-    UTR: UTR8453,
-    UTROverride: UTROverride8453,
-  },
-  42161: {
-    Helper: Helper42161,
-    PoolOverride: PoolOverride42161,
-    UTR: UTR42161,
-    UTROverride: UTROverride42161,
-  },
+  Helper,
+  PoolOverride,
+  UTR,
+  UTROverride,
 }
 
 const DDL_CONFIGS_URL = {
@@ -64,7 +52,7 @@ export class Profile {
   async loadConfig() {
     const [networkConfig, uniV3Pools] = await Promise.all([
       fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/network.json').then((r) => r.json()),
-      fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/routes.json').then((r) => r.json())
+      fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/routes.json').then((r) => r.json()).catch(() => [])
     ])
     this.configs = networkConfig
     this.routes = uniV3Pools
@@ -75,6 +63,6 @@ export class Profile {
   }
 
   getEventDataAbi() {
-    return EventDataAbis[this.chainId]
+    return EventDataAbis
   }
 }
