@@ -23,6 +23,7 @@ export interface INetworkConfig {
     name: string;
     nativeSymbol: string;
     wrappedTokenAddress: string;
+    startBock: number;
     stablecoins: string[];
     helperContract: IHelperContract;
     uniswap: IUniswapContractAddress;

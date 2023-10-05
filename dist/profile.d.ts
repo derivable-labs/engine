@@ -12,5 +12,10 @@ export declare class Profile {
     constructor(engineConfig: IEngineConfig);
     loadConfig(): Promise<void>;
     getAbi(name: string): any;
-    getEventDataAbi(): any;
+    getEventDataAbi(): {
+        PoolCreated: string[];
+        Swap: string[];
+        Swap1: string[];
+        Swap2: string[];
+    };
 }

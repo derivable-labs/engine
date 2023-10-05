@@ -22,7 +22,7 @@ export declare class History {
         tokens: TokenType[];
     }): any[];
     getTokenAddressByPoolAndSide(poolAddress: string, side: BigNumber): string;
-    getSwapAbi: (topic0: string) => any;
+    getSwapAbi: (topic0: string) => string[];
     decodeTransferLog(data: string, topics: string[]): ethers.utils.Result;
     decodeSwapLog(abi: any, args: any): ethers.utils.Result;
 }

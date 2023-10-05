@@ -23,14 +23,10 @@ const PairV3Detail_json_1 = __importDefault(require("./abi/PairV3Detail.json"));
 const Pool_json_1 = __importDefault(require("./abi/Pool.json"));
 const ReserveTokenPrice_json_1 = __importDefault(require("./abi/ReserveTokenPrice.json"));
 const Token_json_1 = __importDefault(require("./abi/Token.json"));
-const Helper_json_1 = __importDefault(require("./abi/8453/Helper.json"));
-const Helper_json_2 = __importDefault(require("./abi/42161/Helper.json"));
-const PoolOverride_json_1 = __importDefault(require("./abi/8453/PoolOverride.json"));
-const UTR_json_1 = __importDefault(require("./abi/8453/UTR.json"));
-const UTROverride_json_1 = __importDefault(require("./abi/8453/UTROverride.json"));
-const PoolOverride_json_2 = __importDefault(require("./abi/42161/PoolOverride.json"));
-const UTR_json_2 = __importDefault(require("./abi/42161/UTR.json"));
-const UTROverride_json_2 = __importDefault(require("./abi/42161/UTROverride.json"));
+const Helper_json_1 = __importDefault(require("./abi/Helper.json"));
+const PoolOverride_json_1 = __importDefault(require("./abi/PoolOverride.json"));
+const UTR_json_1 = __importDefault(require("./abi/UTR.json"));
+const UTROverride_json_1 = __importDefault(require("./abi/UTROverride.json"));
 const node_fetch_1 = __importDefault(require("node-fetch"));
 const abis = {
     BnA: BnA_json_1.default,
@@ -42,18 +38,10 @@ const abis = {
     ReserveTokenPrice: ReserveTokenPrice_json_1.default,
     Token: Token_json_1.default,
     TokensInfo: TokensInfo_json_1.default,
-    8453: {
-        Helper: Helper_json_1.default,
-        PoolOverride: PoolOverride_json_1.default,
-        UTR: UTR_json_1.default,
-        UTROverride: UTROverride_json_1.default,
-    },
-    42161: {
-        Helper: Helper_json_2.default,
-        PoolOverride: PoolOverride_json_2.default,
-        UTR: UTR_json_2.default,
-        UTROverride: UTROverride_json_2.default,
-    },
+    Helper: Helper_json_1.default,
+    PoolOverride: PoolOverride_json_1.default,
+    UTR: UTR_json_1.default,
+    UTROverride: UTROverride_json_1.default,
 };
 const DDL_CONFIGS_URL = {
     'development': `https://raw.githubusercontent.com/derivable-labs/configs/dev/`,
@@ -68,7 +56,7 @@ class Profile {
         return __awaiter(this, void 0, void 0, function* () {
             const [networkConfig, uniV3Pools] = yield Promise.all([
                 (0, node_fetch_1.default)(DDL_CONFIGS_URL[this.env] + this.chainId + '/network.json').then((r) => r.json()),
-                (0, node_fetch_1.default)(DDL_CONFIGS_URL[this.env] + this.chainId + '/routes.json').then((r) => r.json())
+                (0, node_fetch_1.default)(DDL_CONFIGS_URL[this.env] + this.chainId + '/routes.json').then((r) => r.json()).catch(() => [])
             ]);
             this.configs = networkConfig;
             this.routes = uniV3Pools;
@@ -78,7 +66,7 @@ class Profile {
         return abis[name] ? abis[name] : (abis[this.chainId][name] || []);
     }
     getEventDataAbi() {
-        return constant_1.EventDataAbis[this.chainId];
+        return constant_1.EventDataAbis;
     }
 }
 exports.Profile = Profile;

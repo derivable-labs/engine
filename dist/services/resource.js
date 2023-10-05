@@ -64,9 +64,9 @@ class Resource {
     }
     getLastBlockCached(account) {
         if (!this.storage || !this.storage.getItem)
-            return constant_1.ddlGenesisBlock[this.chainId];
-        const lastDDlBlock = Number(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) || constant_1.ddlGenesisBlock[this.chainId] - 1;
-        let lastWalletBlock = constant_1.ddlGenesisBlock[this.chainId] - 1;
+            return this.profile.configs.startBock;
+        const lastDDlBlock = Number(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) || this.profile.configs.startBock - 1;
+        let lastWalletBlock = this.profile.configs.startBock - 1;
         const walletBlockCached = this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account);
         if (account && walletBlockCached) {
             lastWalletBlock = Number(walletBlockCached);

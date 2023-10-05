@@ -32,7 +32,7 @@ export declare class Resource {
     stableCoins: string[];
     constructor(engineConfigs: IEngineConfig, profile: Profile);
     fetchResourceData(account: string): Promise<any>;
-    getLastBlockCached(account: string): any;
+    getLastBlockCached(account: string): number;
     cacheDdlLog({ swapLogs, ddlLogs, transferLogs, headBlock, account, }: {
         swapLogs: any;
         ddlLogs: any;
