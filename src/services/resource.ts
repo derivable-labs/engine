@@ -90,14 +90,14 @@ export class Resource {
 
   getLastBlockCached(account: string) {
     if (!this.storage || !this.storage.getItem)
-      return this.profile.configs.startBock
+      return this.profile.configs.derivable.startBlock
     const lastDDlBlock =
       Number(
         this.storage.getItem(
           this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS,
         ),
-      ) || this.profile.configs.startBock - 1
-    let lastWalletBlock = this.profile.configs.startBock - 1
+      ) || this.profile.configs.derivable.startBlock - 1
+    let lastWalletBlock = this.profile.configs.derivable.startBlock - 1
     const walletBlockCached = this.storage.getItem(
       this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account,
     )
@@ -186,7 +186,7 @@ export class Resource {
   async getResourceCached(account: string): Promise<ResourceData> {
     const results: ResourceData = {
       pools: {},
-      tokens: [],
+      tokens: this._whitelistTokens(),
       swapLogs: [],
       transferLogs: [],
       poolGroups: {},
@@ -218,7 +218,7 @@ export class Resource {
         ddlLogsParsed,
         transferLogsParsed
       )
-      results.tokens = tokens
+      results.tokens = [...tokens, ...results.tokens]
       results.pools = pools
       results.poolGroups = poolGroups
     }
@@ -824,5 +824,19 @@ export class Resource {
         return {}
       }
     })
+  }
+
+  _whitelistTokens() : TokenType[] {
+    const result = []
+    const tokens = this.profile.configs.tokens
+    for(let address in tokens) {
+      result.push({
+          address,
+          name: tokens[address].name,
+          symbol: tokens[address].symbol,
+          decimal: tokens[address].decimals
+        })
+    }
+    return result
   }
 }
