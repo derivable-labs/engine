@@ -1,12 +1,13 @@
 import { ethers } from 'ethers'
 import ReserveTokenPrice from '../abi/ReserveTokenPrice.json'
 import { JsonRpcProvider } from '@ethersproject/providers'
-import {div, formatPercent, sub} from '../utils/helper'
+import {bn, div, formatPercent, numberToWei, sub} from '../utils/helper'
 import {TokenType} from "../types";
 import {MINI_SECOND_PER_DAY} from "../utils/constant";
 import historyProvider from "../historyProvider";
 import {IEngineConfig} from "../utils/configs";
 import {Profile} from "../profile";
+import {isAddress} from "ethers/lib/utils";
 
 export class Price {
   chainId: number
@@ -77,8 +78,13 @@ export class Price {
         provider,
       )
 
+      const whiteListToken = this.profile.configs.tokens
+      const _tokensToFetch = tokens.filter((t) => {
+        return !whiteListToken?.[t]?.price &&  isAddress(t)
+      })
+
       const res = await pairDetailContract.functions.fetchMarketBatch(
-        tokens,
+        _tokensToFetch,
         this.profile.configs.uniswap.v3Factory,
         this.profile.configs.stablecoins,
         this.profile.configs.wrappedTokenAddress,
@@ -86,8 +92,16 @@ export class Price {
       )
 
       const result = {}
-      for (let i in tokens) {
-        result[tokens[i]] = res.sqrtPriceX96[i]
+      for (let i in _tokensToFetch) {
+        result[_tokensToFetch[i]] = res.sqrtPriceX96[i]
+      }
+
+      if(whiteListToken) {
+        for(let address in whiteListToken) {
+          if(whiteListToken[address].price) {
+            result[address] = bn(whiteListToken[address].price || "0x01000000000000000000000000")
+          }
+        }
       }
 
       return result
