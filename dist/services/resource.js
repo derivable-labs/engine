@@ -64,9 +64,9 @@ class Resource {
     }
     getLastBlockCached(account) {
         if (!this.storage || !this.storage.getItem)
-            return this.profile.configs.startBock;
-        const lastDDlBlock = Number(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) || this.profile.configs.startBock - 1;
-        let lastWalletBlock = this.profile.configs.startBock - 1;
+            return this.profile.configs.derivable.startBlock;
+        const lastDDlBlock = Number(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) || this.profile.configs.derivable.startBlock - 1;
+        let lastWalletBlock = this.profile.configs.derivable.startBlock - 1;
         const walletBlockCached = this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account);
         if (account && walletBlockCached) {
             lastWalletBlock = Number(walletBlockCached);
@@ -108,7 +108,7 @@ class Resource {
         return __awaiter(this, void 0, void 0, function* () {
             const results = {
                 pools: {},
-                tokens: [],
+                tokens: this._whitelistTokens(),
                 swapLogs: [],
                 transferLogs: [],
                 poolGroups: {},
@@ -126,7 +126,7 @@ class Resource {
             ];
             if (ddlLogsParsed && ddlLogsParsed.length > 0) {
                 const { tokens, pools, poolGroups } = yield this.generatePoolData(ddlLogsParsed, transferLogsParsed);
-                results.tokens = tokens;
+                results.tokens = [...tokens, ...results.tokens];
                 results.pools = pools;
                 results.poolGroups = poolGroups;
             }
@@ -604,6 +604,19 @@ class Resource {
                 return {};
             }
         });
+    }
+    _whitelistTokens() {
+        const result = [];
+        const tokens = this.profile.configs.tokens;
+        for (let address in tokens) {
+            result.push({
+                address,
+                name: tokens[address].name,
+                symbol: tokens[address].symbol,
+                decimal: tokens[address].decimals
+            });
+        }
+        return result;
     }
 }
 exports.Resource = Resource;

@@ -106,5 +106,6 @@ export declare class Resource {
         rDcShort: BigNumber;
     };
     parseDdlLogs(ddlLogs: any): any;
+    _whitelistTokens(): TokenType[];
 }
 export {};

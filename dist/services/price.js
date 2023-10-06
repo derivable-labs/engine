@@ -19,6 +19,7 @@ const providers_1 = require("@ethersproject/providers");
 const helper_1 = require("../utils/helper");
 const constant_1 = require("../utils/constant");
 const historyProvider_1 = __importDefault(require("../historyProvider"));
+const utils_1 = require("ethers/lib/utils");
 class Price {
     constructor(config, profile) {
         this.reserveTokenPrice = '0x' + ReserveTokenPrice_json_1.default.deployedBytecode.slice(-40);
@@ -61,10 +62,22 @@ class Price {
                     },
                 });
                 const pairDetailContract = new ethers_1.ethers.Contract(this.reserveTokenPrice, ReserveTokenPrice_json_1.default.abi, provider);
-                const res = yield pairDetailContract.functions.fetchMarketBatch(tokens, this.profile.configs.uniswap.v3Factory, this.profile.configs.stablecoins, this.profile.configs.wrappedTokenAddress, this.profile.configs.stablecoins[0]);
+                const whiteListToken = this.profile.configs.tokens;
+                const _tokensToFetch = tokens.filter((t) => {
+                    var _a;
+                    return !((_a = whiteListToken === null || whiteListToken === void 0 ? void 0 : whiteListToken[t]) === null || _a === void 0 ? void 0 : _a.price) && (0, utils_1.isAddress)(t);
+                });
+                const res = yield pairDetailContract.functions.fetchMarketBatch(_tokensToFetch, this.profile.configs.uniswap.v3Factory, this.profile.configs.stablecoins, this.profile.configs.wrappedTokenAddress, this.profile.configs.stablecoins[0]);
                 const result = {};
-                for (let i in tokens) {
-                    result[tokens[i]] = res.sqrtPriceX96[i];
+                for (let i in _tokensToFetch) {
+                    result[_tokensToFetch[i]] = res.sqrtPriceX96[i];
+                }
+                if (whiteListToken) {
+                    for (let address in whiteListToken) {
+                        if (whiteListToken[address].price) {
+                            result[address] = (0, helper_1.bn)(whiteListToken[address].price || "0x01000000000000000000000000");
+                        }
+                    }
                 }
                 return result;
             }

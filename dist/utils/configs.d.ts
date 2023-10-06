@@ -15,7 +15,6 @@ export interface INetworkConfig {
     scanApi?: string;
     explorer?: string;
     scanName?: string;
-    ddlGenesisBlock?: number;
     timePerBlock: number;
     candleChartApi?: string;
     storage?: Storage;
@@ -23,8 +22,15 @@ export interface INetworkConfig {
     name: string;
     nativeSymbol: string;
     wrappedTokenAddress: string;
-    startBock: number;
     stablecoins: string[];
+    tokens?: {
+        [address: string]: {
+            price?: number;
+            symbol: string;
+            name: string;
+            decimals: number;
+        };
+    };
     helperContract: IHelperContract;
     uniswap: IUniswapContractAddress;
     derivable: IDerivableContractAddress;
@@ -38,6 +44,7 @@ export interface IUniswapContractAddress {
 }
 export interface IDerivableContractAddress {
     version: number;
+    startBlock: number;
     poolFactory: string;
     logic: string;
     token: string;
