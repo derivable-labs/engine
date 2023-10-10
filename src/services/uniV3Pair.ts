@@ -1,18 +1,17 @@
-import {ethers} from 'ethers'
+import { ethers } from 'ethers'
 import PairV3DetailAbi from '../abi/PairV3Detail.json'
 import UniswapV3FactoryAbi from '../abi/UniswapV3Factory.json'
 import ERC20Abi from '../abi/ERC20.json'
-import {JsonRpcProvider} from '@ethersproject/providers'
-import {ContractCallContext, Multicall} from "ethereum-multicall";
-import {IDerivableContractAddress, IEngineConfig} from "../utils/configs";
-import {CallReturnContext} from "ethereum-multicall/dist/esm/models/call-return-context";
-import {ZERO_ADDRESS} from "../utils/constant";
-import {bn} from "../utils/helper";
-import {Profile} from "../profile";
+import { JsonRpcProvider } from '@ethersproject/providers'
+import { ContractCallContext, Multicall } from 'ethereum-multicall'
+import { IDerivableContractAddress, IEngineConfig } from '../utils/configs'
+import { CallReturnContext } from 'ethereum-multicall/dist/esm/models/call-return-context'
+import { ZERO_ADDRESS } from '../utils/constant'
+import { bn } from '../utils/helper'
+import { Profile } from '../profile'
 
 const POOL_FEES = [100, 300, 500]
-const FLAG =
-  '0x0000110000000000000000000000000000000000000000000000000000000111'
+const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111'
 // type ConfigType = {
 //   chainId: number
 //   scanApi: string
@@ -39,14 +38,8 @@ export class UniV3Pair {
     this.profile = profile
   }
 
-  async getLargestPoolAddress({
-                              baseToken,
-                              quoteTokens,
-                            }: {
-    baseToken: string,
-    quoteTokens: string[]
-  }): Promise<string> {
-    const pools = await this.getPairAddress({baseToken, quoteTokens})
+  async getLargestPoolAddress({ baseToken, quoteTokens }: { baseToken: string; quoteTokens: string[] }): Promise<string> {
+    const pools = await this.getPairAddress({ baseToken, quoteTokens })
     return await this._getLargestPoolByPools(baseToken, pools)
   }
 
@@ -58,7 +51,7 @@ export class UniV3Pair {
    *   [`${baseAddress-quoteAddress-fee}`]: poolAddress
    * }
    */
-  async _getLargestPoolByPools(baseToken: string, pools: {[key: string]: string}): Promise<string> {
+  async _getLargestPoolByPools(baseToken: string, pools: { [key: string]: string }): Promise<string> {
     const multicall = this._getMulticall()
     const res = await multicall.call(this._generatePoolBalanceContext(baseToken, pools))
     return this._parsePoolBalanceReturnContext(res.results.poolBalances.callsReturnContext)
@@ -76,32 +69,26 @@ export class UniV3Pair {
     return poolResults
   }
 
-  _generatePoolBalanceContext(baseToken: string,pools: {[key: string]: string}) {
+  _generatePoolBalanceContext(baseToken: string, pools: { [key: string]: string }) {
     const calls: any = []
-    for(let i in pools) {
+    for (let i in pools) {
       calls.push({
-          reference: pools[i],
-          methodName: 'balanceOf',
-          methodParameters: [pools[i]],
+        reference: pools[i],
+        methodName: 'balanceOf',
+        methodParameters: [pools[i]],
       })
     }
-    return [{
-      reference: 'poolBalances',
-      contractAddress: baseToken,
-      abi: ERC20Abi,
-      calls
-    }]
+    return [
+      {
+        reference: 'poolBalances',
+        contractAddress: baseToken,
+        abi: ERC20Abi,
+        calls,
+      },
+    ]
   }
 
-
-
-  async getPairAddress({
-                         baseToken,
-                         quoteTokens,
-                       }: {
-    baseToken: string,
-    quoteTokens: string[]
-  }): Promise<{ [key: string]: string }> {
+  async getPairAddress({ baseToken, quoteTokens }: { baseToken: string; quoteTokens: string[] }): Promise<{ [key: string]: string }> {
     const multicall = this._getMulticall()
 
     //@ts-ignore
@@ -125,28 +112,23 @@ export class UniV3Pair {
     POOL_FEES.forEach((fee) => {
       quoteTokens.forEach((quoteToken) => {
         calls.push({
-            reference: `${baseToken}-${quoteToken}-${fee}`,
-            methodName: 'getPool',
-            methodParameters: [baseToken, quoteToken, fee],
-          },
-        )
+          reference: `${baseToken}-${quoteToken}-${fee}`,
+          methodName: 'getPool',
+          methodParameters: [baseToken, quoteToken, fee],
+        })
       })
     })
-    return [{
-      reference: 'poolAddresses',
-      contractAddress: this.profile.configs.uniswap.v3Factory,
-      abi: UniswapV3FactoryAbi,
-      calls
-    }]
+    return [
+      {
+        reference: 'poolAddresses',
+        contractAddress: this.profile.configs.uniswap.v3Factory,
+        abi: UniswapV3FactoryAbi,
+        calls,
+      },
+    ]
   }
 
-  async getPairInfo({
-                      pairAddress,
-                      flag = FLAG,
-                    }: {
-    pairAddress: string
-    flag?: string
-  }) {
+  async getPairInfo({ pairAddress, flag = FLAG }: { pairAddress: string; flag?: string }) {
     try {
       const provider = new JsonRpcProvider(this.rpcUrl)
       // @ts-ignore
@@ -156,11 +138,7 @@ export class UniV3Pair {
         },
       })
 
-      const pairDetailContract = new ethers.Contract(
-        this.pairsV3Info,
-        PairV3DetailAbi.abi,
-        provider,
-      )
+      const pairDetailContract = new ethers.Contract(this.pairsV3Info, PairV3DetailAbi.abi, provider)
 
       const res = await pairDetailContract.functions.query([pairAddress], flag)
       return res.details[0]
@@ -169,13 +147,7 @@ export class UniV3Pair {
     }
   }
 
-  async getPairsInfo({
-                       pairAddresses,
-                       flag = FLAG,
-                     }: {
-    flag?: string
-    pairAddresses: string[]
-  }) {
+  async getPairsInfo({ pairAddresses, flag = FLAG }: { flag?: string; pairAddresses: string[] }) {
     try {
       const provider = new JsonRpcProvider(this.rpcUrl)
       // @ts-ignore
@@ -185,16 +157,9 @@ export class UniV3Pair {
         },
       })
 
-      const pairDetailContract = new ethers.Contract(
-        this.pairsV3Info,
-        PairV3DetailAbi.abi,
-        provider,
-      )
+      const pairDetailContract = new ethers.Contract(this.pairsV3Info, PairV3DetailAbi.abi, provider)
 
-      const {details} = await pairDetailContract.functions.query(
-        pairAddresses,
-        flag,
-      )
+      const { details } = await pairDetailContract.functions.query(pairAddresses, flag)
       const result = {}
       for (let i = 0; i < pairAddresses.length; i++) {
         result[pairAddresses[i]] = {
@@ -219,7 +184,7 @@ export class UniV3Pair {
   }
 
   _getMulticall() {
-    return  new Multicall({
+    return new Multicall({
       multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
       ethersProvider: this.provider,
       tryAggregate: true,

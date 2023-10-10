@@ -1,17 +1,16 @@
-import {PoolsType, Storage, SwapLog, TokenType} from './types'
-import {ethers} from 'ethers'
-import {Price} from './services/price'
-import {Resource} from './services/resource'
-import {BnA} from './services/balanceAndAllowance'
-import {UniV2Pair} from './services/uniV2Pair'
-import {History} from './services/history'
-import {Swap} from './services/swap'
-import {CurrentPool} from './services/currentPool'
-import {CreatePool} from './services/createPool'
-import {UniV3Pair} from './services/uniV3Pair'
-import {IEngineConfig} from './utils/configs'
-import {Profile} from "./profile";
-
+import { PoolsType, Storage, SwapLog, TokenType } from './types'
+import { ethers } from 'ethers'
+import { Price } from './services/price'
+import { Resource } from './services/resource'
+import { BnA } from './services/balanceAndAllowance'
+import { UniV2Pair } from './services/uniV2Pair'
+import { History } from './services/history'
+import { Swap } from './services/swap'
+import { CurrentPool } from './services/currentPool'
+import { CreatePool } from './services/createPool'
+import { UniV3Pair } from './services/uniV3Pair'
+import { IEngineConfig } from './utils/configs'
+import { Profile } from './profile'
 
 export class Engine {
   chainId: number
@@ -31,10 +30,7 @@ export class Engine {
   CURRENT_POOL: CurrentPool
   CREATE_POOL: CreatePool
   enginConfigs: IEngineConfig
-  constructor(
-    enginConfigs: IEngineConfig,
-    profile = Profile,
-  ) {
+  constructor(enginConfigs: IEngineConfig, profile = Profile) {
     this.enginConfigs = enginConfigs
     this.account = enginConfigs.account
     // this.providerToGetLog = this.config.providerToGetLog
@@ -51,14 +47,20 @@ export class Engine {
     this.RESOURCE = new Resource(this.enginConfigs, this.profile)
     this.PRICE = new Price(this.enginConfigs, this.profile)
     this.CURRENT_POOL = new CurrentPool(this.enginConfigs)
-    this.HISTORY = new History({
-      ...this.enginConfigs,
-      RESOURCE: this.RESOURCE,
-    }, this.profile)
-    this.SWAP = new Swap({
-      ...this.enginConfigs,
-      RESOURCE: this.RESOURCE,
-    }, this.profile)
+    this.HISTORY = new History(
+      {
+        ...this.enginConfigs,
+        RESOURCE: this.RESOURCE,
+      },
+      this.profile,
+    )
+    this.SWAP = new Swap(
+      {
+        ...this.enginConfigs,
+        RESOURCE: this.RESOURCE,
+      },
+      this.profile,
+    )
     this.CREATE_POOL = new CreatePool(this.enginConfigs, this.profile)
   }
 

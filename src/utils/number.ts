@@ -12,9 +12,7 @@ const packId = (kind: BigNumber, address: string) => {
 
 export const unpackId = (id: BigNumber) => {
   const k = ethers.utils.hexlify(id.shr(160))
-  const p = ethers.utils.getAddress(
-    ethers.utils.hexlify(id.mod(bn(1).shl(160))),
-  )
+  const p = ethers.utils.getAddress(ethers.utils.hexlify(id.mod(bn(1).shl(160))))
   return { k, p }
 }
 

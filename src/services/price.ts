@@ -1,13 +1,13 @@
 import { ethers } from 'ethers'
 import ReserveTokenPrice from '../abi/ReserveTokenPrice.json'
 import { JsonRpcProvider } from '@ethersproject/providers'
-import {bn, div, formatPercent, numberToWei, sub} from '../utils/helper'
-import {TokenType} from "../types";
-import {MINI_SECOND_PER_DAY} from "../utils/constant";
-import historyProvider from "../historyProvider";
-import {IEngineConfig} from "../utils/configs";
-import {Profile} from "../profile";
-import {isAddress} from "ethers/lib/utils";
+import { bn, div, formatPercent, numberToWei, sub } from '../utils/helper'
+import { TokenType } from '../types'
+import { MINI_SECOND_PER_DAY } from '../utils/constant'
+import historyProvider from '../historyProvider'
+import { IEngineConfig } from '../utils/configs'
+import { Profile } from '../profile'
+import { isAddress } from 'ethers/lib/utils'
 
 export class Price {
   chainId: number
@@ -27,14 +27,13 @@ export class Price {
     this.profile = profile
   }
 
-
   async get24hChange({
-                       baseToken,
-                       cToken,
-                       quoteToken,
-                       chainId,
-                       currentPrice,
-                     }: {
+    baseToken,
+    cToken,
+    quoteToken,
+    chainId,
+    currentPrice,
+  }: {
     baseToken: TokenType
     cToken: string
     chainId: string
@@ -42,9 +41,7 @@ export class Price {
     currentPrice: string
   }) {
     try {
-      const toTime = Math.floor(
-        (new Date().getTime() - MINI_SECOND_PER_DAY) / 1000,
-      )
+      const toTime = Math.floor((new Date().getTime() - MINI_SECOND_PER_DAY) / 1000)
       const result = await historyProvider.getBars({
         to: toTime,
         limit: 1,
@@ -53,7 +50,7 @@ export class Price {
         route: `${baseToken.address}/${cToken}/${quoteToken.address}`,
         outputToken: quoteToken,
         inputToken: baseToken,
-        barValueType: 'string'
+        barValueType: 'string',
       })
       const beforePrice = result[0].open
       return formatPercent(div(sub(currentPrice, beforePrice), beforePrice))
@@ -72,15 +69,11 @@ export class Price {
         },
       })
 
-      const pairDetailContract = new ethers.Contract(
-        this.reserveTokenPrice,
-        ReserveTokenPrice.abi,
-        provider,
-      )
+      const pairDetailContract = new ethers.Contract(this.reserveTokenPrice, ReserveTokenPrice.abi, provider)
 
       const whiteListToken = this.profile.configs.tokens
       const _tokensToFetch = tokens.filter((t) => {
-        return !whiteListToken?.[t]?.price &&  isAddress(t)
+        return !whiteListToken?.[t]?.price && isAddress(t)
       })
 
       const res = await pairDetailContract.functions.fetchMarketBatch(
@@ -96,10 +89,10 @@ export class Price {
         result[_tokensToFetch[i]] = res.sqrtPriceX96[i]
       }
 
-      if(whiteListToken) {
-        for(let address in whiteListToken) {
-          if(whiteListToken[address].price) {
-            result[address] = bn(whiteListToken[address].price || "0x01000000000000000000000000")
+      if (whiteListToken) {
+        for (let address in whiteListToken) {
+          if (whiteListToken[address].price) {
+            result[address] = bn(whiteListToken[address].price || '0x01000000000000000000000000')
           }
         }
       }

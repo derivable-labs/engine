@@ -1,15 +1,10 @@
 import { ethers } from 'ethers'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import abi from '../abi/ERC20.json'
-import {
-  Multicall,
-  ContractCallResults,
-  ContractCallContext,
-} from 'ethereum-multicall'
+import { Multicall, ContractCallResults, ContractCallContext } from 'ethereum-multicall'
 
 const bn = (number: any) => ethers.BigNumber.from(number.toString())
-const encode = (types: string[], values: any) =>
-  ethers.utils.defaultAbiCoder.encode(types, values)
+const encode = (types: string[], values: any) => ethers.utils.defaultAbiCoder.encode(types, values)
 
 const DEFAULT_ACCOUNT = '0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa'
 const DEFAULT_SPENDER = '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
@@ -18,19 +13,10 @@ export function getBalanceSlot(account: string, i: number): string {
   return ethers.utils.keccak256(encode(['address', 'uint'], [account, i]))
 }
 
-export function getAllowanceSlot(
-  account: string,
-  spender: string,
-  i: number,
-): string {
+export function getAllowanceSlot(account: string, spender: string, i: number): string {
   const firstLevelEncoded = encode(['address', 'uint'], [account, i])
   const secondLevelEncoded = encode(['address'], [spender])
-  const slot = ethers.utils.keccak256(
-    ethers.utils.concat([
-      secondLevelEncoded,
-      ethers.utils.keccak256(firstLevelEncoded),
-    ]),
-  )
+  const slot = ethers.utils.keccak256(ethers.utils.concat([secondLevelEncoded, ethers.utils.keccak256(firstLevelEncoded)]))
   return slot
 }
 
@@ -43,14 +29,8 @@ export const getStorageSlotsForBnA = async (
 ) => {
   const stateDiff: any = {}
   for (let i = 0; i < slots; i++) {
-    stateDiff[getBalanceSlot(account, i)] = ethers.utils.hexZeroPad(
-      ethers.utils.hexlify(i + 1),
-      32,
-    )
-    stateDiff[getAllowanceSlot(account, spender, i)] = ethers.utils.hexZeroPad(
-      ethers.utils.hexlify(i + 1),
-      32,
-    )
+    stateDiff[getBalanceSlot(account, i)] = ethers.utils.hexZeroPad(ethers.utils.hexlify(i + 1), 32)
+    stateDiff[getAllowanceSlot(account, spender, i)] = ethers.utils.hexZeroPad(ethers.utils.hexlify(i + 1), 32)
   }
 
   // store the original override state
@@ -64,8 +44,7 @@ export const getStorageSlotsForBnA = async (
   const multicall = new Multicall({
     ethersProvider: provider,
     tryAggregate: true,
-    multicallCustomContractAddress:
-      '0x3bc605DBD3f9d8e9B6FACdfc6548f8BD3b0f0Af5',
+    multicallCustomContractAddress: '0x3bc605DBD3f9d8e9B6FACdfc6548f8BD3b0f0Af5',
   })
 
   const contractCallContext: ContractCallContext = {
@@ -96,9 +75,7 @@ export const getStorageSlotsForBnA = async (
     data[0].returnValues[0].hex == '0x00' ||
     data[1].returnValues[0].hex == '0x00'
   )
-    throw new Error(
-      `unable to find the balance slot for the first ${slots} slots`,
-    )
+    throw new Error(`unable to find the balance slot for the first ${slots} slots`)
 
   let balance = bn(data[0].returnValues[0].hex).toNumber()
   let allowance = bn(data[1].returnValues[0].hex).toNumber()
@@ -123,11 +100,7 @@ export const overrideBnA = async (override: {
   balance?: any
 }) => {
   let state = {}
-  let result = await getStorageSlotsForBnA(
-    override.provider,
-    override.token,
-    override.account,
-  )
+  let result = await getStorageSlotsForBnA(override.provider, override.token, override.account)
   let balance
 
   balance = ethers.BigNumber.from(override.balance.toString())
@@ -142,11 +115,7 @@ export const overrideBnA = async (override: {
       let allowance = override.allowances[spender]
       allowance = ethers.BigNumber.from(allowance.toString())
       allowance = ethers.utils.hexZeroPad(allowance.toHexString(), 32)
-      let slot = getAllowanceSlot(
-        override.account,
-        spender,
-        result.allowance.index,
-      )
+      let slot = getAllowanceSlot(override.account, spender, result.allowance.index)
       state[slot] = allowance
     }
   }

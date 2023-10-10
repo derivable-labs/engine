@@ -1,13 +1,13 @@
-import {Storage} from '../types'
-import {ethers, Signer} from 'ethers'
+import { Storage } from '../types'
+import { ethers, Signer } from 'ethers'
 
 export interface IEngineConfig {
-  env?: 'development' | 'production',
-  account?: string,
-  signer?: ethers.providers.JsonRpcSigner,
-  scanApiKey?: string,
-  chainId: number,
-  storage: Storage,
+  env?: 'development' | 'production'
+  account?: string
+  signer?: ethers.providers.JsonRpcSigner
+  scanApiKey?: string
+  chainId: number
+  storage: Storage
 }
 
 export interface INetworkConfig {
@@ -25,7 +25,7 @@ export interface INetworkConfig {
   nativeSymbol: string
   wrappedTokenAddress: string
   stablecoins: string[]
-  tokens?: {[address: string]: {price?: number, symbol: string, name: string, decimals: number }}
+  tokens?: { [address: string]: { price?: number; symbol: string; name: string; decimals: number } }
   helperContract: IHelperContract
   uniswap: IUniswapContractAddress
   derivable: IDerivableContractAddress

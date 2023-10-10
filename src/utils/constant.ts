@@ -1,7 +1,6 @@
 export const SECONDS_PER_DAY = 86400
 
-export const LARGE_VALUE =
-  '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
+export const LARGE_VALUE = '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const NATIVE_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 export const MINI_SECOND_PER_DAY = 86400000
@@ -41,7 +40,7 @@ export const EventDataAbis = {
     'uint MATURITY_VEST', // config.MATURITY_VEST,
     'uint MATURITY_RATE', // config.MATURITY_RATE,
     'uint OPEN_RATE', // config.OPEN_RATE,
-    'address poolAddress' // uint(uint160(pool))
+    'address poolAddress', // uint(uint160(pool))
   ],
   Swap: [
     'address payer',

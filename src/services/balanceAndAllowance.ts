@@ -1,16 +1,16 @@
-import {bn, getErc1155Token, getNormalAddress, packId} from '../utils/helper'
-import {ethers} from 'ethers'
-import {Multicall} from 'ethereum-multicall'
-import {LARGE_VALUE} from '../utils/constant'
+import { bn, getErc1155Token, getNormalAddress, packId } from '../utils/helper'
+import { ethers } from 'ethers'
+import { Multicall } from 'ethereum-multicall'
+import { LARGE_VALUE } from '../utils/constant'
 import BnAAbi from '../abi/BnA.json'
 import TokenAbi from '../abi/Token.json'
-import {AllowancesType, BalancesType, MaturitiesType} from '../types'
-import {IDerivableContractAddress, IEngineConfig} from '../utils/configs'
-import {unpackId} from "../utils/number";
-import {JsonRpcProvider} from "@ethersproject/providers";
-import {Profile} from "../profile";
+import { AllowancesType, BalancesType, MaturitiesType } from '../types'
+import { IDerivableContractAddress, IEngineConfig } from '../utils/configs'
+import { unpackId } from '../utils/number'
+import { JsonRpcProvider } from '@ethersproject/providers'
+import { Profile } from '../profile'
 
-type BnAReturnType = { balances: BalancesType; allowances: AllowancesType, maturity: MaturitiesType }
+type BnAReturnType = { balances: BalancesType; allowances: AllowancesType; maturity: MaturitiesType }
 
 export class BnA {
   chainId: number
@@ -28,9 +28,8 @@ export class BnA {
     this.profile = profile
   }
 
-  async getBalanceAndAllowance({tokens}: any): Promise<BnAReturnType> {
+  async getBalanceAndAllowance({ tokens }: any): Promise<BnAReturnType> {
     if (this.account) {
-
       // @ts-ignore
       this.provider.setStateOverride({
         [this.bnAAddress as string]: {
@@ -49,20 +48,14 @@ export class BnA {
         erc20Tokens,
         erc1155Tokens,
       })
-      const {results} = await multicall.call(multiCallRequest)
+      const { results } = await multicall.call(multiCallRequest)
 
       return this.parseBnAMultiRes(erc20Tokens, erc1155Tokens, results)
     }
-    return {balances: {}, allowances: {}, maturity: { }}
+    return { balances: {}, allowances: {}, maturity: {} }
   }
 
-  getBnAMulticallRequest({
-                           erc20Tokens,
-                           erc1155Tokens,
-                         }: {
-    erc20Tokens: string[]
-    erc1155Tokens: { [key: string]: string[] }
-  }) {
+  getBnAMulticallRequest({ erc20Tokens, erc1155Tokens }: { erc20Tokens: string[]; erc1155Tokens: { [key: string]: string[] } }) {
     const packs = []
     const accounts = []
     for (const poolAddress in erc1155Tokens) {
@@ -81,11 +74,7 @@ export class BnA {
           {
             reference: 'bna',
             methodName: 'getBnA',
-            methodParameters: [
-              erc20Tokens,
-              [this.account],
-              [this.profile.configs.helperContract.utr],
-            ],
+            methodParameters: [erc20Tokens, [this.account], [this.profile.configs.helperContract.utr]],
           },
         ],
       },
@@ -119,11 +108,7 @@ export class BnA {
     return request
   }
 
-  parseBnAMultiRes(
-    erc20Address: any,
-    erc1155Tokens: any,
-    data: any,
-  ): BnAReturnType {
+  parseBnAMultiRes(erc20Address: any, erc1155Tokens: any, data: any): BnAReturnType {
     const maturity: MaturitiesType = {}
     const balances: BalancesType = {}
     const allowances: AllowancesType = {}
@@ -147,16 +132,16 @@ export class BnA {
       }
     }
 
-    for(let maturityIndex = 2; maturityIndex < data.erc1155.callsReturnContext.length; maturityIndex++) {
+    for (let maturityIndex = 2; maturityIndex < data.erc1155.callsReturnContext.length; maturityIndex++) {
       const responseData = data.erc1155.callsReturnContext[maturityIndex]
-      const {k, p} = unpackId(bn(responseData.reference?.split('-')[1]))
+      const { k, p } = unpackId(bn(responseData.reference?.split('-')[1]))
       maturity[p + '-' + Number(k)] = bn(responseData.returnValues[0]?.hex)
     }
 
     return {
       balances,
       allowances,
-      maturity
+      maturity,
     }
   }
 }

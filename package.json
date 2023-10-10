@@ -16,7 +16,7 @@
     "example:history": "npx ts-node --files ./example/history.ts",
     "example:power": "npx ts-node --files ./example/power.ts",
     "example:getPairAddress": "npx ts-node --files ./example/getPairAddress.ts",
-    "pretty": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\""
+    "pretty": "prettier --write \"./src/**/*.ts\""
   },
   "author": "Derivable Labs",
   "license": "MIT",

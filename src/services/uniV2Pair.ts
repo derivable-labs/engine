@@ -1,11 +1,10 @@
 import { ethers } from 'ethers'
 import PairDetailAbi from '../abi/PairDetail.json'
-import { IEngineConfig} from '../utils/configs'
-import {Profile} from "../profile";
-import {JsonRpcProvider} from "@ethersproject/providers";
+import { IEngineConfig } from '../utils/configs'
+import { Profile } from '../profile'
+import { JsonRpcProvider } from '@ethersproject/providers'
 
-const FLAG =
-  '0x0000110000000000000000000000000000000000000000000000000000000111'
+const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111'
 // type ConfigType = {
 //   chainId: number
 //   scanApi: string
@@ -33,19 +32,9 @@ export class UniV2Pair {
     this.provider = new JsonRpcProvider(profile.configs.rpc)
   }
 
-  async getPairInfo({
-    pairAddress,
-    flag = FLAG,
-  }: {
-    pairAddress: string
-    flag?: string
-  }) {
+  async getPairInfo({ pairAddress, flag = FLAG }: { pairAddress: string; flag?: string }) {
     try {
-      const pairDetailContract = new ethers.Contract(
-        this.pairsInfoAddress as string,
-        PairDetailAbi.abi,
-        this.provider,
-      )
+      const pairDetailContract = new ethers.Contract(this.pairsInfoAddress as string, PairDetailAbi.abi, this.provider)
 
       const res = await pairDetailContract.functions.query([pairAddress], flag)
       return res.details[0]
@@ -54,24 +43,11 @@ export class UniV2Pair {
     }
   }
 
-  async getPairsInfo({
-    pairAddresses,
-    flag = FLAG,
-  }: {
-    flag?: string
-    pairAddresses: string[]
-  }) {
+  async getPairsInfo({ pairAddresses, flag = FLAG }: { flag?: string; pairAddresses: string[] }) {
     try {
-      const pairDetailContract = new ethers.Contract(
-        this.pairsInfoAddress as string,
-        PairDetailAbi.abi,
-        this.provider,
-      )
+      const pairDetailContract = new ethers.Contract(this.pairsInfoAddress as string, PairDetailAbi.abi, this.provider)
 
-      const { details } = await pairDetailContract.functions.query(
-        pairAddresses,
-        flag,
-      )
+      const { details } = await pairDetailContract.functions.query(pairAddresses, flag)
       const result = {}
       for (let i = 0; i < pairAddresses.length; i++) {
         result[pairAddresses[i]] = details[i]
