@@ -589,6 +589,7 @@ export class Resource {
           .div(R)
           .toNumber() / this.unit
     const k = pool.k.toNumber()
+    const power = k/2
     const sides = {
       [A]: {} as any,
       [B]: {} as any,
@@ -596,15 +597,15 @@ export class Resource {
     }
     sides[A].k = Math.min(k, kx(k, R, a, spot, MARK))
     sides[B].k = -Math.min(k, kx(-k, R, b, spot, MARK))
-    sides[B].k =
-      rA
-        .mul(Math.round(sides[A].k * this.unit))
+    sides[C].k = numDiv(
+      rA.mul(Math.round(sides[A].k * this.unit))
         .add(rB.mul(Math.round(sides[B].k * this.unit)))
-        .div(rA.add(rB))
-        .toNumber() / this.unit
+        .div(rA.add(rB)),
+      this.unit
+    )
 
-    const interestRate = rateFromHL(pool.INTEREST_HL.toNumber(), k)
-    const maxPremiumRate = rateFromHL(pool.PREMIUM_HL.toNumber(), k)
+    const interestRate = rateFromHL(pool.INTEREST_HL.toNumber(), power)
+    const maxPremiumRate = rateFromHL(pool.PREMIUM_HL.toNumber(), power)
     if (maxPremiumRate > 0) {
       if (rA.gt(rB)) {
         const rDiff = rA.sub(rB)
