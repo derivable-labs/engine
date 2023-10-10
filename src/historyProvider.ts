@@ -61,7 +61,7 @@ export default {
     limit,
     chainId,
     to,
-    barValueType
+    barValueType,
   }: {
     inputToken: TokenType
     outputToken: TokenType
@@ -73,20 +73,16 @@ export default {
     barValueType?: 'string'
   }): Promise<CandleType[]> {
     const q = route.split('/').join(',')
-    const url = `${CHART_API_ENDPOINT.replaceAll('{chartId}', chainId)}candleline4?q=${q}&r=${convertResolution(resolution)}&l=${limit}&t=${to}`
+    const url = `${CHART_API_ENDPOINT.replaceAll('{chartId}', chainId)}candleline4?q=${q}&r=${convertResolution(
+      resolution,
+    )}&l=${limit}&t=${to}`
 
     return fetch(url)
       .then((r: any) => r.json())
       .then((response: CandleFromApiType) => {
         const bars: CandleType[] = []
-        if (
-          response &&
-          response.s === 'ok' &&
-          response.t &&
-          response.t.length > 0
-        ) {
-          const decimal =
-            18 + (outputToken?.decimal || 18) - (inputToken?.decimal || 18)
+        if (response && response.s === 'ok' && response.t && response.t.length > 0) {
+          const decimal = 18 + (outputToken?.decimal || 18) - (inputToken?.decimal || 18)
           for (let i = 0; i < response.t.length; i++) {
             bars.push({
               low: formatResult(weiToNumber(numberToWei(response.l[i]), decimal), barValueType),
@@ -110,7 +106,7 @@ export default {
 }
 
 const formatResult = (value: string, type: undefined | 'string' | 'number') => {
-  if(type === 'string') {
+  if (type === 'string') {
     return value
   }
   return Number(value)

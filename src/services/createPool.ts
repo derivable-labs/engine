@@ -2,8 +2,8 @@ import { BigNumber, ethers } from 'ethers'
 import { bn } from '../utils/helper'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { PoolConfig } from '../types'
-import {IDerivableContractAddress, IEngineConfig} from '../utils/configs'
-import {Profile} from "../profile";
+import { IDerivableContractAddress, IEngineConfig } from '../utils/configs'
+import { Profile } from '../profile'
 
 export class CreatePool {
   account?: string
@@ -27,11 +27,10 @@ export class CreatePool {
 
   async callStaticCreatePool({ params, value, gasLimit }: any) {
     const helper = this.getStateCalHelperContract(this.signer)
-    return await helper.callStatic.createPool(
-      params,
-      this.contractAddresses.poolFactory,
-      { value: value || bn(0), gasLimit: gasLimit || undefined },
-    )
+    return await helper.callStatic.createPool(params, this.contractAddresses.poolFactory, {
+      value: value || bn(0),
+      gasLimit: gasLimit || undefined,
+    })
   }
 
   async createPool(params: PoolConfig, gasLimit?: BigNumber) {
@@ -52,14 +51,10 @@ export class CreatePool {
         gasLimit,
       })
       const helper = this.getStateCalHelperContract(this.signer)
-      const res = await helper.createPool(
-        newPoolConfigs,
-        this.contractAddresses.poolFactory,
-        {
-          value: params.amountInit,
-          gasLimit: gasLimit || undefined,
-        },
-      )
+      const res = await helper.createPool(newPoolConfigs, this.contractAddresses.poolFactory, {
+        value: params.amountInit,
+        gasLimit: gasLimit || undefined,
+      })
       const tx = await res.wait(1)
       console.log('tx', tx)
       return true
@@ -95,10 +90,6 @@ export class CreatePool {
   }
 
   getStateCalHelperContract(provider?: any) {
-    return new ethers.Contract(
-      this.contractAddresses.stateCalHelper as string,
-      this.profile.getAbi('Helper'),
-      provider || this.provider,
-    )
+    return new ethers.Contract(this.contractAddresses.stateCalHelper as string, this.profile.getAbi('Helper'), provider || this.provider)
   }
 }

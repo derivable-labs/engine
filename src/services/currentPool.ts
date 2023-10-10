@@ -1,6 +1,6 @@
 import { Resource } from './resource'
 import { PoolType } from '../types'
-import {IEngineConfig} from "../utils/configs";
+import { IEngineConfig } from '../utils/configs'
 
 export type PoolData = {
   baseToken: string
