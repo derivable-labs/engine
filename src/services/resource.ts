@@ -15,6 +15,17 @@ const MAX_BLOCK = 4294967295
 
 const { A, B, C } = POOL_IDS
 
+function numDiv(b: BigNumber, unit: number = 1): number {
+  try {
+    return b.toNumber() / unit
+  } catch(err) {
+    if (err.reason == 'overflow') {
+      return Infinity
+    }
+    throw err
+  }
+}
+
 type ResourceData = {
   pools: PoolsType
   tokens: TokenType[]
@@ -598,14 +609,14 @@ export class Resource {
       if (rA.gt(rB)) {
         const rDiff = rA.sub(rB)
         const givingRate = rDiff.mul(Math.round(this.unit * maxPremiumRate))
-        const receivingRate = rA.mul(givingRate).div(rB.add(rC)).toNumber() / this.unit
+        const receivingRate = numDiv(rA.mul(givingRate).div(rB.add(rC)), this.unit)
         sides[A].premium = givingRate.div(rA).toNumber() / this.unit
         sides[B].premium = -receivingRate
         sides[C].premium = receivingRate
       } else if (rB.gt(rA)) {
         const rDiff = rB.sub(rA)
         const givingRate = rDiff.mul(Math.round(this.unit * maxPremiumRate))
-        const receivingRate = rB.mul(givingRate).div(rA.add(rC)).toNumber() / this.unit
+        const receivingRate = numDiv(rB.mul(givingRate).div(rA.add(rC)), this.unit)
         sides[B].premium = givingRate.div(rB).toNumber() / this.unit
         sides[A].premium = -receivingRate
         sides[C].premium = receivingRate
@@ -620,12 +631,10 @@ export class Resource {
     for (const side of [A, B]) {
       sides[side].interest = (interestRate * k) / sides[side].k
     }
-    sides[C].interest =
-      rA
-        .add(rB)
-        .mul(Math.round(this.unit * interestRate))
-        .div(rC)
-        .toNumber() / this.unit
+    sides[C].interest = numDiv(
+      rA.add(rB).mul(Math.round(this.unit * interestRate)).div(rC),
+      this.unit,
+    )
 
     return {
       sides,
