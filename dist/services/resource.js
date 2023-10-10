@@ -508,16 +508,16 @@ class Resource {
             if (rA.gt(rB)) {
                 const rDiff = rA.sub(rB);
                 const givingRate = rDiff.mul(Math.round(this.unit * maxPremiumRate));
-                const receivingRate = numDiv(rA.mul(givingRate).div(rB.add(rC)), this.unit);
-                sides[A].premium = givingRate.div(rA).toNumber() / this.unit;
+                const receivingRate = numDiv(givingRate.div(rB.add(rC)), this.unit);
+                sides[A].premium = numDiv(givingRate.div(rA), this.unit);
                 sides[B].premium = -receivingRate;
                 sides[C].premium = receivingRate;
             }
             else if (rB.gt(rA)) {
                 const rDiff = rB.sub(rA);
                 const givingRate = rDiff.mul(Math.round(this.unit * maxPremiumRate));
-                const receivingRate = numDiv(rB.mul(givingRate).div(rA.add(rC)), this.unit);
-                sides[B].premium = givingRate.div(rB).toNumber() / this.unit;
+                const receivingRate = numDiv(givingRate.div(rA.add(rC)), this.unit);
+                sides[B].premium = numDiv(givingRate.div(rB), this.unit);
                 sides[A].premium = -receivingRate;
                 sides[C].premium = receivingRate;
             }
