@@ -26,7 +26,10 @@ class CreatePool {
     callStaticCreatePool({ params, value, gasLimit }) {
         return __awaiter(this, void 0, void 0, function* () {
             const helper = this.getStateCalHelperContract(this.signer);
-            return yield helper.callStatic.createPool(params, this.contractAddresses.poolFactory, { value: value || (0, helper_1.bn)(0), gasLimit: gasLimit || undefined });
+            return yield helper.callStatic.createPool(params, this.contractAddresses.poolFactory, {
+                value: value || (0, helper_1.bn)(0),
+                gasLimit: gasLimit || undefined,
+            });
         });
     }
     createPool(params, gasLimit) {

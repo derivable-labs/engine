@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
-import { TokenType } from "../types";
-import { IEngineConfig } from "../utils/configs";
-import { Profile } from "../profile";
+import { TokenType } from '../types';
+import { IEngineConfig } from '../utils/configs';
+import { Profile } from '../profile';
 export declare class Price {
     chainId: number;
     scanApi?: string;

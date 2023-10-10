@@ -27,10 +27,7 @@ exports.getBalanceSlot = getBalanceSlot;
 function getAllowanceSlot(account, spender, i) {
     const firstLevelEncoded = encode(['address', 'uint'], [account, i]);
     const secondLevelEncoded = encode(['address'], [spender]);
-    const slot = ethers_1.ethers.utils.keccak256(ethers_1.ethers.utils.concat([
-        secondLevelEncoded,
-        ethers_1.ethers.utils.keccak256(firstLevelEncoded),
-    ]));
+    const slot = ethers_1.ethers.utils.keccak256(ethers_1.ethers.utils.concat([secondLevelEncoded, ethers_1.ethers.utils.keccak256(firstLevelEncoded)]));
     return slot;
 }
 exports.getAllowanceSlot = getAllowanceSlot;

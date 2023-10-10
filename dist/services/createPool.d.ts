@@ -2,7 +2,7 @@ import { BigNumber, ethers } from 'ethers';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { PoolConfig } from '../types';
 import { IDerivableContractAddress, IEngineConfig } from '../utils/configs';
-import { Profile } from "../profile";
+import { Profile } from '../profile';
 export declare class CreatePool {
     account?: string;
     chainId: number;

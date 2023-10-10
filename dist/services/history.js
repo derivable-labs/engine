@@ -41,7 +41,10 @@ class History {
                 positions = this.generatePositionBySwapLog(positions, tokens, formatedData);
             });
             for (let i in positions) {
-                positions[i].entryPrice = positions[i].value && positions[i].balanceToCalculatePrice && positions[i].balanceToCalculatePrice.gt(0) ? (0, helper_1.div)(positions[i].value, positions[i].balanceToCalculatePrice) : 0;
+                positions[i].entryPrice =
+                    positions[i].value && positions[i].balanceToCalculatePrice && positions[i].balanceToCalculatePrice.gt(0)
+                        ? (0, helper_1.div)(positions[i].value, positions[i].balanceToCalculatePrice)
+                        : 0;
             }
             return positions;
         }
@@ -54,8 +57,7 @@ class History {
         const pools = this.RESOURCE.pools;
         const poolAddresses = Object.keys(this.RESOURCE.pools);
         const { poolIn, poolOut, sideIn, sideOut, amountOut, amountIn, priceR, price } = formatedData;
-        if (!poolAddresses.includes(poolIn) ||
-            !poolAddresses.includes(poolOut)) {
+        if (!poolAddresses.includes(poolIn) || !poolAddresses.includes(poolOut)) {
             return positions;
         }
         const tokenInAddress = this.getTokenAddressByPoolAndSide(poolIn, formatedData.sideIn);
@@ -103,7 +105,7 @@ class History {
                     entry: (0, helper_1.max)((0, helper_1.sub)(positions[tokenInAddress].entry, oldEntry), 0),
                     totalEntryR: (0, helper_1.max)((0, helper_1.sub)(positions[tokenInAddress].totalEntryR, oldEntryR), 0),
                     value: (0, helper_1.max)((0, helper_1.sub)(positions[tokenInAddress].value, oldValue), 0),
-                    balanceToCalculatePrice: (0, helper_1.max)(positions[tokenInAddress].balanceToCalculatePrice.sub(amountIn), (0, helper_1.bn)(0))
+                    balanceToCalculatePrice: (0, helper_1.max)(positions[tokenInAddress].balanceToCalculatePrice.sub(amountIn), (0, helper_1.bn)(0)),
                 };
             }
         }
@@ -120,8 +122,7 @@ class History {
                 const abi = this.getSwapAbi(log.topics[0]);
                 const formatedData = this.decodeSwapLog(abi, log.args.args);
                 const { poolIn, poolOut, sideIn, sideOut, amountIn, amountOut, price, priceR } = formatedData;
-                if (!poolAddresses.includes(poolIn) ||
-                    !poolAddresses.includes(poolOut)) {
+                if (!poolAddresses.includes(poolIn) || !poolAddresses.includes(poolOut)) {
                     return null;
                 }
                 let tokenInAddress = this.getTokenAddressByPoolAndSide(poolIn, formatedData.sideIn);
@@ -132,7 +133,8 @@ class History {
                 let entryPrice;
                 const pool = [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) ? pools[poolIn] : pools[poolOut];
                 const { TOKEN_R, baseToken, quoteToken } = pool;
-                if (([constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) || [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideOut.toNumber())) && priceR) {
+                if (([constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) || [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideOut.toNumber())) &&
+                    priceR) {
                     const amount = [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut;
                     const tokenR = tokens.find((t) => t.address === TOKEN_R);
                     const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0]);
@@ -160,9 +162,7 @@ class History {
                     poolOut, tokenIn: tokenInAddress, tokenOut: tokenOutAddress, entryValue,
                     entryPrice }, formatedData), anyTokenHistoryData);
             });
-            return (_swapLogs
-                .filter((l) => l !== null)
-                .sort((a, b) => b.blockNumber - a.blockNumber || b.logIndex - a.logIndex));
+            return _swapLogs.filter((l) => l !== null).sort((a, b) => b.blockNumber - a.blockNumber || b.logIndex - a.logIndex);
         }
         catch (e) {
             throw e;

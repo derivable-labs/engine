@@ -40,7 +40,7 @@ exports.EventDataAbis = {
         'uint MATURITY_VEST',
         'uint MATURITY_RATE',
         'uint OPEN_RATE',
-        'address poolAddress' // uint(uint160(pool))
+        'address poolAddress', // uint(uint160(pool))
     ],
     Swap: [
         'address payer',

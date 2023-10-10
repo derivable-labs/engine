@@ -39,7 +39,7 @@ class UniV3Pair {
         this.pairsV3Info = pairsV3Info;
         this.profile = profile;
     }
-    getLargestPoolAddress({ baseToken, quoteTokens, }) {
+    getLargestPoolAddress({ baseToken, quoteTokens }) {
         return __awaiter(this, void 0, void 0, function* () {
             const pools = yield this.getPairAddress({ baseToken, quoteTokens });
             return yield this._getLargestPoolByPools(baseToken, pools);
@@ -80,14 +80,16 @@ class UniV3Pair {
                 methodParameters: [pools[i]],
             });
         }
-        return [{
+        return [
+            {
                 reference: 'poolBalances',
                 contractAddress: baseToken,
                 abi: ERC20_json_1.default,
-                calls
-            }];
+                calls,
+            },
+        ];
     }
-    getPairAddress({ baseToken, quoteTokens, }) {
+    getPairAddress({ baseToken, quoteTokens }) {
         return __awaiter(this, void 0, void 0, function* () {
             const multicall = this._getMulticall();
             //@ts-ignore
@@ -116,14 +118,16 @@ class UniV3Pair {
                 });
             });
         });
-        return [{
+        return [
+            {
                 reference: 'poolAddresses',
                 contractAddress: this.profile.configs.uniswap.v3Factory,
                 abi: UniswapV3Factory_json_1.default,
-                calls
-            }];
+                calls,
+            },
+        ];
     }
-    getPairInfo({ pairAddress, flag = FLAG, }) {
+    getPairInfo({ pairAddress, flag = FLAG }) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const provider = new providers_1.JsonRpcProvider(this.rpcUrl);
@@ -142,7 +146,7 @@ class UniV3Pair {
             }
         });
     }
-    getPairsInfo({ pairAddresses, flag = FLAG, }) {
+    getPairsInfo({ pairAddresses, flag = FLAG }) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const provider = new providers_1.JsonRpcProvider(this.rpcUrl);

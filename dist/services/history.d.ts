@@ -1,8 +1,8 @@
 import { BigNumber, ethers } from 'ethers';
 import { LogType, TokenType } from '../types';
-import { Profile } from "../profile";
-import { IEngineConfig } from "../utils/configs";
-import { Resource } from "./resource";
+import { Profile } from '../profile';
+import { IEngineConfig } from '../utils/configs';
+import { Resource } from './resource';
 export declare class History {
     account?: string;
     RESOURCE: Resource;

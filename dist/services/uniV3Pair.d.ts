@@ -1,8 +1,8 @@
 import { ethers } from 'ethers';
-import { Multicall } from "ethereum-multicall";
-import { IDerivableContractAddress, IEngineConfig } from "../utils/configs";
-import { CallReturnContext } from "ethereum-multicall/dist/esm/models/call-return-context";
-import { Profile } from "../profile";
+import { Multicall } from 'ethereum-multicall';
+import { IDerivableContractAddress, IEngineConfig } from '../utils/configs';
+import { CallReturnContext } from 'ethereum-multicall/dist/esm/models/call-return-context';
+import { Profile } from '../profile';
 export declare class UniV3Pair {
     chainId: number;
     scanApi?: string;
@@ -12,7 +12,7 @@ export declare class UniV3Pair {
     addresses: Partial<IDerivableContractAddress>;
     profile: Profile;
     constructor(config: IEngineConfig, profile: Profile);
-    getLargestPoolAddress({ baseToken, quoteTokens, }: {
+    getLargestPoolAddress({ baseToken, quoteTokens }: {
         baseToken: string;
         quoteTokens: string[];
     }): Promise<string>;
@@ -74,7 +74,7 @@ export declare class UniV3Pair {
         })[];
         calls: any;
     }[];
-    getPairAddress({ baseToken, quoteTokens, }: {
+    getPairAddress({ baseToken, quoteTokens }: {
         baseToken: string;
         quoteTokens: string[];
     }): Promise<{
@@ -121,11 +121,11 @@ export declare class UniV3Pair {
         })[];
         calls: any;
     }[];
-    getPairInfo({ pairAddress, flag, }: {
+    getPairInfo({ pairAddress, flag }: {
         pairAddress: string;
         flag?: string;
     }): Promise<any>;
-    getPairsInfo({ pairAddresses, flag, }: {
+    getPairsInfo({ pairAddresses, flag }: {
         flag?: string;
         pairAddresses: string[];
     }): Promise<{}>;

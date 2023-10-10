@@ -36,7 +36,7 @@ class UniV2Pair {
         });
         this.provider = new providers_1.JsonRpcProvider(profile.configs.rpc);
     }
-    getPairInfo({ pairAddress, flag = FLAG, }) {
+    getPairInfo({ pairAddress, flag = FLAG }) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const pairDetailContract = new ethers_1.ethers.Contract(this.pairsInfoAddress, PairDetail_json_1.default.abi, this.provider);
@@ -48,7 +48,7 @@ class UniV2Pair {
             }
         });
     }
-    getPairsInfo({ pairAddresses, flag = FLAG, }) {
+    getPairsInfo({ pairAddresses, flag = FLAG }) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const pairDetailContract = new ethers_1.ethers.Contract(this.pairsInfoAddress, PairDetail_json_1.default.abi, this.provider);

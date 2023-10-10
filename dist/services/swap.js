@@ -84,14 +84,8 @@ class Swap {
                 const poolGroup = this.getPoolPoolGroup(step.tokenIn, step.tokenOut);
                 outputs.push({
                     recipient: this.account,
-                    eip: (0, helper_1.isErc1155Address)(step.tokenOut)
-                        ? 1155
-                        : step.tokenOut === constant_1.NATIVE_ADDRESS
-                            ? 0
-                            : 20,
-                    token: (0, helper_1.isErc1155Address)(step.tokenOut)
-                        ? this.derivableAdr.token
-                        : step.tokenOut,
+                    eip: (0, helper_1.isErc1155Address)(step.tokenOut) ? 1155 : step.tokenOut === constant_1.NATIVE_ADDRESS ? 0 : 20,
+                    token: (0, helper_1.isErc1155Address)(step.tokenOut) ? this.derivableAdr.token : step.tokenOut,
                     id: (0, helper_1.isErc1155Address)(step.tokenOut)
                         ? (0, helper_1.packId)(this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R).toString(), this.getAddressByErc1155Address(step.tokenOut, poolGroup.TOKEN_R))
                         : (0, helper_1.bn)(0),
@@ -121,7 +115,7 @@ class Swap {
                         inputs,
                     }, {
                         code: this.derivableAdr.stateCalHelper,
-                        inputs: []
+                        inputs: [],
                     });
                     promises.push(...populateTxData);
                 }
@@ -143,7 +137,7 @@ class Swap {
             return { params: [outputs, actions], value: nativeAmountToWrap };
         });
     }
-    getSweepCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut }) {
+    getSweepCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut, }) {
         const stateCalHelper = this.getStateCalHelperContract();
         const swapCallData = this.getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut });
         let inputs = [
@@ -155,7 +149,7 @@ class Swap {
                 amountIn: step.currentBalanceOut,
                 recipient: stateCalHelper.address,
             },
-            ...swapCallData.inputs
+            ...swapCallData.inputs,
         ];
         const populateTxData = [
             ...swapCallData.populateTxData,
@@ -163,25 +157,22 @@ class Swap {
         ];
         return {
             inputs,
-            populateTxData
+            populateTxData,
         };
     }
-    getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut }) {
+    getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut, }) {
         let inputs = [
             {
                 mode: PAYMENT,
                 eip: (0, helper_1.isErc1155Address)(step.tokenIn) ? 1155 : 20,
-                token: (0, helper_1.isErc1155Address)(step.tokenIn)
-                    ? this.derivableAdr.token
-                    : step.tokenIn,
-                id: (0, helper_1.isErc1155Address)(step.tokenIn)
-                    ? (0, helper_1.packId)(idIn.toString(), poolIn)
-                    : 0,
+                token: (0, helper_1.isErc1155Address)(step.tokenIn) ? this.derivableAdr.token : step.tokenIn,
+                id: (0, helper_1.isErc1155Address)(step.tokenIn) ? (0, helper_1.packId)(idIn.toString(), poolIn) : 0,
                 amountIn: step.amountIn,
                 recipient: (0, utils_1.isAddress)(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R
                     ? this.getUniPool(step.tokenIn, poolGroup.TOKEN_R)
                     : (0, helper_1.isErc1155Address)(step.tokenIn)
-                        ? poolIn : poolOut,
+                        ? poolIn
+                        : poolOut,
             },
         ];
         if (step.tokenIn === constant_1.NATIVE_ADDRESS) {
@@ -206,7 +197,7 @@ class Swap {
                 amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
                 payer: this.account,
                 recipient: this.account,
-                INDEX_R: this.getIndexR(poolGroup.TOKEN_R)
+                INDEX_R: this.getIndexR(poolGroup.TOKEN_R),
             }));
         }
         else if ((0, utils_1.isAddress)(step.tokenOut) && this.wrapToken(step.tokenOut) !== poolGroup.TOKEN_R) {
@@ -218,7 +209,7 @@ class Swap {
                 amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
                 payer: this.account,
                 recipient: this.account,
-                INDEX_R: this.getIndexR(poolGroup.TOKEN_R)
+                INDEX_R: this.getIndexR(poolGroup.TOKEN_R),
             }));
         }
         else {
@@ -231,12 +222,12 @@ class Swap {
                 maturity: 0,
                 payer: this.account,
                 recipient: this.account,
-                INDEX_R: this.getIndexR(poolGroup.TOKEN_R)
+                INDEX_R: this.getIndexR(poolGroup.TOKEN_R),
             }));
         }
         return {
             inputs,
-            populateTxData
+            populateTxData,
         };
     }
     wrapToken(address) {
@@ -248,8 +239,7 @@ class Swap {
     generateSwapParams(method, params) {
         var _a;
         const stateCalHelper = this.getStateCalHelperContract();
-        const functionInterface = (_a = Object.values(stateCalHelper.interface.functions)
-            .find((f) => f.name === method)) === null || _a === void 0 ? void 0 : _a.inputs[0].components;
+        const functionInterface = (_a = Object.values(stateCalHelper.interface.functions).find((f) => f.name === method)) === null || _a === void 0 ? void 0 : _a.inputs[0].components;
         const formatedParams = {};
         for (let name in params) {
             if (functionInterface === null || functionInterface === void 0 ? void 0 : functionInterface.find((c) => c.name === name)) {
@@ -266,8 +256,7 @@ class Swap {
             else if (address === TOKEN_R) {
                 return (0, helper_1.bn)(constant_1.POOL_IDS.R);
             }
-            else if (address === constant_1.NATIVE_ADDRESS &&
-                TOKEN_R === this.profile.configs.wrappedTokenAddress) {
+            else if (address === constant_1.NATIVE_ADDRESS && TOKEN_R === this.profile.configs.wrappedTokenAddress) {
                 return (0, helper_1.bn)(constant_1.POOL_IDS.native);
             }
             return (0, helper_1.bn)(0);
@@ -277,12 +266,8 @@ class Swap {
         }
     }
     getPoolPoolGroup(addressIn, addressOut) {
-        const poolIn = (0, helper_1.isErc1155Address)(addressIn)
-            ? this.RESOURCE.pools[addressIn.split('-')[0]]
-            : null;
-        const poolOut = (0, helper_1.isErc1155Address)(addressOut)
-            ? this.RESOURCE.pools[addressOut.split('-')[0]]
-            : null;
+        const poolIn = (0, helper_1.isErc1155Address)(addressIn) ? this.RESOURCE.pools[addressIn.split('-')[0]] : null;
+        const poolOut = (0, helper_1.isErc1155Address)(addressOut) ? this.RESOURCE.pools[addressOut.split('-')[0]] : null;
         if (!poolIn && !poolOut) {
             throw 'Cannot detect pool to swap';
         }
@@ -327,8 +312,7 @@ class Swap {
         if ((0, helper_1.isErc1155Address)(address)) {
             return address.split('-')[0];
         }
-        if (address === constant_1.NATIVE_ADDRESS &&
-            TOKEN_R === this.profile.configs.wrappedTokenAddress) {
+        if (address === constant_1.NATIVE_ADDRESS && TOKEN_R === this.profile.configs.wrappedTokenAddress) {
             return this.profile.configs.wrappedTokenAddress;
         }
         return address;
@@ -343,7 +327,7 @@ class Swap {
         const routeKey = Object.keys(this.profile.routes).find((r) => {
             return [
                 ...this.profile.configs.stablecoins.map((stablecoin) => stablecoin + '-' + tokenR),
-                ...this.profile.configs.stablecoins.map((stablecoin) => tokenR + '-' + stablecoin)
+                ...this.profile.configs.stablecoins.map((stablecoin) => tokenR + '-' + stablecoin),
             ].includes(r);
         });
         const pool = this.profile.routes[routeKey || ''] ? this.profile.routes[routeKey || ''][0] : undefined;

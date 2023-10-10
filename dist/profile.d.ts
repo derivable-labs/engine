@@ -1,4 +1,4 @@
-import { IEngineConfig, INetworkConfig } from "./utils/configs";
+import { IEngineConfig, INetworkConfig } from './utils/configs';
 export declare class Profile {
     chainId: number;
     env: 'development' | 'production';

@@ -44,8 +44,8 @@ const abis = {
     UTROverride: UTROverride_json_1.default,
 };
 const DDL_CONFIGS_URL = {
-    'development': `https://raw.githubusercontent.com/derivable-labs/configs/dev/`,
-    'production': `https://raw.githubusercontent.com/derivable-labs/configs/main/`,
+    development: `https://raw.githubusercontent.com/derivable-labs/configs/dev/`,
+    production: `https://raw.githubusercontent.com/derivable-labs/configs/main/`,
 };
 class Profile {
     constructor(engineConfig) {
@@ -56,14 +56,16 @@ class Profile {
         return __awaiter(this, void 0, void 0, function* () {
             const [networkConfig, uniV3Pools] = yield Promise.all([
                 (0, node_fetch_1.default)(DDL_CONFIGS_URL[this.env] + this.chainId + '/network.json').then((r) => r.json()),
-                (0, node_fetch_1.default)(DDL_CONFIGS_URL[this.env] + this.chainId + '/routes.json').then((r) => r.json()).catch(() => [])
+                (0, node_fetch_1.default)(DDL_CONFIGS_URL[this.env] + this.chainId + '/routes.json')
+                    .then((r) => r.json())
+                    .catch(() => []),
             ]);
             this.configs = networkConfig;
             this.routes = uniV3Pools;
         });
     }
     getAbi(name) {
-        return abis[name] ? abis[name] : (abis[this.chainId][name] || []);
+        return abis[name] ? abis[name] : abis[this.chainId][name] || [];
     }
     getEventDataAbi() {
         return constant_1.EventDataAbis;

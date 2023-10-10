@@ -54,7 +54,7 @@ class BnA {
             return { balances: {}, allowances: {}, maturity: {} };
         });
     }
-    getBnAMulticallRequest({ erc20Tokens, erc1155Tokens, }) {
+    getBnAMulticallRequest({ erc20Tokens, erc1155Tokens }) {
         const packs = [];
         const accounts = [];
         for (const poolAddress in erc1155Tokens) {
@@ -72,11 +72,7 @@ class BnA {
                     {
                         reference: 'bna',
                         methodName: 'getBnA',
-                        methodParameters: [
-                            erc20Tokens,
-                            [this.account],
-                            [this.profile.configs.helperContract.utr],
-                        ],
+                        methodParameters: [erc20Tokens, [this.account], [this.profile.configs.helperContract.utr]],
                     },
                 ],
             },
@@ -137,7 +133,7 @@ class BnA {
         return {
             balances,
             allowances,
-            maturity
+            maturity,
         };
     }
 }

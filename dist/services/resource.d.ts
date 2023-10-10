@@ -3,7 +3,7 @@ import { LogType, ParseLogType, PoolGroupsType, PoolsType, PoolType, Storage, To
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { UniV3Pair } from './uniV3Pair';
 import { IDerivableContractAddress, IEngineConfig } from '../utils/configs';
-import { Profile } from "../profile";
+import { Profile } from '../profile';
 type ResourceData = {
     pools: PoolsType;
     tokens: TokenType[];
@@ -66,7 +66,7 @@ export declare class Resource {
         pools: any;
         poolGroups: any;
     }>;
-    getRentRate({ rDcLong, rDcShort, R, }: {
+    getRentRate({ rDcLong, rDcShort, R }: {
         R: BigNumber;
         rDcLong: BigNumber;
         rDcShort: BigNumber;

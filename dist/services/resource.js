@@ -24,6 +24,17 @@ const utils_1 = require("ethers/lib/utils");
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider');
 const MAX_BLOCK = 4294967295;
 const { A, B, C } = constant_1.POOL_IDS;
+function numDiv(b, unit = 1) {
+    try {
+        return b.toNumber() / unit;
+    }
+    catch (err) {
+        if (err.reason == 'overflow') {
+            return Infinity;
+        }
+        throw err;
+    }
+}
 class Resource {
     constructor(engineConfigs, profile) {
         this.poolGroups = {};
@@ -51,10 +62,7 @@ class Resource {
             let result = {};
             if (!this.chainId)
                 return result;
-            const [resultCached, newResource] = yield Promise.all([
-                this.getResourceCached(account),
-                this.getNewResource(account),
-            ]);
+            const [resultCached, newResource] = yield Promise.all([this.getResourceCached(account), this.getNewResource(account)]);
             this.poolGroups = Object.assign(Object.assign({}, resultCached.poolGroups), newResource.poolGroups);
             this.pools = Object.assign(Object.assign({}, resultCached.pools), newResource.pools);
             this.tokens = [...resultCached.tokens, ...newResource.tokens];
@@ -65,7 +73,8 @@ class Resource {
     getLastBlockCached(account) {
         if (!this.storage || !this.storage.getItem)
             return this.profile.configs.derivable.startBlock;
-        const lastDDlBlock = Number(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) || this.profile.configs.derivable.startBlock - 1;
+        const lastDDlBlock = Number(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) ||
+            this.profile.configs.derivable.startBlock - 1;
         let lastWalletBlock = this.profile.configs.derivable.startBlock - 1;
         const walletBlockCached = this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account);
         if (account && walletBlockCached) {
@@ -78,12 +87,9 @@ class Resource {
     transferLogs, headBlock, account, }) {
         if (!this.storage || !this.storage.getItem || !this.storage.setItem)
             return;
-        const cachedDdlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.DDL_LOGS) ||
-            '[]');
+        const cachedDdlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.DDL_LOGS) || '[]');
         const newCachedDdlLogs = [...ddlLogs, ...cachedDdlLogs].filter((log, index, self) => {
-            return (index ===
-                self.findIndex((t) => t.logIndex === log.logIndex &&
-                    t.transactionHash === log.transactionHash));
+            return index === self.findIndex((t) => t.logIndex === log.logIndex && t.transactionHash === log.transactionHash);
         });
         this.storage.setItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS, headBlock.toString());
         this.storage.setItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.DDL_LOGS, JSON.stringify(newCachedDdlLogs));
@@ -97,9 +103,7 @@ class Resource {
             return;
         const cachedogs = JSON.parse(this.storage.getItem(key) || '[]');
         const newCacheSwapLogs = [...newLogs, ...cachedogs].filter((log, index, self) => {
-            return (index ===
-                self.findIndex((t) => t.logIndex === log.logIndex &&
-                    t.transactionHash === log.transactionHash));
+            return index === self.findIndex((t) => t.logIndex === log.logIndex && t.transactionHash === log.transactionHash);
         });
         this.storage.setItem(blockKey, headBlock.toString());
         this.storage.setItem(key, JSON.stringify(newCacheSwapLogs));
@@ -115,8 +119,7 @@ class Resource {
             };
             if (!this.storage || !this.storage.getItem)
                 return results;
-            const ddlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.DDL_LOGS) ||
-                '[]');
+            const ddlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.DDL_LOGS) || '[]');
             const swapLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account) || '[]');
             const transferLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.TRANSFER_LOGS + '-' + account) || '[]');
             const [ddlLogsParsed, swapLogsParsed, transferLogsParsed] = [
@@ -143,14 +146,16 @@ class Resource {
     getNewResource(account) {
         return __awaiter(this, void 0, void 0, function* () {
             // TODO: move this part to constructor
-            const etherscanConfig = typeof this.scanApi === 'string' ? {
-                url: this.scanApi,
-                maxResults: 1000,
-                rangeThreshold: 0,
-                rateLimitCount: 1,
-                rateLimitDuration: 5000,
-                apiKeys: this.scanApiKey ? [this.scanApiKey] : []
-            } : this.scanApi;
+            const etherscanConfig = typeof this.scanApi === 'string'
+                ? {
+                    url: this.scanApi,
+                    maxResults: 1000,
+                    rangeThreshold: 0,
+                    rateLimitCount: 1,
+                    rateLimitDuration: 5000,
+                    apiKeys: this.scanApiKey ? [this.scanApiKey] : [],
+                }
+                : this.scanApi;
             const provider = new AssistedJsonRpcProvider(this.providerToGetLog, etherscanConfig);
             const lastHeadBlockCached = this.getLastBlockCached(account);
             const accTopic = account ? '0x' + '0'.repeat(24) + account.slice(2) : null;
@@ -177,9 +182,7 @@ class Resource {
                 }
                 const headBlock = (_a = logs[logs.length - 1]) === null || _a === void 0 ? void 0 : _a.blockNumber;
                 const ddlLogs = logs.filter((log) => {
-                    return log.address
-                        && topics.Derivable.includes(log.topics[0])
-                        && log.address === this.derivableAddress.poolFactory;
+                    return log.address && topics.Derivable.includes(log.topics[0]) && log.address === this.derivableAddress.poolFactory;
                 });
                 const swapLogs = logs.filter((log) => {
                     return log.address && topics.Swap.includes(log.topics[0]);
@@ -194,11 +197,7 @@ class Resource {
                     headBlock,
                     account,
                 });
-                return [
-                    this.parseDdlLogs(ddlLogs),
-                    this.parseDdlLogs(swapLogs),
-                    this.parseDdlLogs(transferLogs)
-                ];
+                return [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs), this.parseDdlLogs(transferLogs)];
             })
                 .then(([ddlLogs, swapLogs, transferLogs]) => __awaiter(this, void 0, void 0, function* () {
                 const result = {
@@ -206,7 +205,7 @@ class Resource {
                     tokens: [],
                     swapLogs: [],
                     transferLogs: [],
-                    poolGroups: {}
+                    poolGroups: {},
                 };
                 if (swapLogs && swapLogs.length > 0) {
                     result.swapLogs = swapLogs;
@@ -347,10 +346,7 @@ class Resource {
                     poolGroups[id].dTokens.push(pools[i].poolAddress + '-' + constant_1.POOL_IDS.A, pools[i].poolAddress + '-' + constant_1.POOL_IDS.B);
                 }
                 else {
-                    poolGroups[id].dTokens = [
-                        pools[i].poolAddress + '-' + constant_1.POOL_IDS.A,
-                        pools[i].poolAddress + '-' + constant_1.POOL_IDS.B,
-                    ];
+                    poolGroups[id].dTokens = [pools[i].poolAddress + '-' + constant_1.POOL_IDS.A, pools[i].poolAddress + '-' + constant_1.POOL_IDS.B];
                 }
                 if (poolGroups[id].allTokens) {
                     poolGroups[id].allTokens.push(pools[i].poolAddress + '-' + constant_1.POOL_IDS.A, pools[i].poolAddress + '-' + constant_1.POOL_IDS.B, pools[i].poolAddress + '-' + constant_1.POOL_IDS.C);
@@ -390,16 +386,12 @@ class Resource {
             };
         });
     }
-    getRentRate({ rDcLong, rDcShort, R, }, rentRate) {
+    getRentRate({ rDcLong, rDcShort, R }, rentRate) {
         const diff = (0, helper_1.bn)(rDcLong).sub(rDcShort).abs();
         const rate = R.isZero() ? (0, helper_1.bn)(0) : diff.mul(rentRate).div(R);
         return {
-            rentRateLong: rDcLong.add(rDcShort).isZero()
-                ? (0, helper_1.bn)(0)
-                : rate.mul(rDcLong).div(rDcLong.add(rDcShort)),
-            rentRateShort: rDcLong.add(rDcShort).isZero()
-                ? (0, helper_1.bn)(0)
-                : rate.mul(rDcShort).div(rDcLong.add(rDcShort)),
+            rentRateLong: rDcLong.add(rDcShort).isZero() ? (0, helper_1.bn)(0) : rate.mul(rDcLong).div(rDcLong.add(rDcShort)),
+            rentRateShort: rDcLong.add(rDcShort).isZero() ? (0, helper_1.bn)(0) : rate.mul(rDcShort).div(rDcLong.add(rDcShort)),
         };
     }
     getPoolOverridedProvider() {
@@ -410,7 +402,7 @@ class Resource {
         };
         // })
         //@ts-ignore
-        this.overrideProvider.setStateOverride(Object.assign(Object.assign({}, stateOverride), { ['0x' + this.profile.getAbi('TokensInfo').deployedBytecode.slice(-40)]: {
+        this.overrideProvider.setStateOverride(Object.assign(Object.assign({}, stateOverride), { [('0x' + this.profile.getAbi('TokensInfo').deployedBytecode.slice(-40))]: {
                 code: this.profile.getAbi('TokensInfo').deployedBytecode,
             } }));
         return this.overrideProvider;
@@ -453,10 +445,7 @@ class Resource {
                     {
                         reference: i,
                         methodName: 'compute',
-                        methodParameters: [
-                            this.derivableAddress.token,
-                            5
-                        ],
+                        methodParameters: [this.derivableAddress.token, 5],
                     },
                 ],
             });
@@ -477,7 +466,7 @@ class Resource {
                 pools[poolStateData[0].reference] = Object.assign(Object.assign({}, formatedData.stateView), formatedData.stateView.state);
             }
             catch (e) {
-                console.error("Cannot get states of: ", poolAddress);
+                console.error('Cannot get states of: ', poolAddress);
                 console.error(e);
             }
         });
@@ -487,8 +476,18 @@ class Resource {
         const { MARK, states } = pool;
         const { R, rA, rB, rC, a, b, spot } = states;
         const riskFactor = rC.gt(0) ? (0, helper_1.div)(rA.sub(rB), rC) : '0';
-        const deleverageRiskA = R.isZero() ? 0 : rA.mul(2 * this.unit).div(R).toNumber() / this.unit;
-        const deleverageRiskB = R.isZero() ? 0 : rB.mul(2 * this.unit).div(R).toNumber() / this.unit;
+        const deleverageRiskA = R.isZero()
+            ? 0
+            : rA
+                .mul(2 * this.unit)
+                .div(R)
+                .toNumber() / this.unit;
+        const deleverageRiskB = R.isZero()
+            ? 0
+            : rB
+                .mul(2 * this.unit)
+                .div(R)
+                .toNumber() / this.unit;
         const k = pool.k.toNumber();
         const sides = {
             [A]: {},
@@ -497,14 +496,19 @@ class Resource {
         };
         sides[A].k = Math.min(k, (0, helper_1.kx)(k, R, a, spot, MARK));
         sides[B].k = -Math.min(k, (0, helper_1.kx)(-k, R, b, spot, MARK));
-        sides[B].k = rA.mul(Math.round(sides[A].k * this.unit)).add(rB.mul(Math.round(sides[B].k * this.unit))).div(rA.add(rB)).toNumber() / this.unit;
+        sides[B].k =
+            rA
+                .mul(Math.round(sides[A].k * this.unit))
+                .add(rB.mul(Math.round(sides[B].k * this.unit)))
+                .div(rA.add(rB))
+                .toNumber() / this.unit;
         const interestRate = (0, helper_1.rateFromHL)(pool.INTEREST_HL.toNumber(), k);
         const maxPremiumRate = (0, helper_1.rateFromHL)(pool.PREMIUM_HL.toNumber(), k);
         if (maxPremiumRate > 0) {
             if (rA.gt(rB)) {
                 const rDiff = rA.sub(rB);
                 const givingRate = rDiff.mul(Math.round(this.unit * maxPremiumRate));
-                const receivingRate = rA.mul(givingRate).div(rB.add(rC)).toNumber() / this.unit;
+                const receivingRate = numDiv(rA.mul(givingRate).div(rB.add(rC)), this.unit);
                 sides[A].premium = givingRate.div(rA).toNumber() / this.unit;
                 sides[B].premium = -receivingRate;
                 sides[C].premium = receivingRate;
@@ -512,7 +516,7 @@ class Resource {
             else if (rB.gt(rA)) {
                 const rDiff = rB.sub(rA);
                 const givingRate = rDiff.mul(Math.round(this.unit * maxPremiumRate));
-                const receivingRate = rB.mul(givingRate).div(rA.add(rC)).toNumber() / this.unit;
+                const receivingRate = numDiv(rB.mul(givingRate).div(rA.add(rC)), this.unit);
                 sides[B].premium = givingRate.div(rB).toNumber() / this.unit;
                 sides[A].premium = -receivingRate;
                 sides[C].premium = receivingRate;
@@ -525,9 +529,9 @@ class Resource {
         }
         // decompound the interest
         for (const side of [A, B]) {
-            sides[side].interest = interestRate * k / sides[side].k;
+            sides[side].interest = (interestRate * k) / sides[side].k;
         }
-        sides[C].interest = rA.add(rB).mul(Math.round(this.unit * interestRate)).div(rC).toNumber() / this.unit;
+        sides[C].interest = numDiv(rA.add(rB).mul(Math.round(this.unit * interestRate)).div(rC), this.unit);
         return {
             sides,
             riskFactor,
@@ -574,8 +578,7 @@ class Resource {
                 try {
                     appName = ethers_1.ethers.utils.parseBytes32String(decodeLog.args.topic1);
                 }
-                catch (e) {
-                }
+                catch (e) { }
                 let data = decodeLog;
                 if (appName === 'PoolCreated') {
                     const poolCreatedData = utils_1.defaultAbiCoder.decode(this.profile.getEventDataAbi()[appName], decodeLog.args.data);
@@ -609,7 +612,7 @@ class Resource {
                 address,
                 name: tokens[address].name,
                 symbol: tokens[address].symbol,
-                decimal: tokens[address].decimals
+                decimal: tokens[address].decimals,
             });
         }
         return result;

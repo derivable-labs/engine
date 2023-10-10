@@ -131,7 +131,7 @@ const div = (a, b) => {
     return (0, exports.weiToNumber)(ethers_1.BigNumber.from((0, exports.numberToWei)(a, 36)).div((0, exports.numberToWei)(b)));
 };
 exports.div = div;
-const max = (a, b) => (0, exports.bn)((0, exports.numberToWei)(a)).gt((0, exports.numberToWei)(b)) ? a : b;
+const max = (a, b) => ((0, exports.bn)((0, exports.numberToWei)(a)).gt((0, exports.numberToWei)(b)) ? a : b);
 exports.max = max;
 const add = (a, b) => {
     a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
@@ -145,9 +145,7 @@ const detectDecimalFromPrice = (price) => {
     }
     else {
         price = price.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
-        const rate = !(0, exports.bn)((0, exports.numberToWei)(price)).isZero()
-            ? (0, exports.weiToNumber)(ethers_1.BigNumber.from((0, exports.numberToWei)(1, 36)).div((0, exports.numberToWei)(price)).toString())
-            : '0';
+        const rate = !(0, exports.bn)((0, exports.numberToWei)(price)).isZero() ? (0, exports.weiToNumber)(ethers_1.BigNumber.from((0, exports.numberToWei)(1, 36)).div((0, exports.numberToWei)(price)).toString()) : '0';
         return rate.split('.')[0].length + 3;
     }
 };
@@ -214,11 +212,11 @@ const getTopics = () => {
 };
 exports.getTopics = getTopics;
 function rateToHL(r, k, DURATION = constant_1.SECONDS_PER_DAY) {
-    return Math.ceil(DURATION * Math.LN2 / r / k / k);
+    return Math.ceil((DURATION * Math.LN2) / r / k / k);
 }
 exports.rateToHL = rateToHL;
 function rateFromHL(HL, k, DURATION = constant_1.SECONDS_PER_DAY) {
-    return DURATION * Math.LN2 / HL / k / k;
+    return (DURATION * Math.LN2) / HL / k / k;
 }
 exports.rateFromHL = rateFromHL;
 const kx = (k, R, v, spot, MARK, PRECISION = 1000000) => {
