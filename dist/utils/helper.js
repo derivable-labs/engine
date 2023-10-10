@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.kx = exports.decompoundRate = exports.compoundRate = exports.toDailyRate = exports.getTopics = exports.mergeDeep = exports.parseSqrtX96 = exports.parseSqrtSpotPrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.max = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
+exports.kx = exports.rateFromHL = exports.rateToHL = exports.getTopics = exports.mergeDeep = exports.parseSqrtX96 = exports.parseSqrtSpotPrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.max = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
 const ethers_1 = require("ethers");
 const Events_json_1 = __importDefault(require("../abi/Events.json"));
 const constant_1 = require("./constant");
@@ -213,21 +213,14 @@ const getTopics = () => {
     return topics;
 };
 exports.getTopics = getTopics;
-function toDailyRate(HALF_LIFE) {
-    if (HALF_LIFE == 0) {
-        return 0;
-    }
-    return 1 - Math.pow(2, (-constant_1.SECONDS_PER_DAY / HALF_LIFE));
+function rateToHL(r, k, DURATION = constant_1.SECONDS_PER_DAY) {
+    return Math.ceil(DURATION * Math.LN2 / r / k / k);
 }
-exports.toDailyRate = toDailyRate;
-function compoundRate(r, p) {
-    return 1 - Math.pow((1 - r), p);
+exports.rateToHL = rateToHL;
+function rateFromHL(HL, k, DURATION = constant_1.SECONDS_PER_DAY) {
+    return DURATION * Math.LN2 / HL / k / k;
 }
-exports.compoundRate = compoundRate;
-function decompoundRate(c, p) {
-    return 1 - Math.pow((1 - c), (1 / p));
-}
-exports.decompoundRate = decompoundRate;
+exports.rateFromHL = rateFromHL;
 const kx = (k, R, v, spot, MARK, PRECISION = 1000000) => {
     try {
         const xk = Math.pow(spot.mul(PRECISION).div(MARK).toNumber() / PRECISION, k);

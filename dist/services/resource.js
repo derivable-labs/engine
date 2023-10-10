@@ -498,20 +498,22 @@ class Resource {
         sides[A].k = Math.min(k, (0, helper_1.kx)(k, R, a, spot, MARK));
         sides[B].k = -Math.min(k, (0, helper_1.kx)(-k, R, b, spot, MARK));
         sides[B].k = rA.mul(Math.round(sides[A].k * this.unit)).add(rB.mul(Math.round(sides[B].k * this.unit))).div(rA.add(rB)).toNumber() / this.unit;
-        let interestRate = (0, helper_1.toDailyRate)(pool.INTEREST_HL.toNumber());
-        let maxPremiumRate = (0, helper_1.toDailyRate)(pool.PREMIUM_HL.toNumber());
+        const interestRate = (0, helper_1.rateFromHL)(pool.INTEREST_HL.toNumber(), k);
+        const maxPremiumRate = (0, helper_1.rateFromHL)(pool.PREMIUM_HL.toNumber(), k);
         if (maxPremiumRate > 0) {
-            const [rMax, rMin] = rA.gt(rB) ? [rA, rB] : [rB, rA];
-            const premiumRate = Number((0, helper_1.div)((0, helper_1.mul)(rMax, (0, helper_1.mul)(rMax.sub(rMin), maxPremiumRate, false)), R));
             if (rA.gt(rB)) {
-                const receivingRate = Number((0, helper_1.div)(premiumRate, rB.add(rC)));
-                sides[A].premium = Number((0, helper_1.div)(premiumRate, rA));
+                const rDiff = rA.sub(rB);
+                const givingRate = rDiff.mul(Math.round(this.unit * maxPremiumRate));
+                const receivingRate = rA.mul(givingRate).div(rB.add(rC)).toNumber() / this.unit;
+                sides[A].premium = givingRate.div(rA).toNumber() / this.unit;
                 sides[B].premium = -receivingRate;
                 sides[C].premium = receivingRate;
             }
             else if (rB.gt(rA)) {
-                const receivingRate = Number((0, helper_1.div)(premiumRate, rA.add(rC)));
-                sides[B].premium = Number((0, helper_1.div)(premiumRate, rB));
+                const rDiff = rB.sub(rA);
+                const givingRate = rDiff.mul(Math.round(this.unit * maxPremiumRate));
+                const receivingRate = rB.mul(givingRate).div(rA.add(rC)).toNumber() / this.unit;
+                sides[B].premium = givingRate.div(rB).toNumber() / this.unit;
                 sides[A].premium = -receivingRate;
                 sides[C].premium = receivingRate;
             }
@@ -520,18 +522,12 @@ class Resource {
                 sides[B].premium = 0;
                 sides[C].premium = 0;
             }
-            // decompound the premium
-            maxPremiumRate = (0, helper_1.decompoundRate)(maxPremiumRate, k / 2) / (k / 2);
-            for (const side of [A, B]) {
-                sides[side].premium = (0, helper_1.decompoundRate)(sides[side].premium, sides[side].k / 2) / (k / 2);
-            }
         }
         // decompound the interest
         for (const side of [A, B]) {
-            sides[side].interest = (0, helper_1.decompoundRate)(interestRate, sides[side].k / 2) / (k / 2);
+            sides[side].interest = interestRate * k / sides[side].k;
         }
         sides[C].interest = rA.add(rB).mul(Math.round(this.unit * interestRate)).div(rC).toNumber() / this.unit;
-        interestRate = (0, helper_1.decompoundRate)(interestRate, k / 2) / (k / 2);
         return {
             sides,
             riskFactor,

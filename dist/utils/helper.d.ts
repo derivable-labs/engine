@@ -29,7 +29,6 @@ export declare const mergeDeep: (target: any, ...sources: any) => any;
 export declare const getTopics: () => {
     [key: string]: string[];
 };
-export declare function toDailyRate(HALF_LIFE: number): number;
-export declare function compoundRate(r: number, p: number): number;
-export declare function decompoundRate(c: number, p: number): number;
+export declare function rateToHL(r: number, k: number, DURATION?: number): number;
+export declare function rateFromHL(HL: number, k: number, DURATION?: number): number;
 export declare const kx: (k: number, R: BigNumber, v: BigNumber, spot: BigNumber, MARK: BigNumber, PRECISION?: number) => number;
