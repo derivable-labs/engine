@@ -12,11 +12,11 @@ import {
 } from '../types'
 import {
   bn,
-  decompoundRate,
   div,
   formatMultiCallBignumber,
-  getNormalAddress, getTopics, mul, parseSqrtSpotPrice, toDailyRate,
+  getNormalAddress, getTopics, mul, parseSqrtSpotPrice,
   kx,
+  rateFromHL,
 } from '../utils/helper'
 import {JsonRpcProvider} from '@ethersproject/providers'
 import _ from 'lodash'
@@ -694,27 +694,21 @@ export class Resource {
       rB.mul(Math.round(sides[B].k * this.unit))
     ).div(rA.add(rB)).toNumber() / this.unit
 
-    let interestRate = toDailyRate(pool.INTEREST_HL.toNumber())
-    let maxPremiumRate = toDailyRate(pool.PREMIUM_HL.toNumber())
+    const interestRate = rateFromHL(pool.INTEREST_HL.toNumber(), k)
+    const maxPremiumRate = rateFromHL(pool.PREMIUM_HL.toNumber(), k)
     if (maxPremiumRate > 0) {
-      const [rMax, rMin] = rA.gt(rB) ? [rA, rB] : [rB, rA]
-      const premiumRate = Number(
-        div(
-          mul(
-            rMax,
-            mul(rMax.sub(rMin), maxPremiumRate, false),
-          ),
-          R,
-        )
-      )
       if (rA.gt(rB)) {
-        const receivingRate = Number(div(premiumRate, rB.add(rC)))
-        sides[A].premium = Number(div(premiumRate, rA))
+        const rDiff = rA.sub(rB)
+        const givingRate = rDiff.mul(Math.round(this.unit * maxPremiumRate))
+        const receivingRate = rA.mul(givingRate).div(rB.add(rC)).toNumber() / this.unit
+        sides[A].premium = givingRate.div(rA).toNumber() / this.unit
         sides[B].premium = -receivingRate
         sides[C].premium = receivingRate
       } else if (rB.gt(rA)) {
-        const receivingRate = Number(div(premiumRate, rA.add(rC)))
-        sides[B].premium = Number(div(premiumRate, rB))
+        const rDiff = rB.sub(rA)
+        const givingRate = rDiff.mul(Math.round(this.unit * maxPremiumRate))
+        const receivingRate = rB.mul(givingRate).div(rA.add(rC)).toNumber() / this.unit
+        sides[B].premium = givingRate.div(rB).toNumber() / this.unit
         sides[A].premium = -receivingRate
         sides[C].premium = receivingRate
       } else {
@@ -722,20 +716,13 @@ export class Resource {
         sides[B].premium = 0
         sides[C].premium = 0
       }
-
-      // decompound the premium
-      maxPremiumRate = decompoundRate(maxPremiumRate, k / 2) / (k / 2)
-      for (const side of [A, B]) {
-        sides[side].premium = decompoundRate(sides[side].premium, sides[side].k / 2) / (k / 2)
-      }
     }
 
     // decompound the interest
     for (const side of [A, B]) {
-      sides[side].interest = decompoundRate(interestRate, sides[side].k / 2) / (k / 2)
+      sides[side].interest = interestRate * k / sides[side].k
     }
     sides[C].interest = rA.add(rB).mul(Math.round(this.unit * interestRate)).div(rC).toNumber() / this.unit
-    interestRate = decompoundRate(interestRate, k / 2) / (k / 2)
 
     return {
       sides,

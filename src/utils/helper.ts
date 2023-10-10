@@ -232,19 +232,12 @@ export const getTopics = (): { [key: string]: string[] } => {
   return topics
 }
 
-export function toDailyRate(HALF_LIFE: number) {
-  if (HALF_LIFE == 0) {
-    return 0
-  }
-  return 1 - 2 ** (-SECONDS_PER_DAY / HALF_LIFE)
+export function rateToHL(r: number, k: number, DURATION = SECONDS_PER_DAY) {
+  return Math.ceil(DURATION * Math.LN2 / r / k / k)
 }
 
-export function compoundRate(r: number, p: number): number {
-  return 1 - (1-r)**p
-}
-
-export function decompoundRate(c: number, p: number): number {
-  return 1 - (1-c)**(1/p)
+export function rateFromHL(HL:number, k: number, DURATION = SECONDS_PER_DAY) {
+  return DURATION * Math.LN2 / HL / k / k
 }
 
 export const kx = (
