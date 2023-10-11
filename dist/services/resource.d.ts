@@ -1,15 +1,23 @@
 import { BigNumber, ethers } from 'ethers';
 import { LogType, ParseLogType, PoolGroupsType, PoolsType, PoolType, Storage, TokenType } from '../types';
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { UniV3Pair } from './uniV3Pair';
+import { IPairInfo, IPairsInfo, UniV3Pair } from './uniV3Pair';
 import { IDerivableContractAddress, IEngineConfig } from '../utils/configs';
 import { Profile } from '../profile';
+import { SignerFetchRpc } from "../utils/rpc-factories";
+export declare const Q128: BigNumber;
 type ResourceData = {
     pools: PoolsType;
     tokens: TokenType[];
     swapLogs: LogType[];
     transferLogs: LogType[];
     poolGroups: any;
+};
+type IPriceInfo = {
+    [pool: string]: {
+        twap: BigNumber;
+        spot: BigNumber;
+    };
 };
 export declare class Resource {
     poolGroups: PoolGroupsType;
@@ -47,6 +55,7 @@ export declare class Resource {
      * parse DDL logs
      * @param logs
      * @param transferLogs
+     * @param tokenAddresses
      */
     generatePoolData(logs: ParseLogType[], transferLogs: ParseLogType[]): Promise<{
         tokens: TokenType[];
@@ -82,7 +91,7 @@ export declare class Resource {
      */
     getMultiCallRequest(normalTokens: string[], listPools: {
         [key: string]: PoolType;
-    }): any;
+    }, pricesInfo: IPriceInfo): any;
     parseMultiCallResponse(multiCallData: any, poolAddresses: string[]): {
         tokens: any;
         poolsState: {};
@@ -106,6 +115,15 @@ export declare class Resource {
         rDcShort: BigNumber;
     };
     parseDdlLogs(ddlLogs: any): any;
+    _tokenInRoutes(): string[];
     _whitelistTokens(): TokenType[];
+    getPrices(pools: {
+        [key: string]: PoolType;
+    }, pairs: IPairsInfo): Promise<IPriceInfo>;
+    getPrice(pool: PoolType, blockNumber: bigint, rpc: SignerFetchRpc, pair: IPairInfo): Promise<{
+        poolAddress: string;
+        twap: BigNumber;
+        spot: BigNumber;
+    }>;
 }
 export {};

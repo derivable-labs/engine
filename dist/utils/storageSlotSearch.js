@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -31,7 +22,7 @@ function getAllowanceSlot(account, spender, i) {
     return slot;
 }
 exports.getAllowanceSlot = getAllowanceSlot;
-const getStorageSlotsForBnA = (provider, contractAddress, account = DEFAULT_ACCOUNT, spender = DEFAULT_SPENDER, slots = 100) => __awaiter(void 0, void 0, void 0, function* () {
+const getStorageSlotsForBnA = async (provider, contractAddress, account = DEFAULT_ACCOUNT, spender = DEFAULT_SPENDER, slots = 100) => {
     const stateDiff = {};
     for (let i = 0; i < slots; i++) {
         stateDiff[getBalanceSlot(account, i)] = ethers_1.ethers.utils.hexZeroPad(ethers_1.ethers.utils.hexlify(i + 1), 32);
@@ -66,7 +57,7 @@ const getStorageSlotsForBnA = (provider, contractAddress, account = DEFAULT_ACCO
             },
         ],
     };
-    const results = yield multicall.call(contractCallContext);
+    const results = await multicall.call(contractCallContext);
     provider.setStateOverride(original);
     let data = results.results[contractCallContext.reference].callsReturnContext;
     if (data[0].decoded == false ||
@@ -86,11 +77,11 @@ const getStorageSlotsForBnA = (provider, contractAddress, account = DEFAULT_ACCO
             slot: getAllowanceSlot(account, spender, allowance - 1),
         },
     };
-});
+};
 exports.getStorageSlotsForBnA = getStorageSlotsForBnA;
-const overrideBnA = (override) => __awaiter(void 0, void 0, void 0, function* () {
+const overrideBnA = async (override) => {
     let state = {};
-    let result = yield (0, exports.getStorageSlotsForBnA)(override.provider, override.token, override.account);
+    let result = await (0, exports.getStorageSlotsForBnA)(override.provider, override.token, override.account);
     let balance;
     balance = ethers_1.ethers.BigNumber.from(override.balance.toString());
     balance = ethers_1.ethers.utils.hexZeroPad(balance.toHexString(), 32);
@@ -107,6 +98,6 @@ const overrideBnA = (override) => __awaiter(void 0, void 0, void 0, function* ()
         }
     }
     return state;
-});
+};
 exports.overrideBnA = overrideBnA;
 //# sourceMappingURL=storageSlotSearch.js.map

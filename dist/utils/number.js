@@ -17,9 +17,9 @@ const unpackId = (id) => {
 };
 exports.unpackId = unpackId;
 function encodeSqrtX96(reserve1, reserve0) {
-    return (0, helper_1.bn)((Math.sqrt(reserve1 / reserve0) * Math.pow(10, 12)).toFixed(0))
+    return (0, helper_1.bn)((Math.sqrt(reserve1 / reserve0) * 10 ** 12).toFixed(0))
         .mul((0, helper_1.bn)(2).pow(96))
-        .div(Math.pow(10, 12));
+        .div(10 ** 12);
 }
 const FLOAT_UNIT = 100000;
 const floatToFixed128 = (n) => {

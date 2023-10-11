@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreatePool = void 0;
 const ethers_1 = require("ethers");
@@ -23,37 +14,33 @@ class CreatePool {
         this.signer = config.signer;
         this.profile = profile;
     }
-    callStaticCreatePool({ params, value, gasLimit }) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const helper = this.getStateCalHelperContract(this.signer);
-            return yield helper.callStatic.createPool(params, this.contractAddresses.poolFactory, {
-                value: value || (0, helper_1.bn)(0),
-                gasLimit: gasLimit || undefined,
-            });
+    async callStaticCreatePool({ params, value, gasLimit }) {
+        const helper = this.getStateCalHelperContract(this.signer);
+        return await helper.callStatic.createPool(params, this.contractAddresses.poolFactory, {
+            value: value || (0, helper_1.bn)(0),
+            gasLimit: gasLimit || undefined,
         });
     }
-    createPool(params, gasLimit) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const newPoolConfigs = this.generateConfig(params.k, params.a, params.b, params.mark, params.recipient, params.oracle, params.initTime, params.halfLife);
-                yield this.callStaticCreatePool({
-                    params: newPoolConfigs,
-                    value: params.amountInit,
-                    gasLimit,
-                });
-                const helper = this.getStateCalHelperContract(this.signer);
-                const res = yield helper.createPool(newPoolConfigs, this.contractAddresses.poolFactory, {
-                    value: params.amountInit,
-                    gasLimit: gasLimit || undefined,
-                });
-                const tx = yield res.wait(1);
-                console.log('tx', tx);
-                return true;
-            }
-            catch (e) {
-                throw e;
-            }
-        });
+    async createPool(params, gasLimit) {
+        try {
+            const newPoolConfigs = this.generateConfig(params.k, params.a, params.b, params.mark, params.recipient, params.oracle, params.initTime, params.halfLife);
+            await this.callStaticCreatePool({
+                params: newPoolConfigs,
+                value: params.amountInit,
+                gasLimit,
+            });
+            const helper = this.getStateCalHelperContract(this.signer);
+            const res = await helper.createPool(newPoolConfigs, this.contractAddresses.poolFactory, {
+                value: params.amountInit,
+                gasLimit: gasLimit || undefined,
+            });
+            const tx = await res.wait(1);
+            console.log('tx', tx);
+            return true;
+        }
+        catch (e) {
+            throw e;
+        }
     }
     generateConfig(k, a, b, mark, recipient, oracle, initTime, halfLife) {
         return {

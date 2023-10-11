@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -52,17 +43,15 @@ class Profile {
         this.chainId = engineConfig.chainId;
         this.env = engineConfig.env || 'production';
     }
-    loadConfig() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const [networkConfig, uniV3Pools] = yield Promise.all([
-                (0, node_fetch_1.default)(DDL_CONFIGS_URL[this.env] + this.chainId + '/network.json').then((r) => r.json()),
-                (0, node_fetch_1.default)(DDL_CONFIGS_URL[this.env] + this.chainId + '/routes.json')
-                    .then((r) => r.json())
-                    .catch(() => []),
-            ]);
-            this.configs = networkConfig;
-            this.routes = uniV3Pools;
-        });
+    async loadConfig() {
+        const [networkConfig, uniV3Pools] = await Promise.all([
+            (0, node_fetch_1.default)(DDL_CONFIGS_URL[this.env] + this.chainId + '/network.json').then((r) => r.json()),
+            (0, node_fetch_1.default)(DDL_CONFIGS_URL[this.env] + this.chainId + '/routes.json')
+                .then((r) => r.json())
+                .catch(() => []),
+        ]);
+        this.configs = networkConfig;
+        this.routes = uniV3Pools;
     }
     getAbi(name) {
         return abis[name] ? abis[name] : abis[this.chainId][name] || [];

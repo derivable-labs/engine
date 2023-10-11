@@ -1,18 +1,9 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Resource = void 0;
+exports.Resource = exports.Q128 = void 0;
 const ethers_1 = require("ethers");
 const constant_1 = require("../utils/constant");
 const ethereum_multicall_1 = require("ethereum-multicall");
@@ -21,8 +12,11 @@ const providers_1 = require("@ethersproject/providers");
 const lodash_1 = __importDefault(require("lodash"));
 const uniV3Pair_1 = require("./uniV3Pair");
 const utils_1 = require("ethers/lib/utils");
+const rpc_factories_1 = require("../utils/rpc-factories");
+const adapters_1 = require("../utils/adapters");
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider');
 const MAX_BLOCK = 4294967295;
+exports.Q128 = (0, helper_1.bn)(1).shl(128);
 const { A, B, C } = constant_1.POOL_IDS;
 function numDiv(b, unit = 1) {
     try {
@@ -57,18 +51,16 @@ class Resource {
         this.profile = profile;
         this.stableCoins = profile.configs.stablecoins;
     }
-    fetchResourceData(account) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let result = {};
-            if (!this.chainId)
-                return result;
-            const [resultCached, newResource] = yield Promise.all([this.getResourceCached(account), this.getNewResource(account)]);
-            this.poolGroups = Object.assign(Object.assign({}, resultCached.poolGroups), newResource.poolGroups);
-            this.pools = Object.assign(Object.assign({}, resultCached.pools), newResource.pools);
-            this.tokens = [...resultCached.tokens, ...newResource.tokens];
-            this.swapLogs = [...resultCached.swapLogs, ...newResource.swapLogs];
-            this.transferLogs = [...resultCached.transferLogs, ...newResource.transferLogs];
-        });
+    async fetchResourceData(account) {
+        let result = {};
+        if (!this.chainId)
+            return result;
+        const [resultCached, newResource] = await Promise.all([this.getResourceCached(account), this.getNewResource(account)]);
+        this.poolGroups = { ...resultCached.poolGroups, ...newResource.poolGroups };
+        this.pools = { ...resultCached.pools, ...newResource.pools };
+        this.tokens = [...resultCached.tokens, ...newResource.tokens];
+        this.swapLogs = [...resultCached.swapLogs, ...newResource.swapLogs];
+        this.transferLogs = [...resultCached.transferLogs, ...newResource.transferLogs];
     }
     getLastBlockCached(account) {
         if (!this.storage || !this.storage.getItem)
@@ -108,146 +100,151 @@ class Resource {
         this.storage.setItem(blockKey, headBlock.toString());
         this.storage.setItem(key, JSON.stringify(newCacheSwapLogs));
     }
-    getResourceCached(account) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const results = {
+    async getResourceCached(account) {
+        const results = {
+            pools: {},
+            tokens: this._whitelistTokens(),
+            swapLogs: [],
+            transferLogs: [],
+            poolGroups: {},
+        };
+        if (!this.storage || !this.storage.getItem)
+            return results;
+        const ddlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.DDL_LOGS) || '[]');
+        const swapLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account) || '[]');
+        const transferLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.TRANSFER_LOGS + '-' + account) || '[]');
+        const [ddlLogsParsed, swapLogsParsed, transferLogsParsed] = [
+            this.parseDdlLogs(ddlLogs),
+            this.parseDdlLogs(swapLogs),
+            this.parseDdlLogs(transferLogs),
+        ];
+        if (ddlLogsParsed && ddlLogsParsed.length > 0) {
+            const { tokens, pools, poolGroups } = await this.generatePoolData(ddlLogsParsed, transferLogsParsed);
+            results.tokens = [...tokens, ...results.tokens];
+            results.pools = pools;
+            results.poolGroups = poolGroups;
+        }
+        if (swapLogsParsed && swapLogsParsed.length > 0) {
+            results.swapLogs = swapLogsParsed;
+        }
+        if (transferLogsParsed && transferLogsParsed.length > 0) {
+            results.transferLogs = transferLogsParsed;
+        }
+        this.pools = { ...results.pools, ...this.pools };
+        return results;
+    }
+    async getNewResource(account) {
+        // TODO: move this part to constructor
+        const etherscanConfig = typeof this.scanApi === 'string'
+            ? {
+                url: this.scanApi,
+                maxResults: 1000,
+                rangeThreshold: 0,
+                rateLimitCount: 1,
+                rateLimitDuration: 5000,
+                apiKeys: this.scanApiKey ? [this.scanApiKey] : [],
+            }
+            : this.scanApi;
+        const provider = new AssistedJsonRpcProvider(this.providerToGetLog, etherscanConfig);
+        const lastHeadBlockCached = this.getLastBlockCached(account);
+        const accTopic = account ? '0x' + '0'.repeat(24) + account.slice(2) : null;
+        const topics = (0, helper_1.getTopics)();
+        let filterTopics = [topics.Derivable[0], null, null, null];
+        if (accTopic) {
+            filterTopics = [
+                [topics.Derivable[0], null, null, null],
+                [null, accTopic, null, null],
+                [null, null, accTopic, null],
+                [null, null, null, accTopic],
+            ];
+        }
+        return await provider
+            .getLogs({
+            fromBlock: lastHeadBlockCached,
+            toBlock: MAX_BLOCK,
+            topics: filterTopics,
+        })
+            .then((logs) => {
+            if (!logs?.length) {
+                return [[], [], []];
+            }
+            const headBlock = logs[logs.length - 1]?.blockNumber;
+            const ddlLogs = logs.filter((log) => {
+                return log.address && topics.Derivable.includes(log.topics[0]) && log.address === this.derivableAddress.poolFactory;
+            });
+            const swapLogs = logs.filter((log) => {
+                return log.address && topics.Swap.includes(log.topics[0]);
+            });
+            const transferLogs = logs.filter((log) => {
+                return log.address && topics.Transfer.includes(log.topics[0]);
+            });
+            this.cacheDdlLog({
+                ddlLogs,
+                swapLogs,
+                transferLogs,
+                headBlock,
+                account,
+            });
+            return [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs), this.parseDdlLogs(transferLogs)];
+        })
+            .then(async ([ddlLogs, swapLogs, transferLogs]) => {
+            const result = {
                 pools: {},
-                tokens: this._whitelistTokens(),
+                tokens: [],
                 swapLogs: [],
                 transferLogs: [],
                 poolGroups: {},
             };
-            if (!this.storage || !this.storage.getItem)
-                return results;
-            const ddlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.DDL_LOGS) || '[]');
-            const swapLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account) || '[]');
-            const transferLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + constant_1.LOCALSTORAGE_KEY.TRANSFER_LOGS + '-' + account) || '[]');
-            const [ddlLogsParsed, swapLogsParsed, transferLogsParsed] = [
-                this.parseDdlLogs(ddlLogs),
-                this.parseDdlLogs(swapLogs),
-                this.parseDdlLogs(transferLogs),
-            ];
-            if (ddlLogsParsed && ddlLogsParsed.length > 0) {
-                const { tokens, pools, poolGroups } = yield this.generatePoolData(ddlLogsParsed, transferLogsParsed);
-                results.tokens = [...tokens, ...results.tokens];
-                results.pools = pools;
-                results.poolGroups = poolGroups;
+            if (swapLogs && swapLogs.length > 0) {
+                result.swapLogs = swapLogs;
             }
-            if (swapLogsParsed && swapLogsParsed.length > 0) {
-                results.swapLogs = swapLogsParsed;
+            if (transferLogs && transferLogs.length > 0) {
+                result.transferLogs = transferLogs;
             }
-            if (transferLogsParsed && transferLogsParsed.length > 0) {
-                results.transferLogs = transferLogsParsed;
+            if (ddlLogs && ddlLogs.length > 0) {
+                const { tokens, pools, poolGroups } = await this.generatePoolData(ddlLogs, transferLogs);
+                result.tokens = tokens;
+                result.pools = pools;
+                result.poolGroups = poolGroups;
             }
-            this.pools = Object.assign(Object.assign({}, results.pools), this.pools);
-            return results;
-        });
-    }
-    getNewResource(account) {
-        return __awaiter(this, void 0, void 0, function* () {
-            // TODO: move this part to constructor
-            const etherscanConfig = typeof this.scanApi === 'string'
-                ? {
-                    url: this.scanApi,
-                    maxResults: 1000,
-                    rangeThreshold: 0,
-                    rateLimitCount: 1,
-                    rateLimitDuration: 5000,
-                    apiKeys: this.scanApiKey ? [this.scanApiKey] : [],
-                }
-                : this.scanApi;
-            const provider = new AssistedJsonRpcProvider(this.providerToGetLog, etherscanConfig);
-            const lastHeadBlockCached = this.getLastBlockCached(account);
-            const accTopic = account ? '0x' + '0'.repeat(24) + account.slice(2) : null;
-            const topics = (0, helper_1.getTopics)();
-            let filterTopics = [topics.Derivable[0], null, null, null];
-            if (accTopic) {
-                filterTopics = [
-                    [topics.Derivable[0], null, null, null],
-                    [null, accTopic, null, null],
-                    [null, null, accTopic, null],
-                    [null, null, null, accTopic],
-                ];
-            }
-            return yield provider
-                .getLogs({
-                fromBlock: lastHeadBlockCached,
-                toBlock: MAX_BLOCK,
-                topics: filterTopics,
-            })
-                .then((logs) => {
-                var _a;
-                if (!(logs === null || logs === void 0 ? void 0 : logs.length)) {
-                    return [[], [], []];
-                }
-                const headBlock = (_a = logs[logs.length - 1]) === null || _a === void 0 ? void 0 : _a.blockNumber;
-                const ddlLogs = logs.filter((log) => {
-                    return log.address && topics.Derivable.includes(log.topics[0]) && log.address === this.derivableAddress.poolFactory;
-                });
-                const swapLogs = logs.filter((log) => {
-                    return log.address && topics.Swap.includes(log.topics[0]);
-                });
-                const transferLogs = logs.filter((log) => {
-                    return log.address && topics.Transfer.includes(log.topics[0]);
-                });
-                this.cacheDdlLog({
-                    ddlLogs,
-                    swapLogs,
-                    transferLogs,
-                    headBlock,
-                    account,
-                });
-                return [this.parseDdlLogs(ddlLogs), this.parseDdlLogs(swapLogs), this.parseDdlLogs(transferLogs)];
-            })
-                .then(([ddlLogs, swapLogs, transferLogs]) => __awaiter(this, void 0, void 0, function* () {
-                const result = {
-                    pools: {},
-                    tokens: [],
-                    swapLogs: [],
-                    transferLogs: [],
-                    poolGroups: {},
-                };
-                if (swapLogs && swapLogs.length > 0) {
-                    result.swapLogs = swapLogs;
-                }
-                if (transferLogs && transferLogs.length > 0) {
-                    result.transferLogs = transferLogs;
-                }
-                if (ddlLogs && ddlLogs.length > 0) {
-                    const { tokens, pools, poolGroups } = yield this.generatePoolData(ddlLogs, transferLogs);
-                    result.tokens = tokens;
-                    result.pools = pools;
-                    result.poolGroups = poolGroups;
-                }
-                this.pools = Object.assign(Object.assign({}, result.pools), this.pools);
-                return result;
-            }))
-                .catch((e) => {
-                console.error(e);
-                return { pools: {}, tokens: [], swapLogs: [], transferLogs: [] };
-            });
+            this.pools = { ...result.pools, ...this.pools };
+            return result;
+        })
+            .catch((e) => {
+            console.error(e);
+            return { pools: {}, tokens: [], swapLogs: [], transferLogs: [] };
         });
     }
     /**
      * parse DDL logs
      * @param logs
      * @param transferLogs
+     * @param tokenAddresses
      */
     generatePoolData(logs, transferLogs) {
-        const allTokens = [];
+        const allTokens = [...this._tokenInRoutes()];
         const allUniPools = [];
         const poolData = {};
-        const logicData = {};
         logs.forEach((log) => {
             if (log.name === 'PoolCreated') {
                 const data = log.args;
                 const powers = [log.args.k.toNumber(), -log.args.k.toNumber()];
+                const pair = ethers_1.ethers.utils.getAddress('0x' + data.ORACLE.slice(-40));
+                const quoteTokenIndex = (0, helper_1.bn)(data.ORACLE.slice(0, 3)).gt(0) ? 1 : 0;
+                const window = (0, helper_1.bn)('0x' + data.ORACLE.substring(2 + 8, 2 + 8 + 8));
                 data.dTokens = powers.map((value, key) => {
                     return { power: value, index: key };
                 });
                 data.dTokens = data.dTokens.map((data) => `${log.address}-${data.index}`);
-                poolData[log.address] = Object.assign(Object.assign({}, data), { poolAddress: log.address, powers, cToken: data.TOKEN_R });
-                const pair = ethers_1.ethers.utils.getAddress('0x' + data.ORACLE.slice(-40));
+                poolData[log.address] = {
+                    ...data,
+                    poolAddress: log.address,
+                    powers,
+                    cToken: data.TOKEN_R,
+                    pair,
+                    window,
+                    quoteTokenIndex
+                };
                 allUniPools.push(pair);
                 allTokens.push(data.TOKEN_R);
             }
@@ -264,127 +261,133 @@ class Resource {
      * @param listPools
      * @param uniPools
      */
-    //@ts-ignore
-    loadStatesData(listTokens, listPools, 
-    //@ts-ignore
-    uniPools) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const multicall = new ethereum_multicall_1.Multicall({
-                multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
-                ethersProvider: this.getPoolOverridedProvider(),
-                tryAggregate: true,
-            });
-            const normalTokens = lodash_1.default.uniq((0, helper_1.getNormalAddress)(listTokens));
-            // @ts-ignore
-            const context = this.getMultiCallRequest(normalTokens, listPools);
-            const [{ results }, pairsInfo] = yield Promise.all([
-                multicall.call(context),
-                this.UNIV3PAIR.getPairsInfo({
-                    pairAddresses: lodash_1.default.uniq(uniPools),
-                }),
-            ]);
-            const { tokens: tokensArr, poolsState } = this.parseMultiCallResponse(results, Object.keys(listPools));
-            const tokens = [];
-            for (let i = 0; i < tokensArr.length; i++) {
-                tokens.push({
-                    symbol: tokensArr[i][0],
-                    name: tokensArr[i][1],
-                    decimal: tokensArr[i][2],
-                    totalSupply: tokensArr[i][3],
-                    address: normalTokens[i],
-                });
-            }
-            const pools = Object.assign({}, listPools);
-            const poolGroups = {};
-            for (const i in pools) {
-                if (!poolsState[i]) {
-                    delete pools[i];
-                    continue;
-                }
-                pools[i].states = poolsState[i];
-                pools[i] = Object.assign(Object.assign({}, pools[i]), this.calcPoolInfo(pools[i]));
-                const { MARK: _MARK, ORACLE, k: _k } = pools[i];
-                const quoteTokenIndex = (0, helper_1.bn)(ORACLE.slice(0, 3)).gt(0) ? 1 : 0;
-                const pair = ethers_1.ethers.utils.getAddress('0x' + ORACLE.slice(-40));
-                const baseToken = quoteTokenIndex === 0 ? pairsInfo[pair].token1 : pairsInfo[pair].token0;
-                const quoteToken = quoteTokenIndex === 0 ? pairsInfo[pair].token0 : pairsInfo[pair].token1;
-                const tokenR = tokens.find((t) => t.address === pools[i].TOKEN_R);
-                pools[i].baseToken = baseToken.address;
-                pools[i].quoteToken = quoteToken.address;
-                const k = _k.toNumber();
-                const id = [pair].join('-');
-                if (poolGroups[id]) {
-                    poolGroups[id].pools[i] = pools[i];
-                }
-                else {
-                    poolGroups[id] = { pools: { [i]: pools[i] } };
-                    poolGroups[id].UTR = pools[i].UTR;
-                    poolGroups[id].pair = pairsInfo[pair];
-                    poolGroups[id].quoteTokenIndex = quoteTokenIndex;
-                    poolGroups[id].baseToken = pools[i].baseToken;
-                    poolGroups[id].quoteToken = pools[i].quoteToken;
-                    poolGroups[id].TOKEN = pools[i].TOKEN;
-                    poolGroups[id].MARK = pools[i].MARK;
-                    poolGroups[id].INIT_TIME = pools[i].INIT_TIME;
-                    poolGroups[id].HALF_LIFE = pools[i].HALF_LIFE;
-                    poolGroups[id].ORACLE = pools[i].ORACLE;
-                    poolGroups[id].TOKEN_R = pools[i].TOKEN_R;
-                    poolGroups[id].states = Object.assign({ twapBase: poolsState[i].twap, spotBase: poolsState[i].spot }, poolsState[i]);
-                    poolGroups[id].basePrice = (0, helper_1.parseSqrtSpotPrice)(poolsState[i].spot, baseToken, quoteToken, 1);
-                }
-                const rdc = this.getRdc(Object.values(poolGroups[id].pools));
-                poolGroups[id].states = Object.assign(Object.assign({}, poolGroups[id].states), rdc);
-                if (poolGroups[id].powers) {
-                    poolGroups[id].k.push(pools[i].k.toNumber());
-                    poolGroups[id].powers.push(pools[i].powers[0], pools[i].powers[1]);
-                }
-                else {
-                    poolGroups[id].k = [pools[i].k.toNumber()];
-                    poolGroups[id].powers = [...pools[i].powers];
-                }
-                if (poolGroups[id].dTokens) {
-                    poolGroups[id].dTokens.push(pools[i].poolAddress + '-' + constant_1.POOL_IDS.A, pools[i].poolAddress + '-' + constant_1.POOL_IDS.B);
-                }
-                else {
-                    poolGroups[id].dTokens = [pools[i].poolAddress + '-' + constant_1.POOL_IDS.A, pools[i].poolAddress + '-' + constant_1.POOL_IDS.B];
-                }
-                if (poolGroups[id].allTokens) {
-                    poolGroups[id].allTokens.push(pools[i].poolAddress + '-' + constant_1.POOL_IDS.A, pools[i].poolAddress + '-' + constant_1.POOL_IDS.B, pools[i].poolAddress + '-' + constant_1.POOL_IDS.C);
-                }
-                else {
-                    poolGroups[id].allTokens = [
-                        pools[i].poolAddress + '-' + constant_1.POOL_IDS.A,
-                        pools[i].poolAddress + '-' + constant_1.POOL_IDS.B,
-                        pools[i].poolAddress + '-' + constant_1.POOL_IDS.C,
-                    ];
-                }
-                tokens.push({
-                    symbol: baseToken.symbol + '^' + (1 + k / 2),
-                    name: baseToken.symbol + '^' + (1 + k / 2),
-                    decimal: tokenR.decimal,
-                    totalSupply: 0,
-                    address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.A,
-                }, {
-                    symbol: baseToken.symbol + '^' + (1 - k / 2),
-                    name: baseToken.symbol + '^' + (1 - k / 2),
-                    decimal: tokenR.decimal,
-                    totalSupply: 0,
-                    address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.B,
-                }, {
-                    symbol: `DLP-${baseToken.symbol}-${k / 2}`,
-                    name: `DLP-${baseToken.symbol}-${k / 2}`,
-                    decimal: tokenR.decimal,
-                    totalSupply: 0,
-                    address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.C,
-                }, baseToken, quoteToken);
-            }
-            return {
-                // @ts-ignore
-                tokens: lodash_1.default.uniqBy(tokens, 'address'),
-                pools,
-                poolGroups,
-            };
+    async loadStatesData(listTokens, listPools, uniPools) {
+        const multicall = new ethereum_multicall_1.Multicall({
+            multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
+            ethersProvider: this.getPoolOverridedProvider(),
+            tryAggregate: true,
         });
+        const normalTokens = lodash_1.default.uniq((0, helper_1.getNormalAddress)(listTokens));
+        const pairsInfo = await this.UNIV3PAIR.getPairsInfo({
+            pairAddresses: lodash_1.default.uniq(uniPools),
+        });
+        const pricesInfo = await this.getPrices(listPools, pairsInfo);
+        // @ts-ignore
+        const context = this.getMultiCallRequest(normalTokens, listPools, pricesInfo);
+        const [{ results }] = await Promise.all([
+            multicall.call(context),
+        ]);
+        const { tokens: tokensArr, poolsState } = this.parseMultiCallResponse(results, Object.keys(listPools));
+        const tokens = [];
+        for (let i = 0; i < tokensArr.length; i++) {
+            tokens.push({
+                symbol: tokensArr[i][0],
+                name: tokensArr[i][1],
+                decimal: tokensArr[i][2],
+                totalSupply: tokensArr[i][3],
+                address: normalTokens[i],
+            });
+        }
+        const pools = { ...listPools };
+        const poolGroups = {};
+        for (const i in pools) {
+            if (!poolsState[i]) {
+                delete pools[i];
+                continue;
+            }
+            pools[i].states = poolsState[i];
+            pools[i] = {
+                ...pools[i],
+                ...this.calcPoolInfo(pools[i]),
+            };
+            const { MARK: _MARK, ORACLE, k: _k } = pools[i];
+            const quoteTokenIndex = (0, helper_1.bn)(ORACLE.slice(0, 3)).gt(0) ? 1 : 0;
+            const pair = ethers_1.ethers.utils.getAddress('0x' + ORACLE.slice(-40));
+            const baseToken = quoteTokenIndex === 0 ? pairsInfo[pair].token1 : pairsInfo[pair].token0;
+            const quoteToken = quoteTokenIndex === 0 ? pairsInfo[pair].token0 : pairsInfo[pair].token1;
+            const tokenR = tokens.find((t) => t.address === pools[i].TOKEN_R);
+            pools[i].baseToken = baseToken.address;
+            pools[i].quoteToken = quoteToken.address;
+            const k = _k.toNumber();
+            const id = [pair].join('-');
+            if (poolGroups[id]) {
+                poolGroups[id].pools[i] = pools[i];
+            }
+            else {
+                poolGroups[id] = { pools: { [i]: pools[i] } };
+                poolGroups[id].UTR = pools[i].UTR;
+                poolGroups[id].pair = pairsInfo[pair];
+                poolGroups[id].quoteTokenIndex = quoteTokenIndex;
+                poolGroups[id].baseToken = pools[i].baseToken;
+                poolGroups[id].quoteToken = pools[i].quoteToken;
+                poolGroups[id].TOKEN = pools[i].TOKEN;
+                poolGroups[id].MARK = pools[i].MARK;
+                poolGroups[id].INIT_TIME = pools[i].INIT_TIME;
+                poolGroups[id].HALF_LIFE = pools[i].HALF_LIFE;
+                poolGroups[id].ORACLE = pools[i].ORACLE;
+                poolGroups[id].TOKEN_R = pools[i].TOKEN_R;
+                poolGroups[id].states = {
+                    twapBase: poolsState[i].twap,
+                    spotBase: poolsState[i].spot,
+                    ...poolsState[i],
+                };
+                poolGroups[id].basePrice = (0, helper_1.parseSqrtSpotPrice)(poolsState[i].spot, baseToken, quoteToken, 1);
+            }
+            const rdc = this.getRdc(Object.values(poolGroups[id].pools));
+            poolGroups[id].states = {
+                ...poolGroups[id].states,
+                ...rdc,
+            };
+            if (poolGroups[id].powers) {
+                poolGroups[id].k.push(pools[i].k.toNumber());
+                poolGroups[id].powers.push(pools[i].powers[0], pools[i].powers[1]);
+            }
+            else {
+                poolGroups[id].k = [pools[i].k.toNumber()];
+                poolGroups[id].powers = [...pools[i].powers];
+            }
+            if (poolGroups[id].dTokens) {
+                poolGroups[id].dTokens.push(pools[i].poolAddress + '-' + constant_1.POOL_IDS.A, pools[i].poolAddress + '-' + constant_1.POOL_IDS.B);
+            }
+            else {
+                poolGroups[id].dTokens = [pools[i].poolAddress + '-' + constant_1.POOL_IDS.A, pools[i].poolAddress + '-' + constant_1.POOL_IDS.B];
+            }
+            if (poolGroups[id].allTokens) {
+                poolGroups[id].allTokens.push(pools[i].poolAddress + '-' + constant_1.POOL_IDS.A, pools[i].poolAddress + '-' + constant_1.POOL_IDS.B, pools[i].poolAddress + '-' + constant_1.POOL_IDS.C);
+            }
+            else {
+                poolGroups[id].allTokens = [
+                    pools[i].poolAddress + '-' + constant_1.POOL_IDS.A,
+                    pools[i].poolAddress + '-' + constant_1.POOL_IDS.B,
+                    pools[i].poolAddress + '-' + constant_1.POOL_IDS.C,
+                ];
+            }
+            tokens.push({
+                symbol: baseToken.symbol + '^' + (1 + k / 2),
+                name: baseToken.symbol + '^' + (1 + k / 2),
+                decimal: tokenR.decimal,
+                totalSupply: 0,
+                address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.A,
+            }, {
+                symbol: baseToken.symbol + '^' + (1 - k / 2),
+                name: baseToken.symbol + '^' + (1 - k / 2),
+                decimal: tokenR.decimal,
+                totalSupply: 0,
+                address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.B,
+            }, {
+                symbol: `DLP-${baseToken.symbol}-${k / 2}`,
+                name: `DLP-${baseToken.symbol}-${k / 2}`,
+                decimal: tokenR.decimal,
+                totalSupply: 0,
+                address: pools[i].poolAddress + '-' + constant_1.POOL_IDS.C,
+            }, baseToken, quoteToken);
+        }
+        return {
+            // @ts-ignore
+            tokens: lodash_1.default.uniqBy(tokens, 'address'),
+            pools,
+            poolGroups,
+        };
     }
     getRentRate({ rDcLong, rDcShort, R }, rentRate) {
         const diff = (0, helper_1.bn)(rDcLong).sub(rDcShort).abs();
@@ -402,9 +405,12 @@ class Resource {
         };
         // })
         //@ts-ignore
-        this.overrideProvider.setStateOverride(Object.assign(Object.assign({}, stateOverride), { [('0x' + this.profile.getAbi('TokensInfo').deployedBytecode.slice(-40))]: {
+        this.overrideProvider.setStateOverride({
+            ...stateOverride,
+            [('0x' + this.profile.getAbi('TokensInfo').deployedBytecode.slice(-40))]: {
                 code: this.profile.getAbi('TokensInfo').deployedBytecode,
-            } }));
+            },
+        });
         return this.overrideProvider;
     }
     /**
@@ -412,12 +418,9 @@ class Resource {
      * @param normalTokens
      * @param listPools
      */
+    getMultiCallRequest(normalTokens, listPools, 
     //@ts-ignore
-    getMultiCallRequest(
-    // @ts-ignore
-    normalTokens, 
-    // @ts-ignore
-    listPools) {
+    pricesInfo) {
         const request = [
             {
                 reference: 'tokens',
@@ -445,7 +448,12 @@ class Resource {
                     {
                         reference: i,
                         methodName: 'compute',
-                        methodParameters: [this.derivableAddress.token, 5],
+                        methodParameters: [
+                            this.derivableAddress.token,
+                            5,
+                            pricesInfo[listPools[i].poolAddress]?.twap || (0, helper_1.bn)(0),
+                            pricesInfo[listPools[i].poolAddress]?.spot || (0, helper_1.bn)(0),
+                        ],
                     },
                 ],
             });
@@ -463,7 +471,14 @@ class Resource {
                 const data = (0, helper_1.formatMultiCallBignumber)(poolStateData[0].returnValues);
                 const encodeData = abiInterface.encodeFunctionResult('compute', [data]);
                 const formatedData = abiInterface.decodeFunctionResult('compute', encodeData);
-                pools[poolStateData[0].reference] = Object.assign(Object.assign({}, formatedData.stateView), formatedData.stateView.state);
+                pools[poolStateData[0].reference] = {
+                    // twapBase: formatedData.states.twap.base._x,
+                    // twapLP: formatedData.states.twap.LP._x,
+                    // spotBase: formatedData.states.spot.base._x,
+                    // spotLP: formatedData.states.spot.LP._x,
+                    ...formatedData.stateView,
+                    ...formatedData.stateView.state,
+                };
             }
             catch (e) {
                 console.error('Cannot get states of: ', poolAddress);
@@ -576,11 +591,15 @@ class Resource {
                 try {
                     appName = ethers_1.ethers.utils.parseBytes32String(decodeLog.args.topic1);
                 }
-                catch (e) { }
+                catch (e) {
+                }
                 let data = decodeLog;
                 if (appName === 'PoolCreated') {
                     const poolCreatedData = utils_1.defaultAbiCoder.decode(this.profile.getEventDataAbi()[appName], decodeLog.args.data);
-                    data = Object.assign(Object.assign({}, poolCreatedData), { TOKEN_R: ethers_1.ethers.utils.getAddress('0x' + decodeLog.args.topic3.slice(-40)) });
+                    data = {
+                        ...poolCreatedData,
+                        TOKEN_R: ethers_1.ethers.utils.getAddress('0x' + decodeLog.args.topic3.slice(-40)),
+                    };
                 }
                 return {
                     address: data.poolAddress,
@@ -593,7 +612,9 @@ class Resource {
                     name: appName,
                     topics: log.topics,
                     data: log.data,
-                    args: Object.assign({}, data),
+                    args: {
+                        ...data,
+                    },
                 };
             }
             catch (e) {
@@ -601,6 +622,11 @@ class Resource {
                 return {};
             }
         });
+    }
+    _tokenInRoutes() {
+        return Object.keys(this.profile.routes).reduce((results, pair) => {
+            return [...results, ...pair.split('-')];
+        }, []);
     }
     _whitelistTokens() {
         const result = [];
@@ -614,6 +640,36 @@ class Resource {
             });
         }
         return result;
+    }
+    //@ts-ignore
+    async getPrices(pools, pairs) {
+        const rpc = await (0, rpc_factories_1.createMemoryRpc)(this.profile.configs.rpc, 10n ** 9n);
+        const blockNumber = await rpc.getBlockNumber();
+        const promises = Object.values(pools).filter((pool) => pool.FETCHER !== constant_1.ZERO_ADDRESS).map((pool) => {
+            return this.getPrice(pool, blockNumber, rpc, pairs[pool.pair]);
+        });
+        const result = {};
+        const res = await Promise.all(promises);
+        res.forEach((priceInfo) => {
+            result[priceInfo.poolAddress] = { spot: priceInfo.spot, twap: priceInfo.twap };
+        });
+        return result;
+    }
+    async getPrice(pool, blockNumber, rpc, pair) {
+        const twap = await (0, helper_1.getPrice)(rpc.getStorageAt, adapters_1.ethGetBlockByNumber.bind(undefined, rpc), BigInt(pool.pair), pool.quoteTokenIndex, (0, helper_1.bn)(blockNumber).sub(Math.floor(pool.window.toNumber() / 2)).toBigInt());
+        let spot;
+        const [r0, r1] = [pair.token0.reserve, pair.token1.reserve];
+        if (pool.quoteTokenIndex == 0) {
+            spot = r0.mul(exports.Q128).div(r1);
+        }
+        else {
+            spot = r1.mul(exports.Q128).div(r0);
+        }
+        return {
+            poolAddress: pool.poolAddress,
+            twap: (0, helper_1.bn)((twap * 2n ** 16n).toString()),
+            spot: twap === 0n ? (0, helper_1.bn)(0) : spot
+        };
     }
 }
 exports.Resource = Resource;

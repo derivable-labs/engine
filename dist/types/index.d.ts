@@ -87,6 +87,7 @@ export type PoolType = {
     PREMIUM_HL: BigNumber;
     ORACLE: string;
     TOKEN_R: string;
+    FETCHER: string;
     pool: string;
     logic: string;
     k: BigNumber;
@@ -107,6 +108,9 @@ export type PoolType = {
     baseId: number;
     basePrice: string;
     cPrice: number;
+    pair: string;
+    quoteTokenIndex: number;
+    window: BigNumber;
 };
 export type SwapLog = {
     address: string;
@@ -124,6 +128,7 @@ export type TokenType = {
     decimal: number;
     name: string;
     symbol: string;
+    icon?: string;
 };
 export type MaturitiesType = {
     [key: string]: BigNumber;
