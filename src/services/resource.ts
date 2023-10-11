@@ -288,19 +288,23 @@ export class Resource {
    * parse DDL logs
    * @param logs
    * @param transferLogs
-   * @param tokenAddresses
    */
   generatePoolData(logs: ParseLogType[], transferLogs: ParseLogType[]) {
-    const allTokens: string[] = [...this._tokenInRoutes()]
+    const allTokens: string[] = []
     const allUniPools: string[] = []
     const poolData = {}
+    const logicData = {}
     logs.forEach((log) => {
       if (log.name === 'PoolCreated') {
         const data = log.args
         const powers = [log.args.k.toNumber(), -log.args.k.toNumber()]
         const pair = ethers.utils.getAddress('0x' + data.ORACLE.slice(-40))
         const quoteTokenIndex = bn(data.ORACLE.slice(0, 3)).gt(0) ? 1 : 0
-        const window = bn('0x' + data.ORACLE.substring(2 + 8, 2 + 8 + 8))
+        const window = bn('0x' + data.ORACLE.substring(2 + 8, 2+8+8))
+        // const window = bn(data.ORACLE).sub(pair).sub(bn(quoteTokenIndex).shl(255)).shr(256 - 60)
+
+        //0x80000000000000060000000031c77f72bcc209ad00e3b7be13d719c08cb7ba7b
+        //0x800000000000012c00000000bae622d0fa237a5105b0c445864a419620a59d83
 
         data.dTokens = powers.map((value, key) => {
           return {power: value, index: key}
@@ -759,12 +763,6 @@ export class Resource {
         return {}
       }
     })
-  }
-
-  _tokenInRoutes() {
-    return Object.keys(this.profile.routes).reduce((results, pair) => {
-       return [...results, ...pair.split('-')]
-    }, [] as string [])
   }
 
   _whitelistTokens(): TokenType[] {
