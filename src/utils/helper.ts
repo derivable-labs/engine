@@ -1,8 +1,7 @@
-import {BigNumber, ethers, utils} from 'ethers'
-import {TokenType} from '../types'
+import { BigNumber, ethers, utils } from 'ethers'
+import { TokenType } from '../types'
 import EventsAbi from '../abi/Events.json'
-import {SECONDS_PER_DAY} from './constant'
-
+import { SECONDS_PER_DAY } from './constant'
 const mdp = require('move-decimal-point')
 
 export const provider = new ethers.providers.JsonRpcProvider('https://bsc-dataseed.binance.org/')
@@ -26,7 +25,7 @@ export const numberToWei = (number: any, decimal: number = 18) => {
   if (!number) return '0'
   number = number.toString()
   if (Number.isFinite(number)) {
-    number = number.toLocaleString('en-US', {useGrouping: false})
+    number = number.toLocaleString('en-US', { useGrouping: false })
   }
   return mdp(number, decimal).split(number.indexOf('.') === -1 ? ',' : '.')[0]
 }
@@ -88,7 +87,7 @@ export const getNormalAddress = (addresses: string[]) => {
 }
 
 export const formatFloat = (number: number | string, decimal = 4) => {
-  number = number.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+  number = number.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   const arr = number.split('.')
   if (arr.length > 1) {
     arr[1] = arr[1].slice(0, decimal)
@@ -97,14 +96,14 @@ export const formatFloat = (number: number | string, decimal = 4) => {
 }
 
 export const formatPercent = (floatNumber: any, decimal: number = 2) => {
-  floatNumber = floatNumber.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+  floatNumber = floatNumber.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   return formatFloat(weiToNumber(numberToWei(floatNumber), 16), decimal)
 }
 
 export const mul = (a: any, b: any, useFullwide = true) => {
   if (useFullwide) {
-    a = a.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
-    b = b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+    a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
+    b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   }
   const result = weiToNumber(BigNumber.from(numberToWei(a)).mul(numberToWei(b)), 36)
   const arr = result.split('.')
@@ -113,25 +112,25 @@ export const mul = (a: any, b: any, useFullwide = true) => {
 }
 
 export const sub = (a: any, b: any) => {
-  a = a.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
-  b = b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+  a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
+  b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   return weiToNumber(BigNumber.from(numberToWei(a)).sub(numberToWei(b)))
 }
 
 export const div = (a: any, b: any) => {
-  if (b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false}) == '0') {
-    return weiToNumber(BigNumber.from(numberToWei((Number(a) / Number(b)).toLocaleString(['en-US', 'fullwide'], {useGrouping: false}))))
+  if (b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false }) == '0') {
+    return weiToNumber(BigNumber.from(numberToWei((Number(a) / Number(b)).toLocaleString(['en-US', 'fullwide'], { useGrouping: false }))))
   }
-  a = a.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
-  b = b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+  a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
+  b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   return weiToNumber(BigNumber.from(numberToWei(a, 36)).div(numberToWei(b)))
 }
 
 export const max = (a: any, b: any) => (bn(numberToWei(a)).gt(numberToWei(b)) ? a : b)
 
 export const add = (a: any, b: any) => {
-  a = a.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
-  b = b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+  a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
+  b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   return weiToNumber(BigNumber.from(numberToWei(a)).add(numberToWei(b)))
 }
 
@@ -139,7 +138,7 @@ export const detectDecimalFromPrice = (price: number | string) => {
   if (Number(price || 0) === 0 || Number(price || 0) >= 1) {
     return 4
   } else {
-    price = price.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+    price = price.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
     const rate = !bn(numberToWei(price)).isZero() ? weiToNumber(BigNumber.from(numberToWei(1, 36)).div(numberToWei(price)).toString()) : '0'
     return rate.split('.')[0].length + 3
   }
@@ -183,10 +182,10 @@ export const mergeDeep = (target: any, ...sources: any): any => {
   if (isObject(target) && isObject(source)) {
     for (const key in source) {
       if (isObject(source[key])) {
-        if (!target[key]) Object.assign(target, {[key]: {}})
+        if (!target[key]) Object.assign(target, { [key]: {} })
         mergeDeep(target[key], source[key])
       } else {
-        Object.assign(target, {[key]: source[key]})
+        Object.assign(target, { [key]: source[key] })
       }
     }
   }
@@ -230,88 +229,4 @@ export const kx = (k: number, R: BigNumber, v: BigNumber, spot: BigNumber, MARK:
     console.warn(err)
     return 0
   }
-}
-
-
-export interface Proof {
-  readonly block: Uint8Array
-  readonly accountProofNodesRlp: Uint8Array
-  readonly reserveAndTimestampProofNodesRlp: Uint8Array
-  readonly priceAccumulatorProofNodesRlp: Uint8Array
-}
-
-export type ProofResult = {
-  readonly accountProof: readonly Uint8Array[]
-  readonly storageProof: readonly {
-    readonly key: bigint
-    readonly value: bigint
-    readonly proof: readonly Uint8Array[]
-  }[]
-}
-
-export type Block = {
-  readonly parentHash: bigint
-  readonly sha3Uncles: bigint
-  readonly miner: bigint
-  readonly stateRoot: bigint
-  readonly transactionsRoot: bigint
-  readonly receiptsRoot: bigint
-  readonly logsBloom: bigint
-  readonly difficulty: bigint
-  readonly number: bigint
-  readonly gasLimit: bigint
-  readonly gasUsed: bigint
-  readonly timestamp: bigint
-  readonly extraData: Uint8Array
-  readonly mixHash: bigint | undefined
-  readonly nonce: bigint | null
-  readonly baseFeePerGas: bigint | null
-}
-
-
-export type EthGetStorageAt = (address: bigint, position: bigint, block: bigint | 'latest') => Promise<bigint>
-export type EthGetProof = (address: bigint, positions: readonly bigint[], block: bigint) => Promise<ProofResult>
-export type EthGetBlockByNumber = (blockNumber: bigint | 'latest') => Promise<Block | null>
-
-export function addressToString(value: bigint) {
-  return `0x${value.toString(16).padStart(40, '0')}`
-}
-
-export async function getPrice(eth_getStorageAt: EthGetStorageAt, eth_getBlockByNumber: EthGetBlockByNumber, exchangeAddress: bigint, quoteTokenIndex: number, blockNumber: bigint): Promise<bigint> {
-  async function getAccumulatorValue(innerBlockNumber: bigint, timestamp: bigint) {
-    const [reservesAndTimestamp, accumulator0, accumulator1] = await Promise.all([
-      eth_getStorageAt(exchangeAddress, 8n, innerBlockNumber),
-      eth_getStorageAt(exchangeAddress, 9n, innerBlockNumber),
-      eth_getStorageAt(exchangeAddress, 10n, innerBlockNumber)
-    ])
-
-    const blockTimestampLast = reservesAndTimestamp >> (112n + 112n)
-    const reserve1 = (reservesAndTimestamp >> 112n) & (2n ** 112n - 1n)
-    const reserve0 = reservesAndTimestamp & (2n ** 112n - 1n)
-    // if (token0 !== denominationToken && token1 !== denominationToken) throw new Error(`Denomination token ${addressToString(denominationToken)} is not one of the tokens for exchange ${exchangeAddress}`)
-    if (reserve0 === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} does not have any reserves for token0.`)
-    if (reserve1 === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} does not have any reserves for token1.`)
-    if (blockTimestampLast === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} has not had its first accumulator update (or it is year 2106).`)
-    if (accumulator0 === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} has not had its first accumulator update (or it is 136 years since launch).`)
-    if (accumulator1 === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} has not had its first accumulator update (or it is 136 years since launch).`)
-    const numeratorReserve = (0 === quoteTokenIndex) ? reserve0 : reserve1
-    const denominatorReserve = (0 === quoteTokenIndex) ? reserve1 : reserve0
-    const accumulator = (0 === quoteTokenIndex) ? accumulator1 : accumulator0
-    const timeElapsedSinceLastAccumulatorUpdate = timestamp - blockTimestampLast
-    const priceNow = numeratorReserve * 2n ** 112n / denominatorReserve
-    return accumulator + timeElapsedSinceLastAccumulatorUpdate * priceNow
-  }
-
-  const latestBlock = await eth_getBlockByNumber('latest')
-  if (latestBlock === null) throw new Error(`Block 'latest' does not exist.`)
-  const historicBlock = await eth_getBlockByNumber(blockNumber)
-  if (historicBlock === null) throw new Error(`Block ${blockNumber} does not exist.`)
-  const [latestAccumulator, historicAccumulator] = await Promise.all([
-    await getAccumulatorValue(latestBlock.number, latestBlock.timestamp),
-    await getAccumulatorValue(blockNumber, historicBlock.timestamp)
-  ])
-
-  const accumulatorDelta = latestAccumulator - historicAccumulator
-  const timeDelta = latestBlock.timestamp - historicBlock.timestamp
-  return timeDelta === 0n ? accumulatorDelta : accumulatorDelta / timeDelta
 }

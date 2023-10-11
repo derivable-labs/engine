@@ -465,23 +465,6 @@
     semver "^7.3.2"
     tsutils "^3.17.1"
 
-"@zoltu/ethereum-crypto@^2.3.0":
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/@zoltu/ethereum-crypto/-/ethereum-crypto-2.3.0.tgz#1b202e0caf78eb62199a6e0b936fe72146ad427d"
-  integrity sha512-zbrL39mb74v+bOOMp48tniRgq6bGjrDnmy9fWJKD/3vlql2Sv1shHsUJvnbR2h0GT1jTy+aI5zbKGPE8zBqnQQ==
-
-"@zoltu/ethereum-fetch-json-rpc@^13.1.4":
-  version "13.1.4"
-  resolved "https://registry.yarnpkg.com/@zoltu/ethereum-fetch-json-rpc/-/ethereum-fetch-json-rpc-13.1.4.tgz#0ef4f90bad4020302b3393f63df4e8b108fc14cb"
-  integrity sha512-Ro4+H54yvRNGjVFs0MYk58DPeh4UndJU9wlaWisd9J7TdiLpOWcAAgqN6hl+E6m2Gy7RsAoFgqjUaqiyp5ebNw==
-  dependencies:
-    "@zoltu/ethereum-types" "9.0.4"
-
-"@zoltu/ethereum-types@9.0.4", "@zoltu/ethereum-types@^9.0.4":
-  version "9.0.4"
-  resolved "https://registry.yarnpkg.com/@zoltu/ethereum-types/-/ethereum-types-9.0.4.tgz#00f70d68c8a4c7d5047298689282988d894f775f"
-  integrity sha512-XwSH21J8NTPlh61y6adBUzxIwJm3hyDkJ8GGz8Wkb5f3U9xozIwdtKhWjtUG3BCuHsmi3kWg3J4lomJpMojsBg==
-
 acorn-jsx@^5.2.0:
   version "5.3.2"
   resolved "https://registry.npmjs.org/acorn-jsx/-/acorn-jsx-5.3.2.tgz"
