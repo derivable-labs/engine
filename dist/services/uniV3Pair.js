@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -14,6 +23,12 @@ const constant_1 = require("../utils/constant");
 const helper_1 = require("../utils/helper");
 const POOL_FEES = [100, 300, 500];
 const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111';
+// type ConfigType = {
+//   chainId: number
+//   scanApi: string
+//   provider: ethers.providers.Provider
+//   rpcUrl: string
+// }
 class UniV3Pair {
     constructor(config, profile) {
         const pairsV3Info = '0x' + PairV3Detail_json_1.default.deployedBytecode.slice(-40);
@@ -24,9 +39,11 @@ class UniV3Pair {
         this.pairsV3Info = pairsV3Info;
         this.profile = profile;
     }
-    async getLargestPoolAddress({ baseToken, quoteTokens }) {
-        const pools = await this.getPairAddress({ baseToken, quoteTokens });
-        return await this._getLargestPoolByPools(baseToken, pools);
+    getLargestPoolAddress({ baseToken, quoteTokens }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pools = yield this.getPairAddress({ baseToken, quoteTokens });
+            return yield this._getLargestPoolByPools(baseToken, pools);
+        });
     }
     /**
      *
@@ -36,10 +53,12 @@ class UniV3Pair {
      *   [`${baseAddress-quoteAddress-fee}`]: poolAddress
      * }
      */
-    async _getLargestPoolByPools(baseToken, pools) {
-        const multicall = this._getMulticall();
-        const res = await multicall.call(this._generatePoolBalanceContext(baseToken, pools));
-        return this._parsePoolBalanceReturnContext(res.results.poolBalances.callsReturnContext);
+    _getLargestPoolByPools(baseToken, pools) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const multicall = this._getMulticall();
+            const res = yield multicall.call(this._generatePoolBalanceContext(baseToken, pools));
+            return this._parsePoolBalanceReturnContext(res.results.poolBalances.callsReturnContext);
+        });
     }
     _parsePoolBalanceReturnContext(returnContexts) {
         let poolResults = constant_1.ZERO_ADDRESS;
@@ -70,12 +89,14 @@ class UniV3Pair {
             },
         ];
     }
-    async getPairAddress({ baseToken, quoteTokens }) {
-        const multicall = this._getMulticall();
-        //@ts-ignore
-        const context = this._generatePoolAddressContext(baseToken, quoteTokens);
-        const res = await multicall.call(context);
-        return this._parsePoolAddressReturnContext(res.results.poolAddresses['callsReturnContext']);
+    getPairAddress({ baseToken, quoteTokens }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const multicall = this._getMulticall();
+            //@ts-ignore
+            const context = this._generatePoolAddressContext(baseToken, quoteTokens);
+            const res = yield multicall.call(context);
+            return this._parsePoolAddressReturnContext(res.results.poolAddresses['callsReturnContext']);
+        });
     }
     _parsePoolAddressReturnContext(returnContexts) {
         const results = {};
@@ -106,58 +127,60 @@ class UniV3Pair {
             },
         ];
     }
-    async getPairInfo({ pairAddress, flag = FLAG }) {
-        try {
-            const provider = new providers_1.JsonRpcProvider(this.rpcUrl);
-            // @ts-ignore
-            provider.setStateOverride({
-                [this.pairsV3Info]: {
-                    code: PairV3Detail_json_1.default.deployedBytecode,
-                },
-            });
-            const pairDetailContract = new ethers_1.ethers.Contract(this.pairsV3Info, PairV3Detail_json_1.default.abi, provider);
-            const res = await pairDetailContract.functions.query([pairAddress], flag);
-            return res.details[0];
-        }
-        catch (e) {
-            throw e;
-        }
-    }
-    async getPairsInfo({ pairAddresses, flag = FLAG }) {
-        try {
-            const provider = new providers_1.JsonRpcProvider(this.rpcUrl);
-            // @ts-ignore
-            provider.setStateOverride({
-                [this.pairsV3Info]: {
-                    code: PairV3Detail_json_1.default.deployedBytecode,
-                },
-            });
-            const pairDetailContract = new ethers_1.ethers.Contract(this.pairsV3Info, PairV3Detail_json_1.default.abi, provider);
-            const { details } = await pairDetailContract.functions.query(pairAddresses, flag);
-            const result = {};
-            for (let i = 0; i < pairAddresses.length; i++) {
-                result[pairAddresses[i]] = {
-                    token0: {
-                        address: details[i].token0.adr,
-                        name: details[i].token0.name,
-                        symbol: details[i].token0.symbol,
-                        decimal: details[i].token0.decimals.toNumber(),
-                        reserve: details[i].token0.reserve,
+    getPairInfo({ pairAddress, flag = FLAG }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const provider = new providers_1.JsonRpcProvider(this.rpcUrl);
+                // @ts-ignore
+                provider.setStateOverride({
+                    [this.pairsV3Info]: {
+                        code: PairV3Detail_json_1.default.deployedBytecode,
                     },
-                    token1: {
-                        address: details[i].token1.adr,
-                        name: details[i].token1.name,
-                        symbol: details[i].token1.symbol,
-                        decimal: details[i].token1.decimals.toNumber(),
-                        reserve: details[i].token1.reserve
-                    },
-                };
+                });
+                const pairDetailContract = new ethers_1.ethers.Contract(this.pairsV3Info, PairV3Detail_json_1.default.abi, provider);
+                const res = yield pairDetailContract.functions.query([pairAddress], flag);
+                return res.details[0];
             }
-            return result;
-        }
-        catch (e) {
-            throw e;
-        }
+            catch (e) {
+                throw e;
+            }
+        });
+    }
+    getPairsInfo({ pairAddresses, flag = FLAG }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const provider = new providers_1.JsonRpcProvider(this.rpcUrl);
+                // @ts-ignore
+                provider.setStateOverride({
+                    [this.pairsV3Info]: {
+                        code: PairV3Detail_json_1.default.deployedBytecode,
+                    },
+                });
+                const pairDetailContract = new ethers_1.ethers.Contract(this.pairsV3Info, PairV3Detail_json_1.default.abi, provider);
+                const { details } = yield pairDetailContract.functions.query(pairAddresses, flag);
+                const result = {};
+                for (let i = 0; i < pairAddresses.length; i++) {
+                    result[pairAddresses[i]] = {
+                        token0: {
+                            address: details[i].token0.adr,
+                            name: details[i].token0.name,
+                            symbol: details[i].token0.symbol,
+                            decimal: details[i].token0.decimals.toNumber(),
+                        },
+                        token1: {
+                            address: details[i].token1.adr,
+                            name: details[i].token1.name,
+                            symbol: details[i].token1.symbol,
+                            decimal: details[i].token1.decimals.toNumber(),
+                        },
+                    };
+                }
+                return result;
+            }
+            catch (e) {
+                throw e;
+            }
+        });
     }
     _getMulticall() {
         return new ethereum_multicall_1.Multicall({

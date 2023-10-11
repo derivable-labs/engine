@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -19,29 +28,31 @@ class BnA {
         this.bnAAddress = '0x' + BnA_json_1.default.deployedBytecode.slice(-40);
         this.profile = profile;
     }
-    async getBalanceAndAllowance({ tokens }) {
-        if (this.account) {
-            // @ts-ignore
-            this.provider.setStateOverride({
-                [this.bnAAddress]: {
-                    code: BnA_json_1.default.deployedBytecode,
-                },
-            });
-            const multicall = new ethereum_multicall_1.Multicall({
-                multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
-                ethersProvider: this.provider,
-                tryAggregate: true,
-            });
-            const erc20Tokens = (0, helper_1.getNormalAddress)(tokens);
-            const erc1155Tokens = (0, helper_1.getErc1155Token)(tokens);
-            const multiCallRequest = this.getBnAMulticallRequest({
-                erc20Tokens,
-                erc1155Tokens,
-            });
-            const { results } = await multicall.call(multiCallRequest);
-            return this.parseBnAMultiRes(erc20Tokens, erc1155Tokens, results);
-        }
-        return { balances: {}, allowances: {}, maturity: {} };
+    getBalanceAndAllowance({ tokens }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.account) {
+                // @ts-ignore
+                this.provider.setStateOverride({
+                    [this.bnAAddress]: {
+                        code: BnA_json_1.default.deployedBytecode,
+                    },
+                });
+                const multicall = new ethereum_multicall_1.Multicall({
+                    multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
+                    ethersProvider: this.provider,
+                    tryAggregate: true,
+                });
+                const erc20Tokens = (0, helper_1.getNormalAddress)(tokens);
+                const erc1155Tokens = (0, helper_1.getErc1155Token)(tokens);
+                const multiCallRequest = this.getBnAMulticallRequest({
+                    erc20Tokens,
+                    erc1155Tokens,
+                });
+                const { results } = yield multicall.call(multiCallRequest);
+                return this.parseBnAMultiRes(erc20Tokens, erc1155Tokens, results);
+            }
+            return { balances: {}, allowances: {}, maturity: {} };
+        });
     }
     getBnAMulticallRequest({ erc20Tokens, erc1155Tokens }) {
         const packs = [];
@@ -93,6 +104,7 @@ class BnA {
         return request;
     }
     parseBnAMultiRes(erc20Address, erc1155Tokens, data) {
+        var _a, _b, _c, _d;
         const maturity = {};
         const balances = {};
         const allowances = {};
@@ -109,14 +121,14 @@ class BnA {
             for (let i = 0; i < erc1155Tokens[poolAddress].length; i++) {
                 const key = poolAddress + '-' + erc1155Tokens[poolAddress][i].toString();
                 allowances[key] = erc1155ApproveInfo ? (0, helper_1.bn)(constant_1.LARGE_VALUE) : (0, helper_1.bn)(0);
-                balances[key] = (0, helper_1.bn)(erc1155BalanceInfo[index]?.hex ?? 0);
+                balances[key] = (0, helper_1.bn)((_b = (_a = erc1155BalanceInfo[index]) === null || _a === void 0 ? void 0 : _a.hex) !== null && _b !== void 0 ? _b : 0);
                 ++index;
             }
         }
         for (let maturityIndex = 2; maturityIndex < data.erc1155.callsReturnContext.length; maturityIndex++) {
             const responseData = data.erc1155.callsReturnContext[maturityIndex];
-            const { k, p } = (0, number_1.unpackId)((0, helper_1.bn)(responseData.reference?.split('-')[1]));
-            maturity[p + '-' + Number(k)] = (0, helper_1.bn)(responseData.returnValues[0]?.hex);
+            const { k, p } = (0, number_1.unpackId)((0, helper_1.bn)((_c = responseData.reference) === null || _c === void 0 ? void 0 : _c.split('-')[1]));
+            maturity[p + '-' + Number(k)] = (0, helper_1.bn)((_d = responseData.returnValues[0]) === null || _d === void 0 ? void 0 : _d.hex);
         }
         return {
             balances,

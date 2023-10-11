@@ -38,13 +38,13 @@ exports.default = {
             .then((response) => {
             const bars = [];
             if (response && response.s === 'ok' && response.t && response.t.length > 0) {
-                const decimal = 18 + (outputToken?.decimal || 18) - (inputToken?.decimal || 18);
+                const decimal = 18 + ((outputToken === null || outputToken === void 0 ? void 0 : outputToken.decimal) || 18) - ((inputToken === null || inputToken === void 0 ? void 0 : inputToken.decimal) || 18);
                 for (let i = 0; i < response.t.length; i++) {
                     bars.push({
                         low: formatResult((0, helper_1.weiToNumber)((0, helper_1.numberToWei)(response.l[i]), decimal), barValueType),
                         open: formatResult((0, helper_1.weiToNumber)((0, helper_1.numberToWei)(response.o[i]), decimal), barValueType),
                         time: response.t[i] * 1000,
-                        volume: formatResult((0, helper_1.weiToNumber)(response.v[i].split('.')[0], outputToken?.decimal), barValueType),
+                        volume: formatResult((0, helper_1.weiToNumber)(response.v[i].split('.')[0], outputToken === null || outputToken === void 0 ? void 0 : outputToken.decimal), barValueType),
                         close: formatResult((0, helper_1.weiToNumber)((0, helper_1.numberToWei)(response.c[i]), decimal), barValueType),
                         high: formatResult((0, helper_1.weiToNumber)((0, helper_1.numberToWei)(response.h[i]), decimal), barValueType),
                     });

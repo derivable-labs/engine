@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Swap = void 0;
 const ethers_1 = require("ethers");
@@ -24,103 +33,109 @@ class Swap {
         this.derivableAdr = profile.configs.derivable;
     }
     //@ts-ignore
-    async calculateAmountOuts(steps) {
-        if (!this.signer)
-            return [[(0, helper_1.bn)(0)], (0, helper_1.bn)(0)];
-        try {
-            const stepsToSwap = [...steps].map((step) => {
-                return { ...step, amountOutMin: 0 };
+    calculateAmountOuts(steps) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.signer)
+                return [[(0, helper_1.bn)(0)], (0, helper_1.bn)(0)];
+            try {
+                const stepsToSwap = [...steps].map((step) => {
+                    return Object.assign(Object.assign({}, step), { amountOutMin: 0 });
+                });
+                const { params, value } = yield this.convertStepToActions(stepsToSwap);
+                const router = this.profile.configs.helperContract.utr;
+                // @ts-ignore
+                this.overrideProvider.setStateOverride({
+                    [router]: {
+                        code: this.profile.getAbi('UTROverride').deployedBytecode,
+                    },
+                });
+                const contract = new ethers_1.ethers.Contract(router, this.profile.getAbi('UTROverride').abi, this.overrideProvider);
+                const res = yield contract.callStatic.exec(...params, {
+                    from: this.account,
+                    value,
+                    gasLimit: this.profile.configs.gasLimitDefault,
+                });
+                const result = [];
+                for (const i in steps) {
+                    result.push(Object.assign(Object.assign({}, steps[i]), { amountOut: res[0][i] }));
+                }
+                return [result, (0, helper_1.bn)(this.profile.configs.gasLimitDefault).sub(res.gasLeft)];
+            }
+            catch (e) {
+                throw e;
+            }
+        });
+    }
+    callStaticMultiSwap({ params, value, gasLimit }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const contract = this.getRouterContract(this.signer);
+            return yield contract.callStatic.exec(...params, {
+                value: value || (0, helper_1.bn)(0),
+                gasLimit: gasLimit || undefined,
             });
-            const { params, value } = await this.convertStepToActions(stepsToSwap);
-            const router = this.profile.configs.helperContract.utr;
+        });
+    }
+    convertStepToActions(steps) {
+        return __awaiter(this, void 0, void 0, function* () {
             // @ts-ignore
-            this.overrideProvider.setStateOverride({
-                [router]: {
-                    code: this.profile.getAbi('UTROverride').deployedBytecode,
-                },
-            });
-            const contract = new ethers_1.ethers.Contract(router, this.profile.getAbi('UTROverride').abi, this.overrideProvider);
-            const res = await contract.callStatic.exec(...params, {
-                from: this.account,
-                value,
-                gasLimit: this.profile.configs.gasLimitDefault,
-            });
-            const result = [];
-            for (const i in steps) {
-                result.push({ ...steps[i], amountOut: res[0][i] });
-            }
-            return [result, (0, helper_1.bn)(this.profile.configs.gasLimitDefault).sub(res.gasLeft)];
-        }
-        catch (e) {
-            throw e;
-        }
-    }
-    async callStaticMultiSwap({ params, value, gasLimit }) {
-        const contract = this.getRouterContract(this.signer);
-        return await contract.callStatic.exec(...params, {
-            value: value || (0, helper_1.bn)(0),
-            gasLimit: gasLimit || undefined,
-        });
-    }
-    async convertStepToActions(steps) {
-        // @ts-ignore
-        const stateCalHelper = this.getStateCalHelperContract();
-        let outputs = [];
-        steps.forEach((step) => {
-            const poolGroup = this.getPoolPoolGroup(step.tokenIn, step.tokenOut);
-            outputs.push({
-                recipient: this.account,
-                eip: (0, helper_1.isErc1155Address)(step.tokenOut) ? 1155 : step.tokenOut === constant_1.NATIVE_ADDRESS ? 0 : 20,
-                token: (0, helper_1.isErc1155Address)(step.tokenOut) ? this.derivableAdr.token : step.tokenOut,
-                id: (0, helper_1.isErc1155Address)(step.tokenOut)
-                    ? (0, helper_1.packId)(this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R).toString(), this.getAddressByErc1155Address(step.tokenOut, poolGroup.TOKEN_R))
-                    : (0, helper_1.bn)(0),
-                amountOutMin: step.amountOutMin,
-            });
-        });
-        let nativeAmountToWrap = (0, helper_1.bn)(0);
-        const metaDatas = [];
-        const promises = [];
-        steps.forEach((step) => {
-            const poolGroup = this.getPoolPoolGroup(step.tokenIn, step.tokenOut);
-            if ((step.tokenIn === constant_1.NATIVE_ADDRESS || step.tokenOut === constant_1.NATIVE_ADDRESS) &&
-                poolGroup.TOKEN_R !== this.profile.configs.wrappedTokenAddress) {
-                throw 'This pool do not support swap by native Token';
-            }
-            const poolIn = this.getAddressByErc1155Address(step.tokenIn, poolGroup.TOKEN_R);
-            const poolOut = this.getAddressByErc1155Address(step.tokenOut, poolGroup.TOKEN_R);
-            let idIn = this.getIdByAddress(step.tokenIn, poolGroup.TOKEN_R);
-            const idOut = this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R);
-            if (step.tokenIn === constant_1.NATIVE_ADDRESS) {
-                nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn);
-            }
-            if (step.useSweep && (0, helper_1.isErc1155Address)(step.tokenOut)) {
-                const { inputs, populateTxData } = this.getSweepCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut });
-                metaDatas.push({
-                    code: this.derivableAdr.stateCalHelper,
-                    inputs,
-                }, {
-                    code: this.derivableAdr.stateCalHelper,
-                    inputs: [],
+            const stateCalHelper = this.getStateCalHelperContract();
+            let outputs = [];
+            steps.forEach((step) => {
+                const poolGroup = this.getPoolPoolGroup(step.tokenIn, step.tokenOut);
+                outputs.push({
+                    recipient: this.account,
+                    eip: (0, helper_1.isErc1155Address)(step.tokenOut) ? 1155 : step.tokenOut === constant_1.NATIVE_ADDRESS ? 0 : 20,
+                    token: (0, helper_1.isErc1155Address)(step.tokenOut) ? this.derivableAdr.token : step.tokenOut,
+                    id: (0, helper_1.isErc1155Address)(step.tokenOut)
+                        ? (0, helper_1.packId)(this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R).toString(), this.getAddressByErc1155Address(step.tokenOut, poolGroup.TOKEN_R))
+                        : (0, helper_1.bn)(0),
+                    amountOutMin: step.amountOutMin,
                 });
-                promises.push(...populateTxData);
-            }
-            else {
-                const { inputs, populateTxData } = this.getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut });
-                metaDatas.push({
-                    code: this.derivableAdr.stateCalHelper,
-                    inputs,
-                });
-                promises.push(...populateTxData);
-            }
+            });
+            let nativeAmountToWrap = (0, helper_1.bn)(0);
+            const metaDatas = [];
+            const promises = [];
+            steps.forEach((step) => {
+                const poolGroup = this.getPoolPoolGroup(step.tokenIn, step.tokenOut);
+                if ((step.tokenIn === constant_1.NATIVE_ADDRESS || step.tokenOut === constant_1.NATIVE_ADDRESS) &&
+                    poolGroup.TOKEN_R !== this.profile.configs.wrappedTokenAddress) {
+                    throw 'This pool do not support swap by native Token';
+                }
+                const poolIn = this.getAddressByErc1155Address(step.tokenIn, poolGroup.TOKEN_R);
+                const poolOut = this.getAddressByErc1155Address(step.tokenOut, poolGroup.TOKEN_R);
+                let idIn = this.getIdByAddress(step.tokenIn, poolGroup.TOKEN_R);
+                const idOut = this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R);
+                if (step.tokenIn === constant_1.NATIVE_ADDRESS) {
+                    nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn);
+                }
+                if (step.useSweep && (0, helper_1.isErc1155Address)(step.tokenOut)) {
+                    const { inputs, populateTxData } = this.getSweepCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut });
+                    metaDatas.push({
+                        code: this.derivableAdr.stateCalHelper,
+                        inputs,
+                    }, {
+                        code: this.derivableAdr.stateCalHelper,
+                        inputs: [],
+                    });
+                    promises.push(...populateTxData);
+                }
+                else {
+                    const { inputs, populateTxData } = this.getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut });
+                    metaDatas.push({
+                        code: this.derivableAdr.stateCalHelper,
+                        inputs,
+                    });
+                    promises.push(...populateTxData);
+                }
+            });
+            const datas = yield Promise.all(promises);
+            const actions = [];
+            //@ts-ignore
+            metaDatas.forEach((metaData, key) => {
+                actions.push(Object.assign(Object.assign({}, metaData), { data: datas[key].data }));
+            });
+            return { params: [outputs, actions], value: nativeAmountToWrap };
         });
-        const datas = await Promise.all(promises);
-        const actions = [];
-        //@ts-ignore
-        metaDatas.forEach((metaData, key) => {
-            actions.push({ ...metaData, data: datas[key].data });
-        });
-        return { params: [outputs, actions], value: nativeAmountToWrap };
     }
     getSweepCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut, }) {
         const stateCalHelper = this.getStateCalHelperContract();
@@ -222,11 +237,12 @@ class Swap {
         return address;
     }
     generateSwapParams(method, params) {
+        var _a;
         const stateCalHelper = this.getStateCalHelperContract();
-        const functionInterface = Object.values(stateCalHelper.interface.functions).find((f) => f.name === method)?.inputs[0].components;
+        const functionInterface = (_a = Object.values(stateCalHelper.interface.functions).find((f) => f.name === method)) === null || _a === void 0 ? void 0 : _a.inputs[0].components;
         const formatedParams = {};
         for (let name in params) {
-            if (functionInterface?.find((c) => c.name === name)) {
+            if (functionInterface === null || functionInterface === void 0 ? void 0 : functionInterface.find((c) => c.name === name)) {
                 formatedParams[name] = params[name];
             }
         }
@@ -269,26 +285,28 @@ class Swap {
         }
         return result;
     }
-    async multiSwap(steps, gasLimit) {
-        try {
-            const { params, value } = await this.convertStepToActions([...steps]);
-            await this.callStaticMultiSwap({
-                params,
-                value,
-                gasLimit,
-            });
-            const contract = this.getRouterContract(this.signer);
-            const res = await contract.exec(...params, {
-                value,
-                gasLimit: gasLimit || undefined,
-            });
-            const tx = await res.wait(1);
-            console.log('tx', tx);
-            return tx;
-        }
-        catch (e) {
-            throw e;
-        }
+    multiSwap(steps, gasLimit) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { params, value } = yield this.convertStepToActions([...steps]);
+                yield this.callStaticMultiSwap({
+                    params,
+                    value,
+                    gasLimit,
+                });
+                const contract = this.getRouterContract(this.signer);
+                const res = yield contract.exec(...params, {
+                    value,
+                    gasLimit: gasLimit || undefined,
+                });
+                const tx = yield res.wait(1);
+                console.log('tx', tx);
+                return tx;
+            }
+            catch (e) {
+                throw e;
+            }
+        });
     }
     getAddressByErc1155Address(address, TOKEN_R) {
         if ((0, helper_1.isErc1155Address)(address)) {
@@ -313,7 +331,7 @@ class Swap {
             ].includes(r);
         });
         const pool = this.profile.routes[routeKey || ''] ? this.profile.routes[routeKey || ''][0] : undefined;
-        return pool?.address ? (0, helper_1.bn)(ethers_1.ethers.utils.hexZeroPad((0, helper_1.bn)(1).shl(255).add(pool.address).toHexString(), 32)) : (0, helper_1.bn)(0);
+        return (pool === null || pool === void 0 ? void 0 : pool.address) ? (0, helper_1.bn)(ethers_1.ethers.utils.hexZeroPad((0, helper_1.bn)(1).shl(255).add(pool.address).toHexString(), 32)) : (0, helper_1.bn)(0);
     }
     getUniPool(tokenIn, tokenR) {
         const routeKey = Object.keys(this.profile.routes).find((r) => {

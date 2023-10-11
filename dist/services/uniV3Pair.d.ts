@@ -1,20 +1,8 @@
-import { BigNumber, ethers } from 'ethers';
+import { ethers } from 'ethers';
 import { Multicall } from 'ethereum-multicall';
 import { IDerivableContractAddress, IEngineConfig } from '../utils/configs';
 import { CallReturnContext } from 'ethereum-multicall/dist/esm/models/call-return-context';
 import { Profile } from '../profile';
-import { TokenType } from "../types";
-export type IPairInfo = {
-    token0: TokenType & {
-        reserve: BigNumber;
-    };
-    token1: TokenType & {
-        reserve: BigNumber;
-    };
-};
-export type IPairsInfo = {
-    [pair: string]: IPairInfo;
-};
 export declare class UniV3Pair {
     chainId: number;
     scanApi?: string;
@@ -140,6 +128,6 @@ export declare class UniV3Pair {
     getPairsInfo({ pairAddresses, flag }: {
         flag?: string;
         pairAddresses: string[];
-    }): Promise<IPairsInfo>;
+    }): Promise<{}>;
     _getMulticall(): Multicall;
 }

@@ -53,6 +53,7 @@ class History {
         }
     }
     generatePositionBySwapLog(positions, tokens, formatedData) {
+        var _a;
         const pools = this.RESOURCE.pools;
         const poolAddresses = Object.keys(this.RESOURCE.pools);
         const { poolIn, poolOut, sideIn, sideOut, amountOut, amountIn, priceR, price } = formatedData;
@@ -82,14 +83,14 @@ class History {
                 const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0]);
                 //@ts-ignore
                 const priceRFormated = (0, helper_1.parseSqrtSpotPrice)(priceR, tokenR, tokenRQuote, 1);
-                positions[tokenOutAddress].totalEntryR = (0, helper_1.add)(positions[tokenOutAddress].totalEntryR ?? 0, amountIn);
-                positions[tokenOutAddress].entry = (0, helper_1.add)(positions[tokenOutAddress].entry, (0, helper_1.weiToNumber)(amountIn.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18)));
+                positions[tokenOutAddress].totalEntryR = (0, helper_1.add)((_a = positions[tokenOutAddress].totalEntryR) !== null && _a !== void 0 ? _a : 0, amountIn);
+                positions[tokenOutAddress].entry = (0, helper_1.add)(positions[tokenOutAddress].entry, (0, helper_1.weiToNumber)(amountIn.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + ((tokenIn === null || tokenIn === void 0 ? void 0 : tokenIn.decimal) || 18)));
             }
             if (price) {
                 const pool = pools[poolOut];
                 const { baseToken, quoteToken } = pool;
                 //@ts-ignore
-                const indexPrice = (0, helper_1.parseSqrtSpotPrice)(price, tokens.find((t) => t?.address === baseToken), tokens.find((t) => t?.address === quoteToken), 1);
+                const indexPrice = (0, helper_1.parseSqrtSpotPrice)(price, tokens.find((t) => (t === null || t === void 0 ? void 0 : t.address) === baseToken), tokens.find((t) => (t === null || t === void 0 ? void 0 : t.address) === quoteToken), 1);
                 positions[tokenOutAddress].value = (0, helper_1.add)(positions[tokenOutAddress].value, (0, helper_1.mul)(amountOut, indexPrice));
                 positions[tokenOutAddress].balanceToCalculatePrice = positions[tokenOutAddress].balanceToCalculatePrice.add(amountOut);
             }
@@ -139,10 +140,10 @@ class History {
                     const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0]);
                     //@ts-ignore
                     const priceRFormated = (0, helper_1.parseSqrtSpotPrice)(priceR, tokenR, tokenRQuote, 1);
-                    entryValue = (0, helper_1.weiToNumber)(amount.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18));
+                    entryValue = (0, helper_1.weiToNumber)(amount.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + ((tokenIn === null || tokenIn === void 0 ? void 0 : tokenIn.decimal) || 18));
                 }
                 if (price) {
-                    entryPrice = (0, helper_1.parseSqrtSpotPrice)(price, tokens.find((t) => t?.address === baseToken), tokens.find((t) => t?.address === quoteToken), 1);
+                    entryPrice = (0, helper_1.parseSqrtSpotPrice)(price, tokens.find((t) => (t === null || t === void 0 ? void 0 : t.address) === baseToken), tokens.find((t) => (t === null || t === void 0 ? void 0 : t.address) === quoteToken), 1);
                 }
                 const _transferLog = transferLogs.find((l) => l.transactionHash === log.transactionHash);
                 const anyTokenHistoryData = {};
@@ -157,20 +158,9 @@ class History {
                         anyTokenHistoryData.amountOut = _transferData.value;
                     }
                 }
-                return {
-                    transactionHash: log.transactionHash,
-                    timeStamp: log.timeStamp,
-                    blockNumber: log.blockNumber,
-                    logIndex: log.logIndex,
-                    poolIn,
-                    poolOut,
-                    tokenIn: tokenInAddress,
-                    tokenOut: tokenOutAddress,
-                    entryValue,
-                    entryPrice,
-                    ...formatedData,
-                    ...anyTokenHistoryData,
-                };
+                return Object.assign(Object.assign({ transactionHash: log.transactionHash, timeStamp: log.timeStamp, blockNumber: log.blockNumber, logIndex: log.logIndex, poolIn,
+                    poolOut, tokenIn: tokenInAddress, tokenOut: tokenOutAddress, entryValue,
+                    entryPrice }, formatedData), anyTokenHistoryData);
             });
             return _swapLogs.filter((l) => l !== null).sort((a, b) => b.blockNumber - a.blockNumber || b.logIndex - a.logIndex);
         }
@@ -184,7 +174,7 @@ class History {
             return constant_1.NATIVE_ADDRESS;
         }
         if (side.eq(constant_1.POOL_IDS.R)) {
-            return pool?.TOKEN_R || constant_1.NATIVE_ADDRESS;
+            return (pool === null || pool === void 0 ? void 0 : pool.TOKEN_R) || constant_1.NATIVE_ADDRESS;
         }
         return poolAddress + '-' + side.toString();
     }
