@@ -4,7 +4,6 @@ import { JsonRpcProvider } from '@ethersproject/providers';
 import { IPairInfo, IPairsInfo, UniV3Pair } from './uniV3Pair';
 import { IDerivableContractAddress, IEngineConfig } from '../utils/configs';
 import { Profile } from '../profile';
-import { SignerFetchRpc } from "../utils/rpc-factories";
 export declare const Q128: BigNumber;
 type ResourceData = {
     pools: PoolsType;
@@ -120,7 +119,7 @@ export declare class Resource {
     getPrices(pools: {
         [key: string]: PoolType;
     }, pairs: IPairsInfo): Promise<IPriceInfo>;
-    getPrice(pool: PoolType, blockNumber: bigint, rpc: SignerFetchRpc, pair: IPairInfo): Promise<{
+    getPrice(pool: PoolType, blockNumber: number, pair: IPairInfo): Promise<{
         poolAddress: string;
         twap: BigNumber;
         spot: BigNumber;

@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -12,8 +35,8 @@ const providers_1 = require("@ethersproject/providers");
 const lodash_1 = __importDefault(require("lodash"));
 const uniV3Pair_1 = require("./uniV3Pair");
 const utils_1 = require("ethers/lib/utils");
-const rpc_factories_1 = require("../utils/rpc-factories");
-const adapters_1 = require("../utils/adapters");
+const OracleSdk = __importStar(require("../utils/OracleSdk"));
+const OracleSdkAdapter = __importStar(require("../utils/OracleSdkAdapter"));
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider');
 const MAX_BLOCK = 4294967295;
 exports.Q128 = (0, helper_1.bn)(1).shl(128);
@@ -643,10 +666,9 @@ class Resource {
     }
     //@ts-ignore
     async getPrices(pools, pairs) {
-        const rpc = await (0, rpc_factories_1.createMemoryRpc)(this.profile.configs.rpc, 10n ** 9n);
-        const blockNumber = await rpc.getBlockNumber();
+        const blockNumber = await this.overrideProvider.getBlockNumber();
         const promises = Object.values(pools).filter((pool) => pool.FETCHER !== constant_1.ZERO_ADDRESS).map((pool) => {
-            return this.getPrice(pool, blockNumber, rpc, pairs[pool.pair]);
+            return this.getPrice(pool, blockNumber, pairs[pool.pair]);
         });
         const result = {};
         const res = await Promise.all(promises);
@@ -655,8 +677,10 @@ class Resource {
         });
         return result;
     }
-    async getPrice(pool, blockNumber, rpc, pair) {
-        const twap = await (0, helper_1.getPrice)(rpc.getStorageAt, adapters_1.ethGetBlockByNumber.bind(undefined, rpc), BigInt(pool.pair), pool.quoteTokenIndex, (0, helper_1.bn)(blockNumber).sub(Math.floor(pool.window.toNumber() / 2)).toBigInt());
+    async getPrice(pool, blockNumber, pair) {
+        const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider);
+        const getBlockByNumber = OracleSdkAdapter.getBlockByNumberFactory(this.overrideProvider);
+        const twap = await OracleSdk.getPrice(getStorageAt, getBlockByNumber, BigInt(pool.pair), pool.quoteTokenIndex, (0, helper_1.bn)(blockNumber).sub(Math.floor(pool.window.toNumber() / 2)).toBigInt());
         let spot;
         const [r0, r1] = [pair.token0.reserve, pair.token1.reserve];
         if (pool.quoteTokenIndex == 0) {
