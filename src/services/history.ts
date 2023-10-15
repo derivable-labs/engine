@@ -1,12 +1,11 @@
 import { BigNumber, ethers } from 'ethers'
-import { PowerState } from 'powerLib/dist/powerLib'
-import { LogType, PoolType, TokenType } from '../types'
+import { LogType, TokenType } from '../types'
 import { NATIVE_ADDRESS, POOL_IDS } from '../utils/constant'
 import {
   add,
   bn,
   div,
-  formatMultiCallBignumber,
+  formatFloat,
   getTopics,
   max,
   mul,
@@ -170,8 +169,12 @@ export class History {
           const amount = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut
           const tokenR = tokens.find((t) => t.address === TOKEN_R)
           const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0])
-          //@ts-ignore
-          const priceRFormated = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote, 1)
+          let priceRFormated
+          if (!priceR?.gt(0)) {
+            priceRFormated = this.profile.configs.tokens?.[TOKEN_R]?.price ?? 0
+          } else {
+            priceRFormated = parseSqrtSpotPrice(priceR, tokenR!, tokenRQuote!, 1)
+          }
           entryValue = weiToNumber(amount.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18))
         }
 

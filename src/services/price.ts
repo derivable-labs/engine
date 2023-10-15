@@ -1,13 +1,14 @@
 import { ethers } from 'ethers'
 import ReserveTokenPrice from '../abi/ReserveTokenPrice.json'
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { bn, div, formatPercent, numberToWei, sub } from '../utils/helper'
+import { BIG, IEW, STR, WEI, bn, countDecimals, div, formatPercent, numberToWei, sub, truncate } from '../utils/helper'
 import { TokenType } from '../types'
 import { MINI_SECOND_PER_DAY } from '../utils/constant'
 import historyProvider from '../historyProvider'
 import { IEngineConfig } from '../utils/configs'
 import { Profile } from '../profile'
 import { isAddress } from 'ethers/lib/utils'
+const mdp = require('move-decimal-point')
 
 export class Price {
   chainId: number
@@ -92,7 +93,9 @@ export class Price {
       if (whiteListToken) {
         for (let address in whiteListToken) {
           if (whiteListToken[address].price) {
-            result[address] = bn(whiteListToken[address].price || '0x01000000000000000000000000')
+            const price = whiteListToken[address].price!
+            const dec = countDecimals(STR(price))
+            result[address] = BIG(truncate(mdp(STR(BIG(WEI(price, dec)).shl(96)), -dec)))
           }
         }
       }
