@@ -285,27 +285,25 @@ class Swap {
         }
         return result;
     }
-    multiSwap(steps, gasLimit) {
+    multiSwap(steps, gasLimit, onSubmitted) {
         return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const { params, value } = yield this.convertStepToActions([...steps]);
-                yield this.callStaticMultiSwap({
-                    params,
-                    value,
-                    gasLimit,
-                });
-                const contract = this.getRouterContract(this.signer);
-                const res = yield contract.exec(...params, {
-                    value,
-                    gasLimit: gasLimit || undefined,
-                });
-                const tx = yield res.wait(1);
-                console.log('tx', tx);
-                return tx;
+            const { params, value } = yield this.convertStepToActions([...steps]);
+            yield this.callStaticMultiSwap({
+                params,
+                value,
+                gasLimit,
+            });
+            const contract = this.getRouterContract(this.signer);
+            const res = yield contract.exec(...params, {
+                value,
+                gasLimit: gasLimit || undefined,
+            });
+            if (onSubmitted) {
+                onSubmitted({ hash: res.hash, steps });
             }
-            catch (e) {
-                throw e;
-            }
+            const tx = yield res.wait();
+            console.log('tx', tx);
+            return tx;
         });
     }
     getAddressByErc1155Address(address, TOKEN_R) {

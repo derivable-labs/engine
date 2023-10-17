@@ -158,3 +158,7 @@ export type SwapStepType = {
     currentBalanceOut?: BigNumber;
     uniPool?: string;
 };
+export type PendingSwapTransactionType = {
+    hash: string;
+    steps: SwapStepType[];
+};

@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from 'ethers';
-import { SwapStepType } from '../types';
+import { PendingSwapTransactionType, SwapStepType } from '../types';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { Profile } from '../profile';
 import { IDerivableContractAddress, IEngineConfig } from '../utils/configs';
@@ -15,6 +15,7 @@ export declare class Swap {
     config: IEngineConfig;
     profile: Profile;
     derivableAdr: IDerivableContractAddress;
+    pendingTxs: PendingSwapTransactionType[];
     constructor(config: IEngineConfig & {
         RESOURCE: Resource;
     }, profile: Profile);
@@ -84,7 +85,7 @@ export declare class Swap {
         pools: {};
         TOKEN_R: string;
     };
-    multiSwap(steps: SwapStepType[], gasLimit?: BigNumber): Promise<any>;
+    multiSwap(steps: SwapStepType[], gasLimit?: BigNumber, onSubmitted?: (pendingTx: PendingSwapTransactionType) => void): Promise<any>;
     getAddressByErc1155Address(address: string, TOKEN_R: string): string;
     getRouterContract(provider: any): ethers.Contract;
     getStateCalHelperContract(provider?: any): ethers.Contract;
