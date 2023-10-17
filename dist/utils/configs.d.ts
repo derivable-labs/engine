@@ -22,6 +22,7 @@ export interface INetworkConfig {
     name: string;
     nativeSymbol: string;
     wrappedTokenAddress: string;
+    nativePriceUSD: number;
     stablecoins: string[];
     tokens?: {
         [address: string]: {
