@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from 'ethers'
-import { SwapStepType } from '../types'
+import { PendingSwapTransactionType, SwapStepType } from '../types'
 import { bn, isErc1155Address, packId } from '../utils/helper'
 import { NATIVE_ADDRESS, POOL_IDS, ZERO_ADDRESS } from '../utils/constant'
 import { JsonRpcProvider } from '@ethersproject/providers'
@@ -23,6 +23,7 @@ export class Swap {
   config: IEngineConfig
   profile: Profile
   derivableAdr: IDerivableContractAddress
+  pendingTxs: PendingSwapTransactionType[]
 
   constructor(config: IEngineConfig & { RESOURCE: Resource }, profile: Profile) {
     this.config = config
@@ -359,26 +360,25 @@ export class Swap {
     return result
   }
 
-  async multiSwap(steps: SwapStepType[], gasLimit?: BigNumber) {
-    try {
-      const { params, value } = await this.convertStepToActions([...steps])
+  async multiSwap(steps: SwapStepType[], gasLimit?: BigNumber, onSubmitted?: (pendingTx: PendingSwapTransactionType) => void) {
+    const { params, value } = await this.convertStepToActions([...steps])
 
-      await this.callStaticMultiSwap({
-        params,
-        value,
-        gasLimit,
-      })
-      const contract = this.getRouterContract(this.signer)
-      const res = await contract.exec(...params, {
-        value,
-        gasLimit: gasLimit || undefined,
-      })
-      const tx = await res.wait(1)
-      console.log('tx', tx)
-      return tx
-    } catch (e) {
-      throw e
+    await this.callStaticMultiSwap({
+      params,
+      value,
+      gasLimit,
+    })
+    const contract = this.getRouterContract(this.signer)
+    const res = await contract.exec(...params, {
+      value,
+      gasLimit: gasLimit || undefined,
+    })
+    if (onSubmitted) {
+      onSubmitted({ hash: res.hash, steps })
     }
+    const tx = await res.wait()
+    console.log('tx', tx)
+    return tx
   }
 
   getAddressByErc1155Address(address: string, TOKEN_R: string) {
