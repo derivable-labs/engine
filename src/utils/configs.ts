@@ -24,6 +24,7 @@ export interface INetworkConfig {
   name: string
   nativeSymbol: string
   wrappedTokenAddress: string
+  nativePriceUSD: number
   stablecoins: string[]
   tokens?: { [address: string]: { price?: number; symbol: string; name: string; decimals: number } }
   helperContract: IHelperContract
