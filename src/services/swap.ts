@@ -380,6 +380,7 @@ export class Swap {
   async multiSwap(
     steps: SwapStepType[],
     gasLimit?: BigNumber,
+    gasPrice?: BigNumber,
     submitFetcherV2 = false,
     onSubmitted?: (pendingTx: PendingSwapTransactionType) => void,
   ): Promise<TransactionReceipt> {
@@ -390,11 +391,13 @@ export class Swap {
         params,
         value,
         gasLimit,
+        gasPrice: gasPrice || undefined
       })
       const contract = this.getRouterContract(this.signer)
       const res = await contract.exec(...params, {
         value,
         gasLimit: gasLimit || undefined,
+        gasPrice: gasPrice || undefined
       })
       if (onSubmitted) {
         onSubmitted({hash: res.hash, steps})
@@ -404,7 +407,7 @@ export class Swap {
       return tx
     } catch (e) {
       if (e?.reason === "OLD" && !submitFetcherV2) {
-        return this.multiSwap(steps, gasLimit, true, onSubmitted)
+        return this.multiSwap(steps, gasLimit, gasPrice,true, onSubmitted)
       }
       throw e
     }
