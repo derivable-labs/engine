@@ -453,16 +453,14 @@ export class Swap {
 
   async fetchPriceTx(pool: PoolType) {
     const blockNumber = await this.provider.getBlockNumber()
-    const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider)
     const getProof = OracleSdkAdapter.getProofFactory(this.providerGetProof)
     const getBlockByNumber = OracleSdkAdapter.getBlockByNumberFactory(this.overrideProvider)
     // get the proof from the SDK
     const proof = await OracleSdk.getProof(
-      getStorageAt,
       getProof,
       getBlockByNumber,
       BigInt(pool.pair),
-      BigInt(pool.quoteToken),
+      pool.quoteTokenIndex,
       bn(blockNumber).sub(pool.window.toNumber() >> 1).toBigInt()
     )
     // Connect to the network
@@ -480,10 +478,8 @@ export class Swap {
     const targetBlock = bn(blockNumber).sub(pool.window.toNumber() >> 1)
     const timestamp = (await this.provider.getBlock(targetBlock.toNumber())).timestamp
     const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider)
-    const getBlockByNumber = OracleSdkAdapter.getBlockByNumberFactory(this.overrideProvider)
     const accumulatorPrice = await OracleSdk.getAccumulatorPrice(
       getStorageAt,
-      getBlockByNumber,
       BigInt(pool.pair),
       pool.quoteTokenIndex,
       targetBlock.toBigInt()
