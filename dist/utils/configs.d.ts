@@ -30,6 +30,7 @@ export interface INetworkConfig {
             symbol: string;
             name: string;
             decimals: number;
+            logo: string;
         };
     };
     helperContract: IHelperContract;
