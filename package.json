@@ -25,6 +25,7 @@
     "@zoltu/ethereum-crypto": "^2.3.0",
     "@zoltu/ethereum-fetch-json-rpc": "^13.1.4",
     "@zoltu/ethereum-types": "^9.0.4",
+    "@zoltu/rlp-encoder": "^2.0.6",
     "assisted-json-rpc-provider": "git+ssh://git@github.com:derivable-labs/AssistedJsonRpcProvider.git#dev",
     "canonical-weth": "^1.4.0",
     "ethereum-multicall": "^2.15.0",

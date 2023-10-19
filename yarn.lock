@@ -482,6 +482,11 @@
   resolved "https://registry.yarnpkg.com/@zoltu/ethereum-types/-/ethereum-types-9.0.4.tgz#00f70d68c8a4c7d5047298689282988d894f775f"
   integrity sha512-XwSH21J8NTPlh61y6adBUzxIwJm3hyDkJ8GGz8Wkb5f3U9xozIwdtKhWjtUG3BCuHsmi3kWg3J4lomJpMojsBg==
 
+"@zoltu/rlp-encoder@^2.0.6":
+  version "2.0.6"
+  resolved "https://registry.yarnpkg.com/@zoltu/rlp-encoder/-/rlp-encoder-2.0.6.tgz#00bfd2d9766de3c0f15714f972e910ce1af4c075"
+  integrity sha512-Cu6bqeavzzWdIdYLhiuWR+RulJnWi0bdZbI+sgm2pGIqdzpkJHO0YxExiwEpFBkWeDEr7mBof26Bh2toTCVBqg==
+
 acorn-jsx@^5.2.0:
   version "5.3.2"
   resolved "https://registry.npmjs.org/acorn-jsx/-/acorn-jsx-5.3.2.tgz"

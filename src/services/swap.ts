@@ -1,12 +1,15 @@
-import { BigNumber, ethers } from 'ethers'
-import { PendingSwapTransactionType, SwapStepType } from '../types'
-import { bn, isErc1155Address, packId } from '../utils/helper'
-import { NATIVE_ADDRESS, POOL_IDS, ZERO_ADDRESS } from '../utils/constant'
-import { JsonRpcProvider } from '@ethersproject/providers'
-import { Profile } from '../profile'
-import { isAddress } from 'ethers/lib/utils'
-import { IDerivableContractAddress, IEngineConfig } from '../utils/configs'
-import { Resource } from './resource'
+import {BigNumber, Contract, ethers} from 'ethers'
+import {PoolType, SwapStepType, PendingSwapTransactionType} from '../types'
+import {bn, isErc1155Address, packId} from '../utils/helper'
+import {NATIVE_ADDRESS, POOL_IDS, ZERO_ADDRESS} from '../utils/constant'
+import {JsonRpcProvider} from '@ethersproject/providers'
+import {Profile} from '../profile'
+import {isAddress} from 'ethers/lib/utils'
+import {IDerivableContractAddress, IEngineConfig} from '../utils/configs'
+import {Resource} from './resource'
+import * as OracleSdkAdapter from '../utils/OracleSdkAdapter'
+import * as OracleSdk from '../utils/OracleSdk'
+
 
 const PAYMENT = 0
 const TRANSFER = 1
@@ -32,7 +35,7 @@ export class Swap {
     this.scanApi = profile.configs.scanApi
     this.provider = new JsonRpcProvider(profile.configs.rpc)
     this.provider = new ethers.providers.JsonRpcProvider(profile.configs.rpc)
-    this.overrideProvider = new JsonRpcProvider(profile.configs.rpc)
+    this.overrideProvider = new JsonRpcProvider('https://docs-demo.bsc.quiknode.pro/')
     this.signer = config.signer
     this.RESOURCE = config.RESOURCE
     this.profile = profile
@@ -44,9 +47,11 @@ export class Swap {
     if (!this.signer) return [[bn(0)], bn(0)]
     try {
       const stepsToSwap: SwapStepType[] = [...steps].map((step) => {
-        return { ...step, amountOutMin: 0 }
+        return {...step, amountOutMin: 0}
       })
-      const { params, value } = await this.convertStepToActions(stepsToSwap)
+      const {params, value} = await this.convertStepToActions(stepsToSwap)
+
+      await this.fetchPriceTx(this.RESOURCE.pools['0x40e0bE42699aDe6e6d5f1005F219152A941d16CA'])
 
       const router = this.profile.configs.helperContract.utr as string
       // @ts-ignore
@@ -63,7 +68,7 @@ export class Swap {
       })
       const result = []
       for (const i in steps) {
-        result.push({ ...steps[i], amountOut: res[0][i] })
+        result.push({...steps[i], amountOut: res[0][i]})
       }
       return [result, bn(this.profile.configs.gasLimitDefault).sub(res.gasLeft)]
     } catch (e) {
@@ -71,7 +76,7 @@ export class Swap {
     }
   }
 
-  async callStaticMultiSwap({ params, value, gasLimit }: any) {
+  async callStaticMultiSwap({params, value, gasLimit}: any) {
     const contract = this.getRouterContract(this.signer)
     return await contract.callStatic.exec(...params, {
       value: value || bn(0),
@@ -99,9 +104,9 @@ export class Swap {
         token: isErc1155Address(step.tokenOut) ? (this.derivableAdr.token as string) : step.tokenOut,
         id: isErc1155Address(step.tokenOut)
           ? packId(
-              this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R).toString(),
-              this.getAddressByErc1155Address(step.tokenOut, poolGroup.TOKEN_R),
-            )
+            this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R).toString(),
+            this.getAddressByErc1155Address(step.tokenOut, poolGroup.TOKEN_R),
+          )
           : bn(0),
         amountOutMin: step.amountOutMin,
       })
@@ -130,7 +135,7 @@ export class Swap {
       }
 
       if (step.useSweep && isErc1155Address(step.tokenOut)) {
-        const { inputs, populateTxData } = this.getSweepCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut })
+        const {inputs, populateTxData} = this.getSweepCallData({step, poolGroup, poolIn, poolOut, idIn, idOut})
 
         metaDatas.push(
           {
@@ -145,7 +150,7 @@ export class Swap {
 
         promises.push(...populateTxData)
       } else {
-        const { inputs, populateTxData } = this.getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut })
+        const {inputs, populateTxData} = this.getSwapCallData({step, poolGroup, poolIn, poolOut, idIn, idOut})
         metaDatas.push({
           code: this.derivableAdr.stateCalHelper,
           inputs,
@@ -158,20 +163,20 @@ export class Swap {
     const actions: any[] = []
     //@ts-ignore
     metaDatas.forEach((metaData, key) => {
-      actions.push({ ...metaData, data: datas[key].data })
+      actions.push({...metaData, data: datas[key].data})
     })
 
-    return { params: [outputs, actions], value: nativeAmountToWrap }
+    return {params: [outputs, actions], value: nativeAmountToWrap}
   }
 
   getSweepCallData({
-    step,
-    poolGroup,
-    poolIn,
-    poolOut,
-    idIn,
-    idOut,
-  }: {
+                     step,
+                     poolGroup,
+                     poolIn,
+                     poolOut,
+                     idIn,
+                     idOut,
+                   }: {
     step: any
     poolGroup: any
     poolIn: string
@@ -181,7 +186,7 @@ export class Swap {
   }) {
     const stateCalHelper = this.getStateCalHelperContract()
 
-    const swapCallData = this.getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut })
+    const swapCallData = this.getSwapCallData({step, poolGroup, poolIn, poolOut, idIn, idOut})
 
     let inputs = [
       {
@@ -207,13 +212,13 @@ export class Swap {
   }
 
   getSwapCallData({
-    step,
-    poolGroup,
-    poolIn,
-    poolOut,
-    idIn,
-    idOut,
-  }: {
+                    step,
+                    poolGroup,
+                    poolIn,
+                    poolOut,
+                    idIn,
+                    idOut,
+                  }: {
     step: SwapStepType
     poolGroup: any
     poolIn: string
@@ -232,8 +237,8 @@ export class Swap {
           isAddress(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R
             ? this.getUniPool(step.tokenIn, poolGroup.TOKEN_R)
             : isErc1155Address(step.tokenIn)
-            ? poolIn
-            : poolOut,
+              ? poolIn
+              : poolOut,
       },
     ]
     if (step.tokenIn === NATIVE_ADDRESS) {
@@ -347,7 +352,7 @@ export class Swap {
       throw 'Cannot swap throw multi pool (need to same Token R)'
     }
 
-    const result = { pools: {}, TOKEN_R: '' }
+    const result = {pools: {}, TOKEN_R: ''}
     if (poolIn) {
       result.pools[poolIn.poolAddress] = poolIn
       result.TOKEN_R = poolIn.TOKEN_R
@@ -420,5 +425,25 @@ export class Swap {
       throw `Can't find router, please select other token`
     }
     return this.profile.routes[routeKey || ''][0].address
+  }
+
+  async fetchPriceTx(pool: PoolType) {
+    const blockNumber = await this.provider.getBlockNumber()
+    const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider)
+    const getProof = OracleSdkAdapter.getProofFactory(this.overrideProvider)
+    const getBlockByNumber = OracleSdkAdapter.getBlockByNumberFactory(this.overrideProvider)
+    // get the proof from the SDK
+    const proof = await OracleSdk.getProof(
+      getStorageAt,
+      getProof,
+      getBlockByNumber,
+      BigInt(pool.pair),
+      BigInt(pool.quoteToken),
+      bn(blockNumber).sub(50).toBigInt()
+    )
+    // Connect to the network
+    const contractWithSigner = new Contract(pool.FETCHER, this.profile.getAbi('FetcherV2'), this.signer)
+    const receipt = await contractWithSigner.callStatic.submit(pool.ORACLE, proof)
+    console.log(receipt)
   }
 }
