@@ -407,7 +407,7 @@ export class Swap {
       return tx
     } catch (e) {
       if (e?.reason === "OLD" && !submitFetcherV2) {
-        return this.multiSwap(steps, gasLimit, gasPrice,true, onSubmitted)
+        return this.multiSwap(steps, gasLimit, gasPrice, true, onSubmitted)
       }
       throw e
     }
