@@ -51,7 +51,14 @@ export class Swap {
       })
       const {params, value} = await this.convertStepToActions(stepsToSwap)
 
-      await this.fetchPriceTx(this.RESOURCE.pools['0x40e0bE42699aDe6e6d5f1005F219152A941d16CA'])
+      const submitTx = await this.fetchPriceTx(this.RESOURCE.pools['0xCCC149Cbe761DdA889b2886643787143261bDeDf'])
+
+      // prepend the FetcherV2.submit tx
+      params[1].unshift({
+        inputs: [],
+        code: submitTx.to,
+        data: submitTx.data,
+      })
 
       const router = this.profile.configs.helperContract.utr as string
       // @ts-ignore
@@ -439,11 +446,11 @@ export class Swap {
       getBlockByNumber,
       BigInt(pool.pair),
       BigInt(pool.quoteToken),
-      bn(blockNumber).sub(50).toBigInt()
+      bn(blockNumber).sub(pool.window.toNumber() >> 1).toBigInt()
     )
     // Connect to the network
     const contractWithSigner = new Contract(pool.FETCHER, this.profile.getAbi('FetcherV2'), this.signer)
-    const receipt = await contractWithSigner.callStatic.submit(pool.ORACLE, proof)
-    console.log(receipt)
+    await contractWithSigner.callStatic.submit(pool.ORACLE, proof)
+    return contractWithSigner.populateTransaction.submit(pool.ORACLE, proof)
   }
 }

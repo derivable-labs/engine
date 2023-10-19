@@ -11,16 +11,16 @@ const testLocal = async () => {
   await engine.initServices()
   await engine.RESOURCE.fetchResourceData(configs.account)
 
-  const currentPool = engine.RESOURCE.poolGroups['0x49B355Bb422dC456314D160C353416afBcAF2996']
+  const currentPool = engine.RESOURCE.pools['0xCCC149Cbe761DdA889b2886643787143261bDeDf']
   engine.setCurrentPool({
     ...currentPool,
   })
 
-  const poolOut = '0x40e0bE42699aDe6e6d5f1005F219152A941d16CA'
+  const poolOut = currentPool.poolAddress
   const provider = new ethers.providers.JsonRpcProvider(engine.profile.configs.rpc)
   // @ts-ignore
   const tokenContract = new ethers.Contract( engine.profile.configs.derivable.token, TokenAbi, provider)
-  const currentBalanceOut = await tokenContract.balanceOf(configs.account, packId(POOL_IDS.A.toString(), poolOut))
+  const currentBalanceOut = await tokenContract.balanceOf(configs.account, packId(POOL_IDS.C.toString(), poolOut))
   const steps = [
     {
       amountIn: bn(numberToWei(0.01, 6)),
