@@ -11,8 +11,7 @@ import {
   mul,
   parseSqrtSpotPrice,
   kx,
-  rateFromHL,
-  getPrice
+  rateFromHL
 } from '../utils/helper'
 import {JsonRpcProvider} from '@ethersproject/providers'
 import _ from 'lodash'
@@ -20,8 +19,8 @@ import {IPairInfo, IPairsInfo, UniV3Pair} from './uniV3Pair'
 import {IDerivableContractAddress, IEngineConfig} from '../utils/configs'
 import {defaultAbiCoder} from 'ethers/lib/utils'
 import {Profile} from '../profile'
-import {createMemoryRpc, SignerFetchRpc} from "../utils/rpc-factories";
-import {ethGetBlockByNumber} from "../utils/adapters";
+import * as OracleSdk from '../utils/OracleSdk'
+import * as OracleSdkAdapter from '../utils/OracleSdkAdapter'
 
 const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
@@ -784,11 +783,10 @@ export class Resource {
 
   //@ts-ignore
   async getPrices(pools: { [key: string]: PoolType }, pairs: IPairsInfo): Promise<IPriceInfo> {
-    const rpc = await createMemoryRpc(this.profile.configs.rpc, 10n ** 9n)
-    const blockNumber = await rpc.getBlockNumber()
+    const blockNumber = await this.overrideProvider.getBlockNumber()
 
     const promises = Object.values(pools).filter((pool) => pool.FETCHER !== ZERO_ADDRESS).map((pool) => {
-      return this.getPrice(pool, blockNumber, rpc, pairs[pool.pair])
+      return this.getPrice(pool, blockNumber, pairs[pool.pair])
     })
 
     const result = {}
@@ -799,9 +797,13 @@ export class Resource {
     return result
   }
 
-  async getPrice(pool: PoolType, blockNumber: bigint, rpc: SignerFetchRpc, pair: IPairInfo) {
-    const twap = await getPrice(rpc.getStorageAt,
-      ethGetBlockByNumber.bind(undefined, rpc),
+  async getPrice(pool: PoolType, blockNumber: number, pair: IPairInfo) {
+    const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider)
+    const getBlockByNumber = OracleSdkAdapter.getBlockByNumberFactory(this.overrideProvider)
+
+    const twap = await OracleSdk.getPrice(
+      getStorageAt,
+      getBlockByNumber,
       BigInt(pool.pair),
       pool.quoteTokenIndex,
       bn(blockNumber).sub(Math.floor(pool.window.toNumber() / 2)).toBigInt()
