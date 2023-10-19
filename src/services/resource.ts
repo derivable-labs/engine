@@ -607,7 +607,8 @@ export class Resource {
   }
 
   calcPoolInfo(pool: PoolType) {
-    const {MARK, states} = pool
+    const {FETCHER, MARK, states} = pool
+    const version = (!FETCHER || FETCHER == ZERO_ADDRESS) ? 3 : 2
     const {R, rA, rB, rC, a, b, spot} = states
     const riskFactor = rC.gt(0) ? div(rA.sub(rB), rC) : '0'
     const deleverageRiskA = R.isZero()
@@ -623,7 +624,7 @@ export class Resource {
       .div(R)
       .toNumber() / this.unit
     const k = pool.k.toNumber()
-    const power = k / 2
+    const power = version == 3 ? k/2 : k
     const sides = {
       [A]: {} as any,
       [B]: {} as any,
