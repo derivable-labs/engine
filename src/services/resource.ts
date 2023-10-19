@@ -731,6 +731,7 @@ export class Resource {
     for (let address in tokens) {
       result.push({
         address,
+        logo: tokens[address].logo,
         name: tokens[address].name,
         symbol: tokens[address].symbol,
         decimal: tokens[address].decimals,
