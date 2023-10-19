@@ -451,8 +451,10 @@ export class Swap {
     return this.profile.routes[routeKey || ''][0].address
   }
 
-  async fetchPriceTx(pool: PoolType) {
-    const blockNumber = await this.provider.getBlockNumber()
+  async fetchPriceTx(pool: PoolType, blockNumber?: number) {
+    if (blockNumber == null) {
+      blockNumber = await this.provider.getBlockNumber()
+    }
     const getProof = OracleSdkAdapter.getProofFactory(this.providerGetProof)
     const getBlockByNumber = OracleSdkAdapter.getBlockByNumberFactory(this.overrideProvider)
     // get the proof from the SDK
@@ -473,8 +475,10 @@ export class Swap {
     }
   }
 
-  async fetchPriceMockTx(pool: PoolType) {
-    const blockNumber = await this.provider.getBlockNumber()
+  async fetchPriceMockTx(pool: PoolType, blockNumber?: number) {
+    if (blockNumber == null) {
+      blockNumber = await this.provider.getBlockNumber()
+    }
     const targetBlock = bn(blockNumber).sub(pool.window.toNumber() >> 1)
     const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider)
     const accumulator = await OracleSdk.getAccumulatorPrice(
