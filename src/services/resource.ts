@@ -302,6 +302,10 @@ export class Resource {
         const quoteTokenIndex = bn(data.ORACLE.slice(0, 3)).gt(0) ? 1 : 0
         const window = bn('0x' + data.ORACLE.substring(2 + 8, 2 + 8 + 8))
 
+        if(data.FETCHER !== ZERO_ADDRESS && data.FETCHER !== this.profile.configs.derivable.uniswapV2Fetcher) {
+          return
+        }
+
         data.dTokens = powers.map((value, key) => {
           return {power: value, index: key}
         })
