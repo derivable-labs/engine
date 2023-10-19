@@ -1,24 +1,38 @@
-import { BigNumber, ethers } from 'ethers'
-import { LOCALSTORAGE_KEY, POOL_IDS } from '../utils/constant'
-import { Multicall } from 'ethereum-multicall'
-import { LogType, ParseLogType, PoolGroupsType, PoolsType, PoolType, Storage, TokenType } from '../types'
-import { bn, div, formatMultiCallBignumber, getNormalAddress, getTopics, mul, parseSqrtSpotPrice, kx, rateFromHL } from '../utils/helper'
-import { JsonRpcProvider } from '@ethersproject/providers'
+import {BigNumber, Contract, ethers} from 'ethers'
+import {LOCALSTORAGE_KEY, POOL_IDS, ZERO_ADDRESS} from '../utils/constant'
+import {Multicall} from 'ethereum-multicall'
+import {LogType, ParseLogType, PoolGroupsType, PoolsType, PoolType, Storage, TokenType} from '../types'
+import {
+  bn,
+  div,
+  formatMultiCallBignumber,
+  getNormalAddress,
+  getTopics,
+  mul,
+  parseSqrtSpotPrice,
+  kx,
+  rateFromHL,
+  getPrice
+} from '../utils/helper'
+import {JsonRpcProvider} from '@ethersproject/providers'
 import _ from 'lodash'
-import { UniV3Pair } from './uniV3Pair'
-import { IDerivableContractAddress, IEngineConfig } from '../utils/configs'
-import { defaultAbiCoder } from 'ethers/lib/utils'
-import { Profile } from '../profile'
+import {IPairInfo, IPairsInfo, UniV3Pair} from './uniV3Pair'
+import {IDerivableContractAddress, IEngineConfig} from '../utils/configs'
+import {defaultAbiCoder} from 'ethers/lib/utils'
+import {Profile} from '../profile'
+import {createMemoryRpc, SignerFetchRpc} from "../utils/rpc-factories";
+import {ethGetBlockByNumber} from "../utils/adapters";
 
-const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider')
+const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
+export const Q128 = bn(1).shl(128)
 
-const { A, B, C } = POOL_IDS
+const {A, B, C} = POOL_IDS
 
 function numDiv(b: BigNumber, unit: number = 1): number {
   try {
     return b.toNumber() / unit
-  } catch(err) {
+  } catch (err) {
     if (err.reason == 'overflow') {
       return Infinity
     }
@@ -32,6 +46,13 @@ type ResourceData = {
   swapLogs: LogType[]
   transferLogs: LogType[]
   poolGroups: any
+}
+
+type IPriceInfo = {
+  [pool: string]: {
+    twap: BigNumber
+    spot: BigNumber
+  }
 }
 
 export class Resource {
@@ -74,8 +95,8 @@ export class Resource {
     let result: any = {}
     if (!this.chainId) return result
     const [resultCached, newResource] = await Promise.all([this.getResourceCached(account), this.getNewResource(account)])
-    this.poolGroups = { ...resultCached.poolGroups, ...newResource.poolGroups }
-    this.pools = { ...resultCached.pools, ...newResource.pools }
+    this.poolGroups = {...resultCached.poolGroups, ...newResource.poolGroups}
+    this.pools = {...resultCached.pools, ...newResource.pools}
     this.tokens = [...resultCached.tokens, ...newResource.tokens]
     this.swapLogs = [...resultCached.swapLogs, ...newResource.swapLogs]
     this.transferLogs = [...resultCached.transferLogs, ...newResource.transferLogs]
@@ -95,13 +116,13 @@ export class Resource {
   }
 
   cacheDdlLog({
-    swapLogs,
-    ddlLogs,
-    //@ts-ignore
-    transferLogs,
-    headBlock,
-    account,
-  }: {
+                swapLogs,
+                ddlLogs,
+                //@ts-ignore
+                transferLogs,
+                headBlock,
+                account,
+              }: {
     swapLogs: any
     ddlLogs: any
     transferLogs: any
@@ -161,7 +182,7 @@ export class Resource {
     ]
 
     if (ddlLogsParsed && ddlLogsParsed.length > 0) {
-      const { tokens, pools, poolGroups } = await this.generatePoolData(ddlLogsParsed, transferLogsParsed)
+      const {tokens, pools, poolGroups} = await this.generatePoolData(ddlLogsParsed, transferLogsParsed)
       results.tokens = [...tokens, ...results.tokens]
       results.pools = pools
       results.poolGroups = poolGroups
@@ -172,7 +193,7 @@ export class Resource {
     if (transferLogsParsed && transferLogsParsed.length > 0) {
       results.transferLogs = transferLogsParsed
     }
-    this.pools = { ...results.pools, ...this.pools }
+    this.pools = {...results.pools, ...this.pools}
     return results
   }
 
@@ -181,13 +202,13 @@ export class Resource {
     const etherscanConfig =
       typeof this.scanApi === 'string'
         ? {
-            url: this.scanApi,
-            maxResults: 1000,
-            rangeThreshold: 0,
-            rateLimitCount: 1,
-            rateLimitDuration: 5000,
-            apiKeys: this.scanApiKey ? [this.scanApiKey] : [],
-          }
+          url: this.scanApi,
+          maxResults: 1000,
+          rangeThreshold: 0,
+          rateLimitCount: 1,
+          rateLimitDuration: 5000,
+          apiKeys: this.scanApiKey ? [this.scanApiKey] : [],
+        }
         : this.scanApi
 
     const provider = new AssistedJsonRpcProvider(this.providerToGetLog, etherscanConfig)
@@ -249,17 +270,17 @@ export class Resource {
           result.transferLogs = transferLogs
         }
         if (ddlLogs && ddlLogs.length > 0) {
-          const { tokens, pools, poolGroups } = await this.generatePoolData(ddlLogs, transferLogs)
+          const {tokens, pools, poolGroups} = await this.generatePoolData(ddlLogs, transferLogs)
           result.tokens = tokens
           result.pools = pools
           result.poolGroups = poolGroups
         }
-        this.pools = { ...result.pools, ...this.pools }
+        this.pools = {...result.pools, ...this.pools}
         return result
       })
       .catch((e: any) => {
         console.error(e)
-        return { pools: {}, tokens: [], swapLogs: [], transferLogs: [] }
+        return {pools: {}, tokens: [], swapLogs: [], transferLogs: []}
       })
   }
 
@@ -277,19 +298,32 @@ export class Resource {
       if (log.name === 'PoolCreated') {
         const data = log.args
         const powers = [log.args.k.toNumber(), -log.args.k.toNumber()]
+        const pair = ethers.utils.getAddress('0x' + data.ORACLE.slice(-40))
+        const quoteTokenIndex = bn(data.ORACLE.slice(0, 3)).gt(0) ? 1 : 0
+        const window = bn('0x' + data.ORACLE.substring(2 + 8, 2+8+8))
+        // const window = bn(data.ORACLE).sub(pair).sub(bn(quoteTokenIndex).shl(255)).shr(256 - 60)
+
+        //0x80000000000000060000000031c77f72bcc209ad00e3b7be13d719c08cb7ba7b
+        //0x800000000000012c00000000bae622d0fa237a5105b0c445864a419620a59d83
+
         data.dTokens = powers.map((value, key) => {
-          return { power: value, index: key }
+          return {power: value, index: key}
         })
 
-        data.dTokens = (data.dTokens as { index: number; power: number }[]).map((data) => `${log.address}-${data.index}`)
+        data.dTokens = (data.dTokens as {
+          index: number;
+          power: number
+        }[]).map((data) => `${log.address}-${data.index}`)
 
         poolData[log.address] = {
           ...data,
           poolAddress: log.address,
           powers,
           cToken: data.TOKEN_R,
+          pair,
+          window,
+          quoteTokenIndex
         }
-        const pair = ethers.utils.getAddress('0x' + data.ORACLE.slice(-40))
 
         allUniPools.push(pair)
         allTokens.push(data.TOKEN_R)
@@ -311,11 +345,9 @@ export class Resource {
    * @param listPools
    * @param uniPools
    */
-  //@ts-ignore
   async loadStatesData(
     listTokens: string[],
     listPools: { [key: string]: PoolType },
-    //@ts-ignore
     uniPools: string[],
   ): Promise<{
     tokens: TokenType[]
@@ -329,16 +361,19 @@ export class Resource {
     })
     const normalTokens = _.uniq(getNormalAddress(listTokens))
 
+    const pairsInfo = await this.UNIV3PAIR.getPairsInfo({
+      pairAddresses: _.uniq(uniPools),
+    })
+
+    const pricesInfo = await this.getPrices(listPools, pairsInfo)
+
     // @ts-ignore
-    const context: ContractCallContext[] = this.getMultiCallRequest(normalTokens, listPools)
-    const [{ results }, pairsInfo] = await Promise.all([
+    const context: ContractCallContext[] = this.getMultiCallRequest(normalTokens, listPools, pricesInfo)
+    const [{results}] = await Promise.all([
       multicall.call(context),
-      this.UNIV3PAIR.getPairsInfo({
-        pairAddresses: _.uniq(uniPools),
-      }),
     ])
 
-    const { tokens: tokensArr, poolsState } = this.parseMultiCallResponse(results, Object.keys(listPools))
+    const {tokens: tokensArr, poolsState} = this.parseMultiCallResponse(results, Object.keys(listPools))
     const tokens: any[] = []
     for (let i = 0; i < tokensArr.length; i++) {
       tokens.push({
@@ -350,7 +385,7 @@ export class Resource {
       })
     }
 
-    const pools = { ...listPools }
+    const pools = {...listPools}
     const poolGroups = {}
 
     for (const i in pools) {
@@ -364,7 +399,7 @@ export class Resource {
         ...this.calcPoolInfo(pools[i]),
       }
 
-      const { MARK: _MARK, ORACLE, k: _k } = pools[i]
+      const {MARK: _MARK, ORACLE, k: _k} = pools[i]
 
       const quoteTokenIndex = bn(ORACLE.slice(0, 3)).gt(0) ? 1 : 0
       const pair = ethers.utils.getAddress('0x' + ORACLE.slice(-40))
@@ -382,7 +417,7 @@ export class Resource {
       if (poolGroups[id]) {
         poolGroups[id].pools[i] = pools[i]
       } else {
-        poolGroups[id] = { pools: { [i]: pools[i] } }
+        poolGroups[id] = {pools: {[i]: pools[i]}}
         poolGroups[id].UTR = pools[i].UTR
         poolGroups[id].pair = pairsInfo[pair]
         poolGroups[id].quoteTokenIndex = quoteTokenIndex
@@ -469,7 +504,7 @@ export class Resource {
     }
   }
 
-  getRentRate({ rDcLong, rDcShort, R }: { R: BigNumber; rDcLong: BigNumber; rDcShort: BigNumber }, rentRate: BigNumber) {
+  getRentRate({rDcLong, rDcShort, R}: { R: BigNumber; rDcLong: BigNumber; rDcShort: BigNumber }, rentRate: BigNumber) {
     const diff = bn(rDcLong).sub(rDcShort).abs()
     const rate = R.isZero() ? bn(0) : diff.mul(rentRate).div(R)
     return {
@@ -501,12 +536,11 @@ export class Resource {
    * @param normalTokens
    * @param listPools
    */
-  //@ts-ignore
   getMultiCallRequest(
-    // @ts-ignore
     normalTokens: string[],
-    // @ts-ignore
     listPools: { [key: string]: PoolType },
+    //@ts-ignore
+    pricesInfo: IPriceInfo,
   ) {
     const request: any = [
       {
@@ -535,7 +569,12 @@ export class Resource {
           {
             reference: i,
             methodName: 'compute',
-            methodParameters: [this.derivableAddress.token, 5],
+            methodParameters: [
+              this.derivableAddress.token,
+              5,
+              pricesInfo[listPools[i].poolAddress]?.twap || bn(0),
+              pricesInfo[listPools[i].poolAddress]?.spot || bn(0),
+            ],
           },
         ],
       })
@@ -569,27 +608,27 @@ export class Resource {
       }
     })
 
-    return { tokens, poolsState: pools }
+    return {tokens, poolsState: pools}
   }
 
   calcPoolInfo(pool: PoolType) {
-    const { MARK, states } = pool
-    const { R, rA, rB, rC, a, b, spot } = states
+    const {MARK, states} = pool
+    const {R, rA, rB, rC, a, b, spot} = states
     const riskFactor = rC.gt(0) ? div(rA.sub(rB), rC) : '0'
     const deleverageRiskA = R.isZero()
       ? 0
       : rA
-          .mul(2 * this.unit)
-          .div(R)
-          .toNumber() / this.unit
+      .mul(2 * this.unit)
+      .div(R)
+      .toNumber() / this.unit
     const deleverageRiskB = R.isZero()
       ? 0
       : rB
-          .mul(2 * this.unit)
-          .div(R)
-          .toNumber() / this.unit
+      .mul(2 * this.unit)
+      .div(R)
+      .toNumber() / this.unit
     const k = pool.k.toNumber()
-    const power = k/2
+    const power = k / 2
     const sides = {
       [A]: {} as any,
       [B]: {} as any,
@@ -692,7 +731,8 @@ export class Resource {
         let appName = ''
         try {
           appName = ethers.utils.parseBytes32String(decodeLog.args.topic1)
-        } catch (e) {}
+        } catch (e) {
+        }
 
         let data: any = decodeLog
         if (appName === 'PoolCreated') {
@@ -738,5 +778,45 @@ export class Resource {
       })
     }
     return result
+  }
+
+  //@ts-ignore
+  async getPrices(pools: { [key: string]: PoolType }, pairs: IPairsInfo): Promise<IPriceInfo> {
+    const rpc = await createMemoryRpc(this.profile.configs.rpc, 10n ** 9n)
+    const blockNumber = await rpc.getBlockNumber()
+
+    const promises = Object.values(pools).filter((pool) => pool.FETCHER !== ZERO_ADDRESS).map((pool) => {
+      return this.getPrice(pool, blockNumber, rpc, pairs[pool.pair])
+    })
+
+    const result = {}
+    const res = await Promise.all(promises)
+    res.forEach((priceInfo) => {
+      result[priceInfo.poolAddress] = {spot: priceInfo.spot, twap: priceInfo.twap}
+    })
+    return result
+  }
+
+  async getPrice(pool: PoolType, blockNumber: bigint, rpc: SignerFetchRpc, pair: IPairInfo) {
+    const twap = await getPrice(rpc.getStorageAt,
+      ethGetBlockByNumber.bind(undefined, rpc),
+      BigInt(pool.pair),
+      pool.quoteTokenIndex,
+      bn(blockNumber).sub(Math.floor(pool.window.toNumber() / 2)).toBigInt()
+    )
+
+    let spot
+    const [r0, r1] = [pair.token0.reserve, pair.token1.reserve]
+    if (pool.quoteTokenIndex == 0) {
+      spot = r0.mul(Q128).div(r1)
+    } else {
+      spot = r1.mul(Q128).div(r0)
+    }
+
+    return {
+      poolAddress: pool.poolAddress,
+      twap: bn((twap * 2n ** 16n).toString()),
+      spot: twap === 0n ? bn(0) : spot
+    }
   }
 }
