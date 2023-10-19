@@ -479,12 +479,21 @@ export class Swap {
     const blockNumber = await this.provider.getBlockNumber()
     const targetBlock = bn(blockNumber).sub(pool.window.toNumber() >> 1)
     const timestamp = (await this.provider.getBlock(targetBlock.toNumber())).timestamp
+    const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider)
+    const getBlockByNumber = OracleSdkAdapter.getBlockByNumberFactory(this.overrideProvider)
+    const accumulatorPrice = await OracleSdk.getAccumulatorPrice(
+      getStorageAt,
+      getBlockByNumber,
+      BigInt(pool.pair),
+      pool.quoteTokenIndex,
+      targetBlock.toBigInt()
+    )
 
     // Connect to the network
     const contractWithSigner = new Contract(pool.FETCHER, this.profile.getAbi('FetcherV2Mock').abi, this.signer)
     const data = await contractWithSigner.populateTransaction.submitPrice(
       pool.ORACLE,
-      pool.states.twap,
+      bn(accumulatorPrice),
       targetBlock.toBigInt(),
       timestamp
     )
