@@ -128,6 +128,7 @@ export type TokenType = {
   decimal: number
   name: string
   symbol: string
+  icon?: string
 }
 
 export type MaturitiesType = { [key: string]: BigNumber }
