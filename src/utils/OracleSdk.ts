@@ -81,7 +81,7 @@ export async function getPrice(eth_getStorageAt: EthGetStorageAt, eth_getBlockBy
 	return timeDelta === 0n ? accumulatorDelta : accumulatorDelta / timeDelta
 }
 
-export async function getAccumulatorPrice(eth_getStorageAt: EthGetStorageAt, exchangeAddress: bigint, quoteTokenIndex: number, blockNumber: bigint): Promise<bigint> {
+export async function getAccumulatorPrice(eth_getStorageAt: EthGetStorageAt, exchangeAddress: bigint, quoteTokenIndex: number, blockNumber: bigint): Promise<{price: bigint, timestamp: bigint}> {
 	const priceAccumulatorSlot = quoteTokenIndex == 0 ? 10n : 9n
 	const [
 		reservesAndTimestamp,
@@ -97,7 +97,10 @@ export async function getAccumulatorPrice(eth_getStorageAt: EthGetStorageAt, exc
 	if (reserve1 === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} does not have any reserves for token1.`)
 	if (blockTimestampLast === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} has not had its first accumulator update (or it is year 2106).`)
 	if (accumulator === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} has not had its first accumulator update (or it is 136 years since launch).`)
-	return accumulator
+	return {
+		price: accumulator,
+		timestamp: blockTimestampLast
+	}
 }
 
 export async function getProof(eth_getProof: EthGetProof, eth_getBlockByNumber: EthGetBlockByNumber, exchangeAddress: bigint, quoteTokenIndex: number, blockNumber: bigint): Promise<Proof> {

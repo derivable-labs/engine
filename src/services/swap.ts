@@ -476,9 +476,8 @@ export class Swap {
   async fetchPriceMockTx(pool: PoolType) {
     const blockNumber = await this.provider.getBlockNumber()
     const targetBlock = bn(blockNumber).sub(pool.window.toNumber() >> 1)
-    const timestamp = (await this.provider.getBlock(targetBlock.toNumber())).timestamp
     const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider)
-    const accumulatorPrice = await OracleSdk.getAccumulatorPrice(
+    const accumulator = await OracleSdk.getAccumulatorPrice(
       getStorageAt,
       BigInt(pool.pair),
       pool.quoteTokenIndex,
@@ -489,9 +488,9 @@ export class Swap {
     const contractWithSigner = new Contract(pool.FETCHER, this.profile.getAbi('FetcherV2Mock').abi, this.signer)
     const data = await contractWithSigner.populateTransaction.submitPrice(
       pool.ORACLE,
-      bn(accumulatorPrice),
+      bn(accumulator.price),
       targetBlock.toBigInt(),
-      timestamp
+      accumulator.timestamp
     )
     return {
       inputs: [],
