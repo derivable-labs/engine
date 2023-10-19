@@ -162,6 +162,14 @@ export const parseSqrtSpotPrice = (value: BigNumber, token0: TokenType, token1: 
   return formatFloat(price, 18)
 }
 
+export const parseSpotPrice = (value: BigNumber, token0: TokenType, token1: TokenType, quoteTokenIndex: number) => {
+  let price = weiToNumber(value.mul(numberToWei(1, token0?.decimal)).shr(128), token1?.decimal)
+  if (quoteTokenIndex === 0) {
+    price = weiToNumber(bn(numberToWei(1, 36)).div(bn(numberToWei(price))))
+  }
+  return formatFloat(price, 18)
+}
+
 export const parseSqrtX96 = (price: BigNumber, baseToken: TokenType, quoteToken: TokenType) => {
   return weiToNumber(
     price

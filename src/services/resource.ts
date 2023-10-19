@@ -11,7 +11,8 @@ import {
   mul,
   parseSqrtSpotPrice,
   kx,
-  rateFromHL
+  rateFromHL,
+  parseSpotPrice
 } from '../utils/helper'
 import {JsonRpcProvider} from '@ethersproject/providers'
 import _ from 'lodash'
@@ -429,7 +430,10 @@ export class Resource {
           spotBase: poolsState[i].spot,
           ...poolsState[i],
         }
-        poolGroups[id].basePrice = parseSqrtSpotPrice(poolsState[i].spot, baseToken, quoteToken, 1)
+        const exp = (!pools[i].FETCHER || pools[i].FETCHER == ZERO_ADDRESS) ? 2 : 1
+        poolGroups[id].basePrice = exp == 2
+          ? parseSqrtSpotPrice(poolsState[i].spot, baseToken, quoteToken, 1)
+          : parseSpotPrice(poolsState[i].spot, baseToken, quoteToken, 1)
       }
 
       const rdc = this.getRdc(Object.values(poolGroups[id].pools))
