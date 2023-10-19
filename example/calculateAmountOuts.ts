@@ -11,7 +11,7 @@ const testLocal = async () => {
   await engine.initServices()
   await engine.RESOURCE.fetchResourceData(configs.account)
 
-  const currentPool = engine.RESOURCE.pools['0xCCC149Cbe761DdA889b2886643787143261bDeDf']
+  const currentPool = engine.RESOURCE.pools['0x1A7b61cFc379873C1eC57D4f9ca6A6B5b69306b0']
   engine.setCurrentPool({
     ...currentPool,
   })
