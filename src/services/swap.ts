@@ -160,7 +160,7 @@ export class Swap {
 
       if (submitFetcherV2) {
         const pool = isErc1155Address(step.tokenIn) ? this.RESOURCE.pools[poolIn] : this.RESOURCE.pools[poolOut]
-        promises.push(isCalculate ? this.fetchPriceMockTx(pool) : this.fetchPriceTx(pool) )
+        promises.push(isCalculate ? this.fetchPriceMockTx(pool) : this.fetchPriceTx(pool))
       }
     })
     const datas: any[] = await Promise.all(promises)
@@ -378,11 +378,19 @@ export class Swap {
   }
 
   async multiSwap(
-    steps: SwapStepType[],
-    gasLimit?: BigNumber,
-    gasPrice?: BigNumber,
-    submitFetcherV2 = false,
-    onSubmitted?: (pendingTx: PendingSwapTransactionType) => void,
+    {
+      steps,
+      gasLimit,
+      gasPrice,
+      submitFetcherV2 = false,
+      onSubmitted
+    }: {
+      steps: SwapStepType[],
+      gasLimit?: BigNumber,
+      gasPrice?: BigNumber,
+      submitFetcherV2?: boolean,
+      onSubmitted?: (pendingTx: PendingSwapTransactionType) => void,
+    }
   ): Promise<TransactionReceipt> {
     try {
       const {params, value} = await this.convertStepToActions([...steps], submitFetcherV2)
@@ -407,7 +415,7 @@ export class Swap {
       return tx
     } catch (e) {
       if (e?.reason === "OLD" && !submitFetcherV2) {
-        return this.multiSwap(steps, gasLimit, gasPrice, true, onSubmitted)
+        return this.multiSwap({steps, gasLimit, gasPrice, submitFetcherV2: true, onSubmitted})
       }
       throw e
     }

@@ -33,7 +33,11 @@ const testLocal = async () => {
   ]
 
   try {
-    const res = await engine.SWAP.multiSwap(steps, bn(2000000), bn(7e9))
+    const res = await engine.SWAP.multiSwap({
+      steps,
+      gasLimit: bn(2000000),
+      gasPrice: bn(7e9)
+    })
     console.log(res)
   } catch (e) {
     console.log(e)
