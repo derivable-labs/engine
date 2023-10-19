@@ -28,6 +28,7 @@
     "@zoltu/rlp-encoder": "^2.0.6",
     "assisted-json-rpc-provider": "git+ssh://git@github.com:derivable-labs/AssistedJsonRpcProvider.git#dev",
     "canonical-weth": "^1.4.0",
+    "dotenv": "^16.3.1",
     "ethereum-multicall": "^2.15.0",
     "ethers": "^5.5.4",
     "lodash": "^4.17.21",
