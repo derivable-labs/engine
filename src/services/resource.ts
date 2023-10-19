@@ -82,7 +82,7 @@ export class Resource {
     this.account = engineConfigs.account
     this.storage = engineConfigs.storage
     this.account = engineConfigs.account
-    this.providerToGetLog = new ethers.providers.JsonRpcProvider(profile.configs.rpcToGetLogs || profile.configs.rpc)
+    this.providerToGetLog = new ethers.providers.JsonRpcProvider(profile.configs.rpcGetLog || profile.configs.rpc)
     this.provider = new ethers.providers.JsonRpcProvider(profile.configs.rpc)
     this.UNIV3PAIR = new UniV3Pair(engineConfigs, profile)
     this.overrideProvider = new JsonRpcProvider(profile.configs.rpc)

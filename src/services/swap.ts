@@ -20,6 +20,7 @@ export class Swap {
   chainId: number
   scanApi?: string
   provider: ethers.providers.Provider
+  providerGetProof: JsonRpcProvider
   overrideProvider: JsonRpcProvider
   signer?: ethers.providers.JsonRpcSigner
   RESOURCE: Resource
@@ -33,9 +34,9 @@ export class Swap {
     this.account = config.account
     this.chainId = config.chainId
     this.scanApi = profile.configs.scanApi
-    this.provider = new JsonRpcProvider(profile.configs.rpc)
     this.provider = new ethers.providers.JsonRpcProvider(profile.configs.rpc)
-    this.overrideProvider = new JsonRpcProvider('https://docs-demo.bsc.quiknode.pro/')
+    this.overrideProvider = new JsonRpcProvider(profile.configs.rpc)
+    this.providerGetProof = new JsonRpcProvider(profile.configs.rpcGetProof || profile.configs.rpc)
     this.signer = config.signer
     this.RESOURCE = config.RESOURCE
     this.profile = profile
@@ -48,16 +49,11 @@ export class Swap {
       const stepsToSwap: SwapStepType[] = [...steps].map((step) => {
         return {...step, amountOutMin: 0}
       })
-      const {params, value} = await this.convertStepToActions(stepsToSwap, fetcherV2)
+      const {params, value} = await this.convertStepToActions(stepsToSwap, fetcherV2, true)
 
       const router = this.profile.configs.helperContract.utr as string
-      // @ts-ignore
-      this.overrideProvider.setStateOverride({
-        [router]: {
-          code: this.profile.getAbi('UTROverride').deployedBytecode,
-        },
-      })
-      const contract = new ethers.Contract(router, this.profile.getAbi('UTROverride').abi, this.overrideProvider)
+
+      const contract = new ethers.Contract(router, this.profile.getAbi('UTROverride').abi, this.getOverrideProvider())
       const res = await contract.callStatic.exec(...params, {
         from: this.account,
         value,
@@ -69,7 +65,7 @@ export class Swap {
       }
       return [result, bn(this.profile.configs.gasLimitDefault).sub(res.gasLeft)]
     } catch (e) {
-      if(e?.reason === "OLD" && !fetcherV2) {
+      if (e?.reason === "OLD" && !fetcherV2) {
         return this.calculateAmountOuts(steps, true)
       }
       throw e
@@ -84,7 +80,10 @@ export class Swap {
     })
   }
 
-  async convertStepToActions(steps: SwapStepType[], submitFetcherV2: boolean): Promise<{ params: any; value: BigNumber }> {
+  async convertStepToActions(steps: SwapStepType[], submitFetcherV2: boolean, isCalculate = false): Promise<{
+    params: any;
+    value: BigNumber
+  }> {
     // @ts-ignore
     const stateCalHelper = this.getStateCalHelperContract()
 
@@ -159,8 +158,9 @@ export class Swap {
         promises.push(...populateTxData)
       }
 
-      if(submitFetcherV2) {
-        promises.push(this.fetchPriceTx(isErc1155Address(step.tokenIn) ? this.RESOURCE.pools[poolIn] : this.RESOURCE.pools[poolOut]))
+      if (submitFetcherV2) {
+        const pool = isErc1155Address(step.tokenIn) ? this.RESOURCE.pools[poolIn] : this.RESOURCE.pools[poolOut]
+        promises.push(isCalculate ? this.fetchPriceMockTx(pool) : this.fetchPriceTx(pool) )
       }
     })
     const datas: any[] = await Promise.all(promises)
@@ -171,9 +171,9 @@ export class Swap {
       actions.push({...metaData, data: datas[key].data})
     })
 
-    if(submitFetcherV2) {
+    if (submitFetcherV2) {
       // data in last of `datas` is submitFetchV2 data
-      for(let i = metaDatas.length; i < datas.length; i++) {
+      for (let i = metaDatas.length; i < datas.length; i++) {
         actions.unshift(datas[datas.length - 1])
       }
     }
@@ -397,13 +397,13 @@ export class Swap {
         gasLimit: gasLimit || undefined,
       })
       if (onSubmitted) {
-        onSubmitted({ hash: res.hash, steps })
+        onSubmitted({hash: res.hash, steps})
       }
       const tx = await res.wait(1)
       console.log('tx', tx)
       return tx
     } catch (e) {
-      if(e?.reason === "OLD" && !submitFetcherV2) {
+      if (e?.reason === "OLD" && !submitFetcherV2) {
         return this.multiSwap(steps, gasLimit, true, onSubmitted)
       }
       throw e
@@ -454,7 +454,7 @@ export class Swap {
   async fetchPriceTx(pool: PoolType) {
     const blockNumber = await this.provider.getBlockNumber()
     const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider)
-    const getProof = OracleSdkAdapter.getProofFactory(this.overrideProvider)
+    const getProof = OracleSdkAdapter.getProofFactory(this.providerGetProof)
     const getBlockByNumber = OracleSdkAdapter.getBlockByNumberFactory(this.overrideProvider)
     // get the proof from the SDK
     const proof = await OracleSdk.getProof(
@@ -473,5 +473,41 @@ export class Swap {
       code: pool.FETCHER,
       data: data.data,
     }
+  }
+
+  async fetchPriceMockTx(pool: PoolType) {
+    const blockNumber = await this.provider.getBlockNumber()
+    const targetBlock = bn(blockNumber).sub(pool.window.toNumber() >> 1)
+    const timestamp = (await this.provider.getBlock(targetBlock.toNumber())).timestamp
+
+    // Connect to the network
+    const contractWithSigner = new Contract(pool.FETCHER, this.profile.getAbi('FetcherV2Mock').abi, this.signer)
+    const data = await contractWithSigner.populateTransaction.submitPrice(
+      pool.ORACLE,
+      pool.states.twap,
+      targetBlock.toBigInt(),
+      timestamp
+    )
+    return {
+      inputs: [],
+      code: pool.FETCHER,
+      data: data.data,
+    }
+  }
+
+  getOverrideProvider() {
+    const router = this.profile.configs.helperContract.utr as string
+    const fetcherV2 = this.profile.configs.derivable.uniswapV2Fetcher as string
+    this.overrideProvider.setStateOverride({
+      [router]: {
+        code: this.profile.getAbi('UTROverride').deployedBytecode,
+      },
+      ...(fetcherV2 ? {
+        [fetcherV2]: {
+          code: this.profile.getAbi('FetcherV2Mock').deployedBytecode,
+        }
+      } : {})
+    })
+    return this.overrideProvider
   }
 }

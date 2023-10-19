@@ -6,6 +6,7 @@ import TokensInfo from './abi/TokensInfo.json'
 import Events from './abi/Events.json'
 import PairDetail from './abi/PairDetail.json'
 import PairV3Detail from './abi/PairV3Detail.json'
+import FetcherV2Mock from './abi/FetcherV2Mock.json'
 import Pool from './abi/Pool.json'
 import ReserveTokenPrice from './abi/ReserveTokenPrice.json'
 import Token from './abi/Token.json'
@@ -31,6 +32,7 @@ const abis = {
   PoolOverride,
   UTR,
   UTROverride,
+  FetcherV2Mock
 }
 
 const DDL_CONFIGS_URL = {
