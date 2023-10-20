@@ -6,17 +6,20 @@ import TokensInfo from './abi/TokensInfo.json'
 import Events from './abi/Events.json'
 import PairDetail from './abi/PairDetail.json'
 import PairV3Detail from './abi/PairV3Detail.json'
+import FetcherV2Mock from './abi/FetcherV2Mock.json'
 import Pool from './abi/Pool.json'
 import ReserveTokenPrice from './abi/ReserveTokenPrice.json'
 import Token from './abi/Token.json'
 import Helper from './abi/Helper.json'
 import PoolOverride from './abi/PoolOverride.json'
 import UTR from './abi/UTR.json'
+import FetcherV2 from './abi/FetcherV2.json'
 import UTROverride from './abi/UTROverride.json'
 import fetch from 'node-fetch'
 
 const abis = {
   BnA,
+  FetcherV2,
   ERC20,
   Events,
   PairDetail,
@@ -29,6 +32,7 @@ const abis = {
   PoolOverride,
   UTR,
   UTROverride,
+  FetcherV2Mock
 }
 
 const DDL_CONFIGS_URL = {

@@ -1,10 +1,9 @@
 import { ethers, Wallet } from 'ethers'
+require('dotenv').config()
 
-const PRIVATE_KEY =
-  '0x60f5906de1edfc4d14eb4aea49ed4c06641bbdbd5a56092392308e9730598373'
-const account = '0xE3C75f8963E4CA02ea9a281c32b41FdfC248e07f'
-const provider = new ethers.providers.JsonRpcProvider('https://mainnet.base.org')
-const walletPrivateKey = new Wallet(PRIVATE_KEY)
+const account = process.env.ACCOUNT_ADDRESS as string
+const provider = new ethers.providers.JsonRpcProvider('https://bsc.rpc.blxrbdn.com')
+const walletPrivateKey = new Wallet(process.env.PRIVATE_KEY as string)
 const wallet = walletPrivateKey.connect(provider)
 
 const TestConfigs = {
