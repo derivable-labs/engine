@@ -1,12 +1,26 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Swap = void 0;
@@ -15,6 +29,8 @@ const helper_1 = require("../utils/helper");
 const constant_1 = require("../utils/constant");
 const providers_1 = require("@ethersproject/providers");
 const utils_1 = require("ethers/lib/utils");
+const OracleSdkAdapter = __importStar(require("../utils/OracleSdkAdapter"));
+const OracleSdk = __importStar(require("../utils/OracleSdk"));
 const PAYMENT = 0;
 const TRANSFER = 1;
 const CALL_VALUE = 2;
@@ -24,118 +40,124 @@ class Swap {
         this.account = config.account;
         this.chainId = config.chainId;
         this.scanApi = profile.configs.scanApi;
-        this.provider = new providers_1.JsonRpcProvider(profile.configs.rpc);
         this.provider = new ethers_1.ethers.providers.JsonRpcProvider(profile.configs.rpc);
         this.overrideProvider = new providers_1.JsonRpcProvider(profile.configs.rpc);
+        this.providerGetProof = new providers_1.JsonRpcProvider(profile.configs.rpcGetProof || profile.configs.rpc);
         this.signer = config.signer;
         this.RESOURCE = config.RESOURCE;
         this.profile = profile;
         this.derivableAdr = profile.configs.derivable;
     }
-    //@ts-ignore
-    calculateAmountOuts(steps) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!this.signer)
-                return [[(0, helper_1.bn)(0)], (0, helper_1.bn)(0)];
-            try {
-                const stepsToSwap = [...steps].map((step) => {
-                    return Object.assign(Object.assign({}, step), { amountOutMin: 0 });
-                });
-                const { params, value } = yield this.convertStepToActions(stepsToSwap);
-                const router = this.profile.configs.helperContract.utr;
-                // @ts-ignore
-                this.overrideProvider.setStateOverride({
-                    [router]: {
-                        code: this.profile.getAbi('UTROverride').deployedBytecode,
-                    },
-                });
-                const contract = new ethers_1.ethers.Contract(router, this.profile.getAbi('UTROverride').abi, this.overrideProvider);
-                const res = yield contract.callStatic.exec(...params, {
-                    from: this.account,
-                    value,
-                    gasLimit: this.profile.configs.gasLimitDefault,
-                });
-                const result = [];
-                for (const i in steps) {
-                    result.push(Object.assign(Object.assign({}, steps[i]), { amountOut: res[0][i] }));
-                }
-                return [result, (0, helper_1.bn)(this.profile.configs.gasLimitDefault).sub(res.gasLeft)];
+    async calculateAmountOuts(steps, fetcherV2 = false) {
+        if (!this.signer)
+            return [[(0, helper_1.bn)(0)], (0, helper_1.bn)(0)];
+        try {
+            const { helperContract, gasLimitDefault, gasForProof } = this.profile.configs;
+            const stepsToSwap = [...steps].map((step) => {
+                return { ...step, amountOutMin: 0 };
+            });
+            const { params, value } = await this.convertStepToActions(stepsToSwap, fetcherV2, true);
+            const router = helperContract.utr;
+            const contract = new ethers_1.ethers.Contract(router, this.profile.getAbi('UTROverride').abi, this.getOverrideProvider());
+            const res = await contract.callStatic.exec(...params, {
+                from: this.account,
+                value,
+                gasLimit: gasLimitDefault,
+            });
+            const result = [];
+            for (const i in steps) {
+                result.push({ ...steps[i], amountOut: res[0][i] });
             }
-            catch (e) {
-                throw e;
+            let gasUsed = gasLimitDefault - res.gasLeft.toNumber();
+            if (fetcherV2) {
+                gasUsed += gasForProof ?? 800000;
             }
+            return [result, (0, helper_1.bn)(gasUsed)];
+        }
+        catch (e) {
+            if (e?.reason === "OLD" && !fetcherV2) {
+                return this.calculateAmountOuts(steps, true);
+            }
+            throw e;
+        }
+    }
+    async callStaticMultiSwap({ params, value, gasLimit }) {
+        const contract = this.getRouterContract(this.signer);
+        return await contract.callStatic.exec(...params, {
+            value: value || (0, helper_1.bn)(0),
+            gasLimit: gasLimit || undefined,
         });
     }
-    callStaticMultiSwap({ params, value, gasLimit }) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const contract = this.getRouterContract(this.signer);
-            return yield contract.callStatic.exec(...params, {
-                value: value || (0, helper_1.bn)(0),
-                gasLimit: gasLimit || undefined,
+    async convertStepToActions(steps, submitFetcherV2, isCalculate = false) {
+        // @ts-ignore
+        const stateCalHelper = this.getStateCalHelperContract();
+        let outputs = [];
+        steps.forEach((step) => {
+            const poolGroup = this.getPoolPoolGroup(step.tokenIn, step.tokenOut);
+            outputs.push({
+                recipient: this.account,
+                eip: (0, helper_1.isErc1155Address)(step.tokenOut) ? 1155 : step.tokenOut === constant_1.NATIVE_ADDRESS ? 0 : 20,
+                token: (0, helper_1.isErc1155Address)(step.tokenOut) ? this.derivableAdr.token : step.tokenOut,
+                id: (0, helper_1.isErc1155Address)(step.tokenOut)
+                    ? (0, helper_1.packId)(this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R).toString(), this.getAddressByErc1155Address(step.tokenOut, poolGroup.TOKEN_R))
+                    : (0, helper_1.bn)(0),
+                amountOutMin: step.amountOutMin,
             });
         });
-    }
-    convertStepToActions(steps) {
-        return __awaiter(this, void 0, void 0, function* () {
-            // @ts-ignore
-            const stateCalHelper = this.getStateCalHelperContract();
-            let outputs = [];
-            steps.forEach((step) => {
-                const poolGroup = this.getPoolPoolGroup(step.tokenIn, step.tokenOut);
-                outputs.push({
-                    recipient: this.account,
-                    eip: (0, helper_1.isErc1155Address)(step.tokenOut) ? 1155 : step.tokenOut === constant_1.NATIVE_ADDRESS ? 0 : 20,
-                    token: (0, helper_1.isErc1155Address)(step.tokenOut) ? this.derivableAdr.token : step.tokenOut,
-                    id: (0, helper_1.isErc1155Address)(step.tokenOut)
-                        ? (0, helper_1.packId)(this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R).toString(), this.getAddressByErc1155Address(step.tokenOut, poolGroup.TOKEN_R))
-                        : (0, helper_1.bn)(0),
-                    amountOutMin: step.amountOutMin,
+        let nativeAmountToWrap = (0, helper_1.bn)(0);
+        const metaDatas = [];
+        const promises = [];
+        const fetcherData = {};
+        steps.forEach((step) => {
+            const poolGroup = this.getPoolPoolGroup(step.tokenIn, step.tokenOut);
+            if ((step.tokenIn === constant_1.NATIVE_ADDRESS || step.tokenOut === constant_1.NATIVE_ADDRESS) &&
+                poolGroup.TOKEN_R !== this.profile.configs.wrappedTokenAddress) {
+                throw 'This pool do not support swap by native Token';
+            }
+            const poolIn = this.getAddressByErc1155Address(step.tokenIn, poolGroup.TOKEN_R);
+            const poolOut = this.getAddressByErc1155Address(step.tokenOut, poolGroup.TOKEN_R);
+            let idIn = this.getIdByAddress(step.tokenIn, poolGroup.TOKEN_R);
+            const idOut = this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R);
+            if (step.tokenIn === constant_1.NATIVE_ADDRESS) {
+                nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn);
+            }
+            if (step.useSweep && (0, helper_1.isErc1155Address)(step.tokenOut)) {
+                const { inputs, populateTxData } = this.getSweepCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut });
+                metaDatas.push({
+                    code: this.derivableAdr.stateCalHelper,
+                    inputs,
+                }, {
+                    code: this.derivableAdr.stateCalHelper,
+                    inputs: [],
                 });
-            });
-            let nativeAmountToWrap = (0, helper_1.bn)(0);
-            const metaDatas = [];
-            const promises = [];
-            steps.forEach((step) => {
-                const poolGroup = this.getPoolPoolGroup(step.tokenIn, step.tokenOut);
-                if ((step.tokenIn === constant_1.NATIVE_ADDRESS || step.tokenOut === constant_1.NATIVE_ADDRESS) &&
-                    poolGroup.TOKEN_R !== this.profile.configs.wrappedTokenAddress) {
-                    throw 'This pool do not support swap by native Token';
-                }
-                const poolIn = this.getAddressByErc1155Address(step.tokenIn, poolGroup.TOKEN_R);
-                const poolOut = this.getAddressByErc1155Address(step.tokenOut, poolGroup.TOKEN_R);
-                let idIn = this.getIdByAddress(step.tokenIn, poolGroup.TOKEN_R);
-                const idOut = this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R);
-                if (step.tokenIn === constant_1.NATIVE_ADDRESS) {
-                    nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn);
-                }
-                if (step.useSweep && (0, helper_1.isErc1155Address)(step.tokenOut)) {
-                    const { inputs, populateTxData } = this.getSweepCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut });
-                    metaDatas.push({
-                        code: this.derivableAdr.stateCalHelper,
-                        inputs,
-                    }, {
-                        code: this.derivableAdr.stateCalHelper,
-                        inputs: [],
-                    });
-                    promises.push(...populateTxData);
-                }
-                else {
-                    const { inputs, populateTxData } = this.getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut });
-                    metaDatas.push({
-                        code: this.derivableAdr.stateCalHelper,
-                        inputs,
-                    });
-                    promises.push(...populateTxData);
-                }
-            });
-            const datas = yield Promise.all(promises);
-            const actions = [];
-            //@ts-ignore
-            metaDatas.forEach((metaData, key) => {
-                actions.push(Object.assign(Object.assign({}, metaData), { data: datas[key].data }));
-            });
-            return { params: [outputs, actions], value: nativeAmountToWrap };
+                promises.push(...populateTxData);
+            }
+            else {
+                const { inputs, populateTxData } = this.getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut });
+                metaDatas.push({
+                    code: this.derivableAdr.stateCalHelper,
+                    inputs,
+                });
+                promises.push(...populateTxData);
+            }
+            if (submitFetcherV2) {
+                const pool = (0, helper_1.isErc1155Address)(step.tokenIn) ? this.RESOURCE.pools[poolIn] : this.RESOURCE.pools[poolOut];
+                promises.push(isCalculate ? this.fetchPriceMockTx(pool) : this.fetchPriceTx(pool));
+            }
         });
+        const datas = await Promise.all(promises);
+        const actions = [];
+        //@ts-ignore
+        metaDatas.forEach((metaData, key) => {
+            actions.push({ ...metaData, data: datas[key].data });
+        });
+        if (submitFetcherV2) {
+            // data in last of `datas` is submitFetchV2 data
+            for (let i = metaDatas.length; i < datas.length; i++) {
+                actions.unshift(datas[datas.length - 1]);
+            }
+        }
+        return { params: [outputs, actions], value: nativeAmountToWrap };
     }
     getSweepCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut, }) {
         const stateCalHelper = this.getStateCalHelperContract();
@@ -237,12 +259,11 @@ class Swap {
         return address;
     }
     generateSwapParams(method, params) {
-        var _a;
         const stateCalHelper = this.getStateCalHelperContract();
-        const functionInterface = (_a = Object.values(stateCalHelper.interface.functions).find((f) => f.name === method)) === null || _a === void 0 ? void 0 : _a.inputs[0].components;
+        const functionInterface = Object.values(stateCalHelper.interface.functions).find((f) => f.name === method)?.inputs[0].components;
         const formatedParams = {};
         for (let name in params) {
-            if (functionInterface === null || functionInterface === void 0 ? void 0 : functionInterface.find((c) => c.name === name)) {
+            if (functionInterface?.find((c) => c.name === name)) {
                 formatedParams[name] = params[name];
             }
         }
@@ -285,26 +306,34 @@ class Swap {
         }
         return result;
     }
-    multiSwap(steps, gasLimit, onSubmitted) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const { params, value } = yield this.convertStepToActions([...steps]);
-            yield this.callStaticMultiSwap({
+    async multiSwap(steps, { gasLimit, gasPrice, submitFetcherV2 = false, onSubmitted }) {
+        try {
+            const { params, value } = await this.convertStepToActions([...steps], submitFetcherV2);
+            await this.callStaticMultiSwap({
                 params,
                 value,
                 gasLimit,
+                gasPrice: gasPrice || undefined
             });
             const contract = this.getRouterContract(this.signer);
-            const res = yield contract.exec(...params, {
+            const res = await contract.exec(...params, {
                 value,
                 gasLimit: gasLimit || undefined,
+                gasPrice: gasPrice || undefined
             });
             if (onSubmitted) {
                 onSubmitted({ hash: res.hash, steps });
             }
-            const tx = yield res.wait();
+            const tx = await res.wait(1);
             console.log('tx', tx);
             return tx;
-        });
+        }
+        catch (e) {
+            if (e?.reason === "OLD" && !submitFetcherV2) {
+                return this.multiSwap(steps, { gasLimit, gasPrice, submitFetcherV2: true, onSubmitted });
+            }
+            throw e;
+        }
     }
     getAddressByErc1155Address(address, TOKEN_R) {
         if ((0, helper_1.isErc1155Address)(address)) {
@@ -329,7 +358,7 @@ class Swap {
             ].includes(r);
         });
         const pool = this.profile.routes[routeKey || ''] ? this.profile.routes[routeKey || ''][0] : undefined;
-        return (pool === null || pool === void 0 ? void 0 : pool.address) ? (0, helper_1.bn)(ethers_1.ethers.utils.hexZeroPad((0, helper_1.bn)(1).shl(255).add(pool.address).toHexString(), 32)) : (0, helper_1.bn)(0);
+        return pool?.address ? (0, helper_1.bn)(ethers_1.ethers.utils.hexZeroPad((0, helper_1.bn)(1).shl(255).add(pool.address).toHexString(), 32)) : (0, helper_1.bn)(0);
     }
     getUniPool(tokenIn, tokenR) {
         const routeKey = Object.keys(this.profile.routes).find((r) => {
@@ -340,6 +369,54 @@ class Swap {
             throw `Can't find router, please select other token`;
         }
         return this.profile.routes[routeKey || ''][0].address;
+    }
+    async fetchPriceTx(pool, blockNumber) {
+        if (blockNumber == null) {
+            blockNumber = await this.provider.getBlockNumber();
+        }
+        const getProof = OracleSdkAdapter.getProofFactory(this.providerGetProof);
+        const getBlockByNumber = OracleSdkAdapter.getBlockByNumberFactory(this.overrideProvider);
+        // get the proof from the SDK
+        const proof = await OracleSdk.getProof(getProof, getBlockByNumber, BigInt(pool.pair), pool.quoteTokenIndex, (0, helper_1.bn)(blockNumber).sub(pool.window.toNumber() >> 1).toBigInt());
+        // Connect to the network
+        const contractWithSigner = new ethers_1.Contract(pool.FETCHER, this.profile.getAbi('FetcherV2'), this.signer);
+        const data = await contractWithSigner.populateTransaction.submit(pool.ORACLE, proof);
+        return {
+            inputs: [],
+            code: pool.FETCHER,
+            data: data.data,
+        };
+    }
+    async fetchPriceMockTx(pool, blockNumber) {
+        if (blockNumber == null) {
+            blockNumber = await this.provider.getBlockNumber();
+        }
+        const targetBlock = (0, helper_1.bn)(blockNumber).sub(pool.window.toNumber() >> 1);
+        const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider);
+        const accumulator = await OracleSdk.getAccumulatorPrice(getStorageAt, BigInt(pool.pair), pool.quoteTokenIndex, targetBlock.toBigInt());
+        // Connect to the network
+        const contractWithSigner = new ethers_1.Contract(pool.FETCHER, this.profile.getAbi('FetcherV2Mock').abi, this.signer);
+        const data = await contractWithSigner.populateTransaction.submitPrice(pool.ORACLE, (0, helper_1.bn)(accumulator.price), targetBlock.toBigInt(), accumulator.timestamp);
+        return {
+            inputs: [],
+            code: pool.FETCHER,
+            data: data.data,
+        };
+    }
+    getOverrideProvider() {
+        const router = this.profile.configs.helperContract.utr;
+        const fetcherV2 = this.profile.configs.derivable.uniswapV2Fetcher;
+        this.overrideProvider.setStateOverride({
+            [router]: {
+                code: this.profile.getAbi('UTROverride').deployedBytecode,
+            },
+            ...(fetcherV2 ? {
+                [fetcherV2]: {
+                    code: this.profile.getAbi('FetcherV2Mock').deployedBytecode,
+                }
+            } : {})
+        });
+        return this.overrideProvider;
     }
 }
 exports.Swap = Swap;
