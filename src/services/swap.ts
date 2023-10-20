@@ -378,14 +378,13 @@ export class Swap {
   }
 
   async multiSwap(
+    steps: SwapStepType[],
     {
-      steps,
       gasLimit,
       gasPrice,
       submitFetcherV2 = false,
       onSubmitted
     }: {
-      steps: SwapStepType[],
       gasLimit?: BigNumber,
       gasPrice?: BigNumber,
       submitFetcherV2?: boolean,
@@ -415,7 +414,7 @@ export class Swap {
       return tx
     } catch (e) {
       if (e?.reason === "OLD" && !submitFetcherV2) {
-        return this.multiSwap({steps, gasLimit, gasPrice, submitFetcherV2: true, onSubmitted})
+        return this.multiSwap(steps, {gasLimit, gasPrice, submitFetcherV2: true, onSubmitted})
       }
       throw e
     }
