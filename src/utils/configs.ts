@@ -22,6 +22,7 @@ export interface INetworkConfig {
   candleChartApi?: string
   storage?: Storage
   gasLimitDefault: number
+  gasForProof: number
   name: string
   nativeSymbol: string
   wrappedTokenAddress: string

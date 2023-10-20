@@ -46,24 +46,29 @@ export class Swap {
   async calculateAmountOuts(steps: SwapStepType[], fetcherV2 = false): Promise<any> {
     if (!this.signer) return [[bn(0)], bn(0)]
     try {
+      const { helperContract, gasLimitDefault, gasForProof } = this.profile.configs
       const stepsToSwap: SwapStepType[] = [...steps].map((step) => {
         return {...step, amountOutMin: 0}
       })
       const {params, value} = await this.convertStepToActions(stepsToSwap, fetcherV2, true)
 
-      const router = this.profile.configs.helperContract.utr as string
+      const router = helperContract.utr as string
 
       const contract = new ethers.Contract(router, this.profile.getAbi('UTROverride').abi, this.getOverrideProvider())
       const res = await contract.callStatic.exec(...params, {
         from: this.account,
         value,
-        gasLimit: this.profile.configs.gasLimitDefault,
+        gasLimit: gasLimitDefault,
       })
       const result = []
       for (const i in steps) {
         result.push({...steps[i], amountOut: res[0][i]})
       }
-      return [result, bn(this.profile.configs.gasLimitDefault).sub(res.gasLeft)]
+      let gasUsed = gasLimitDefault - res.gasLeft.toNumber()
+      if (fetcherV2) {
+        gasUsed += gasForProof ?? 800000
+      }
+      return [result, bn(gasUsed)]
     } catch (e) {
       if (e?.reason === "OLD" && !fetcherV2) {
         return this.calculateAmountOuts(steps, true)
