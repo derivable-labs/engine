@@ -13,7 +13,8 @@ export interface IEngineConfig {
 export interface INetworkConfig {
   chainId: number
   rpc: string
-  rpcToGetLogs: string
+  rpcGetLog?: string
+  rpcGetProof?: string
   scanApi?: string
   explorer?: string
   scanName?: string
@@ -21,6 +22,7 @@ export interface INetworkConfig {
   candleChartApi?: string
   storage?: Storage
   gasLimitDefault: number
+  gasForProof: number
   name: string
   nativeSymbol: string
   wrappedTokenAddress: string
@@ -52,6 +54,7 @@ export interface IDerivableContractAddress {
   tokenDescriptor: string
   compositeFetcher: string
   multiCall: string
+  uniswapV2Fetcher?: string
 }
 
 export const DEFAULT_CHAIN = 42161
