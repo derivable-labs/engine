@@ -73,7 +73,7 @@ class History {
                     totalEntryR: 0, // totalEntryR
                 };
             }
-            if (priceR) {
+            if (priceR?.gt(0)) {
                 positions[tokenOutAddress].balance = positions[tokenOutAddress].balance.add(amountOut);
             }
             if ([constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) && priceR?.gt(0)) {

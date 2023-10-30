@@ -163,14 +163,7 @@ const parsePrice = (value, baseToken, quoteToken, pool) => {
     if (exp == 2) {
         value = value.mul(value);
     }
-    const quoteTokenIndex = baseToken.address.localeCompare(quoteToken.address, undefined, { sensitivity: 'base' }) < 0 ?
-        1 : 0;
-    const [token0, token1] = quoteTokenIndex == 1 ?
-        [baseToken, quoteToken] : [quoteToken, baseToken];
-    let price = (0, exports.weiToNumber)(value.mul((0, exports.numberToWei)(1, token0?.decimal)).shr(128 * exp), token1?.decimal);
-    if (quoteTokenIndex === 0) {
-        price = (0, exports.weiToNumber)((0, exports.bn)((0, exports.numberToWei)(1, 36)).div((0, exports.bn)((0, exports.numberToWei)(price))));
-    }
+    let price = (0, exports.weiToNumber)(value.mul((0, exports.numberToWei)(1, baseToken.decimal)).shr(128 * exp), quoteToken.decimal);
     return (0, exports.formatFloat)(price, 18);
 };
 exports.parsePrice = parsePrice;
