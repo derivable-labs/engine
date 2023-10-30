@@ -209,10 +209,10 @@ export const getTopics = (): { [key: string]: string[] } => {
   return topics
 }
 
-export const getTokenUrl = async (chainSymbol: string, address: string) => {
+export const getCoingeckoToken = async (chainSymbol: string, address: string) => {
   try {
     const res = await fetch(`https://api.coingecko.com/api/v3/coins/${chainSymbol}/contract/${address.toLowerCase()}`)
-    return res
+    return await res.json()
   } catch (e) {
     console.error(e)
     return null
