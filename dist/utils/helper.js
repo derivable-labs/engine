@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addressToString = exports.kx = exports.rateFromHL = exports.rateToHL = exports.getTopics = exports.mergeDeep = exports.parseSqrtX96 = exports.parseSpotPrice = exports.parseSqrtSpotPrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.max = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
+exports.addressToString = exports.kx = exports.rateFromHL = exports.rateToHL = exports.getTopics = exports.mergeDeep = exports.parseSqrtX96 = exports.parsePrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.max = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
 const ethers_1 = require("ethers");
 const Events_json_1 = __importDefault(require("../abi/Events.json"));
 const constant_1 = require("./constant");
@@ -158,31 +158,22 @@ const parseUq128x128 = (value, unit = 1000) => {
     return value.mul(unit).shr(112).toNumber() / unit;
 };
 exports.parseUq128x128 = parseUq128x128;
-const parseSqrtSpotPrice = (value, baseToken, quoteToken) => {
+const parsePrice = (value, baseToken, quoteToken, pool) => {
+    const exp = (pool?.FETCHER && pool?.FETCHER != constant_1.ZERO_ADDRESS) ? 1 : 2;
+    if (exp == 2) {
+        value = value.mul(value);
+    }
     const quoteTokenIndex = baseToken.address.localeCompare(quoteToken.address, undefined, { sensitivity: 'base' }) < 0 ?
         1 : 0;
     const [token0, token1] = quoteTokenIndex == 1 ?
         [baseToken, quoteToken] : [quoteToken, baseToken];
-    let price = (0, exports.weiToNumber)(value.mul(value).mul((0, exports.numberToWei)(1, token0?.decimal)).shr(256), token1?.decimal);
-    console.log(value.toString(), value.mul(value).mul((0, exports.numberToWei)(1, token0?.decimal)).shr(256).toString(), price);
+    let price = (0, exports.weiToNumber)(value.mul((0, exports.numberToWei)(1, token0?.decimal)).shr(128 * exp), token1?.decimal);
     if (quoteTokenIndex === 0) {
         price = (0, exports.weiToNumber)((0, exports.bn)((0, exports.numberToWei)(1, 36)).div((0, exports.bn)((0, exports.numberToWei)(price))));
     }
     return (0, exports.formatFloat)(price, 18);
 };
-exports.parseSqrtSpotPrice = parseSqrtSpotPrice;
-const parseSpotPrice = (value, baseToken, quoteToken) => {
-    const quoteTokenIndex = baseToken.address.localeCompare(quoteToken.address, undefined, { sensitivity: 'base' }) < 0 ?
-        1 : 0;
-    const [token0, token1] = quoteTokenIndex == 1 ?
-        [baseToken, quoteToken] : [quoteToken, baseToken];
-    let price = (0, exports.weiToNumber)(value.mul((0, exports.numberToWei)(1, token0?.decimal)).shr(128), token1?.decimal);
-    if (quoteTokenIndex === 0) {
-        price = (0, exports.weiToNumber)((0, exports.bn)((0, exports.numberToWei)(1, 36)).div((0, exports.bn)((0, exports.numberToWei)(price))));
-    }
-    return (0, exports.formatFloat)(price, 18);
-};
-exports.parseSpotPrice = parseSpotPrice;
+exports.parsePrice = parsePrice;
 const parseSqrtX96 = (price, baseToken, quoteToken) => {
     return (0, exports.weiToNumber)(price
         .mul(price)

@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from 'ethers';
-import { TokenType } from '../types';
+import { PoolType, TokenType } from '../types';
 export declare const provider: ethers.providers.JsonRpcProvider;
 export declare const bn: typeof BigNumber.from;
 export declare const weiToNumber: (wei: any, decimal?: number, decimalToDisplay?: number) => any;
@@ -23,8 +23,7 @@ export declare const add: (a: any, b: any) => any;
 export declare const detectDecimalFromPrice: (price: number | string) => any;
 export declare const packId: (kind: string, address: string) => BigNumber;
 export declare const parseUq128x128: (value: BigNumber, unit?: number) => number;
-export declare const parseSqrtSpotPrice: (value: BigNumber, baseToken: TokenType, quoteToken: TokenType) => string;
-export declare const parseSpotPrice: (value: BigNumber, baseToken: TokenType, quoteToken: TokenType) => string;
+export declare const parsePrice: (value: BigNumber, baseToken: TokenType, quoteToken: TokenType, pool?: PoolType) => string;
 export declare const parseSqrtX96: (price: BigNumber, baseToken: TokenType, quoteToken: TokenType) => any;
 export declare const mergeDeep: (target: any, ...sources: any) => any;
 export declare const getTopics: () => {
