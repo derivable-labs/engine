@@ -159,15 +159,7 @@ export const parsePrice = (value: BigNumber, baseToken: TokenType, quoteToken: T
   if (exp == 2) {
     value = value.mul(value)
   }
-  const quoteTokenIndex =
-    baseToken.address.localeCompare(quoteToken.address, undefined, {sensitivity: 'base'}) < 0 ?
-    1 : 0
-  const [token0, token1] = quoteTokenIndex == 1 ?
-    [baseToken, quoteToken] : [quoteToken, baseToken]
-  let price = weiToNumber(value.mul(numberToWei(1, token0?.decimal)).shr(128*exp), token1?.decimal)
-  if (quoteTokenIndex === 0) {
-    price = weiToNumber(bn(numberToWei(1, 36)).div(bn(numberToWei(price))))
-  }
+  let price = weiToNumber(value.mul(numberToWei(1, baseToken.decimal)).shr(128*exp), quoteToken.decimal)
   return formatFloat(price, 18)
 }
 
