@@ -26,7 +26,7 @@ export const numberToWei = (number: any, decimal: number = 18) => {
   if (!number) return '0'
   number = number.toString()
   if (Number.isFinite(number)) {
-    number = number.toLocaleString('en-US', {useGrouping: false})
+    number = number.toLocaleString('en-US', { useGrouping: false })
   }
   return mdp(number, decimal).split(number.indexOf('.') === -1 ? ',' : '.')[0]
 }
@@ -88,7 +88,7 @@ export const getNormalAddress = (addresses: string[]) => {
 }
 
 export const formatFloat = (number: number | string, decimal = 4) => {
-  number = number.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+  number = number.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   const arr = number.split('.')
   if (arr.length > 1) {
     arr[1] = arr[1].slice(0, decimal)
@@ -97,14 +97,14 @@ export const formatFloat = (number: number | string, decimal = 4) => {
 }
 
 export const formatPercent = (floatNumber: any, decimal: number = 2) => {
-  floatNumber = floatNumber.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+  floatNumber = floatNumber.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   return formatFloat(weiToNumber(numberToWei(floatNumber), 16), decimal)
 }
 
 export const mul = (a: any, b: any, useFullwide = true) => {
   if (useFullwide) {
-    a = a.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
-    b = b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+    a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
+    b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   }
   const result = weiToNumber(BigNumber.from(numberToWei(a)).mul(numberToWei(b)), 36)
   const arr = result.split('.')
@@ -113,25 +113,25 @@ export const mul = (a: any, b: any, useFullwide = true) => {
 }
 
 export const sub = (a: any, b: any) => {
-  a = a.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
-  b = b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+  a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
+  b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   return weiToNumber(BigNumber.from(numberToWei(a)).sub(numberToWei(b)))
 }
 
 export const div = (a: any, b: any) => {
-  if (b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false}) == '0') {
-    return weiToNumber(BigNumber.from(numberToWei((Number(a) / Number(b)).toLocaleString(['en-US', 'fullwide'], {useGrouping: false}))))
+  if (b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false }) == '0') {
+    return weiToNumber(BigNumber.from(numberToWei((Number(a) / Number(b)).toLocaleString(['en-US', 'fullwide'], { useGrouping: false }))))
   }
-  a = a.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
-  b = b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+  a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
+  b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   return weiToNumber(BigNumber.from(numberToWei(a, 36)).div(numberToWei(b)))
 }
 
 export const max = (a: any, b: any) => (bn(numberToWei(a)).gt(numberToWei(b)) ? a : b)
 
 export const add = (a: any, b: any) => {
-  a = a.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
-  b = b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+  a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
+  b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   return weiToNumber(BigNumber.from(numberToWei(a)).add(numberToWei(b)))
 }
 
@@ -139,7 +139,7 @@ export const detectDecimalFromPrice = (price: number | string) => {
   if (Number(price || 0) === 0 || Number(price || 0) >= 1) {
     return 4
   } else {
-    price = price.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+    price = price.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
     const rate = !bn(numberToWei(price)).isZero() ? weiToNumber(BigNumber.from(numberToWei(1, 36)).div(numberToWei(price)).toString()) : '0'
     return rate.split('.')[0].length + 3
   }
@@ -169,7 +169,7 @@ export const parseSqrtX96 = (price: BigNumber, baseToken: TokenType, quoteToken:
       .mul(price)
       .mul(numberToWei(1, baseToken.decimal + 18))
       .shr(192),
-    quoteToken.decimal + 18,
+    quoteToken.decimal + 18
   )
 }
 
@@ -184,10 +184,10 @@ export const mergeDeep = (target: any, ...sources: any): any => {
   if (isObject(target) && isObject(source)) {
     for (const key in source) {
       if (isObject(source[key])) {
-        if (!target[key]) Object.assign(target, {[key]: {}})
+        if (!target[key]) Object.assign(target, { [key]: {} })
         mergeDeep(target[key], source[key])
       } else {
-        Object.assign(target, {[key]: source[key]})
+        Object.assign(target, { [key]: source[key] })
       }
     }
   }
@@ -207,6 +207,16 @@ export const getTopics = (): { [key: string]: string[] } => {
     }
   }
   return topics
+}
+
+export const getTokenUrl = async (chainSymbol: string, address: string) => {
+  try {
+    const res = await fetch(`https://api.coingecko.com/api/v3/coins/${chainSymbol}/contract/${address.toLowerCase()}`)
+    return res
+  } catch (e) {
+    console.error(e)
+    return null
+  }
 }
 
 export function rateToHL(r: number, k: number, DURATION = SECONDS_PER_DAY) {
@@ -232,7 +242,6 @@ export const kx = (k: number, R: BigNumber, v: BigNumber, spot: BigNumber, MARK:
     return 0
   }
 }
-
 
 export interface Proof {
   readonly block: Uint8Array
@@ -268,7 +277,6 @@ export type Block = {
   readonly nonce: bigint | null
   readonly baseFeePerGas: bigint | null
 }
-
 
 export type EthGetStorageAt = (address: bigint, position: bigint, block: bigint | 'latest') => Promise<bigint>
 export type EthGetProof = (address: bigint, positions: readonly bigint[], block: bigint) => Promise<ProofResult>
