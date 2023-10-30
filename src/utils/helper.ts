@@ -211,9 +211,9 @@ export const getTopics = (): { [key: string]: string[] } => {
 
 export const getCoingeckoToken = async (chainSymbol: string, address: string) => {
   try {
-    const res = await fetch(`https://api.coingecko.com/api/v3/coins/${chainSymbol}/contract/${address.toLowerCase()}`)
+    const res = await fetch(`https://api.geckoterminal.com/api/v2/networks/${chainSymbol}/tokens/${address.toLowerCase()}/info`)
     if (res.status === 404) return { status: 'notfound' }
-    return { ...await res.json(), status: 'success' }
+    return { ...(await res.json()).data, status: 'success' }
   } catch (e) {
     return { status: 'error' }
   }
