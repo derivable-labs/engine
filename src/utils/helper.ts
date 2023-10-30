@@ -154,15 +154,26 @@ export const parseUq128x128 = (value: BigNumber, unit = 1000) => {
   return value.mul(unit).shr(112).toNumber() / unit
 }
 
-export const parseSqrtSpotPrice = (value: BigNumber, token0: TokenType, token1: TokenType, quoteTokenIndex: number) => {
+export const parseSqrtSpotPrice = (value: BigNumber, baseToken: TokenType, quoteToken: TokenType) => {
+  const quoteTokenIndex =
+    baseToken.address.localeCompare(quoteToken.address, undefined, {sensitivity: 'base'}) < 0 ?
+    1 : 0
+  const [token0, token1] = quoteTokenIndex == 1 ?
+    [baseToken, quoteToken] : [quoteToken, baseToken]
   let price = weiToNumber(value.mul(value).mul(numberToWei(1, token0?.decimal)).shr(256), token1?.decimal)
+  console.log(value.toString(), value.mul(value).mul(numberToWei(1, token0?.decimal)).shr(256).toString(), price)
   if (quoteTokenIndex === 0) {
     price = weiToNumber(bn(numberToWei(1, 36)).div(bn(numberToWei(price))))
   }
   return formatFloat(price, 18)
 }
 
-export const parseSpotPrice = (value: BigNumber, token0: TokenType, token1: TokenType, quoteTokenIndex: number) => {
+export const parseSpotPrice = (value: BigNumber, baseToken: TokenType, quoteToken: TokenType) => {
+  const quoteTokenIndex =
+    baseToken.address.localeCompare(quoteToken.address, undefined, {sensitivity: 'base'}) < 0 ?
+    1 : 0
+  const [token0, token1] = quoteTokenIndex == 1 ?
+    [baseToken, quoteToken] : [quoteToken, baseToken]
   let price = weiToNumber(value.mul(numberToWei(1, token0?.decimal)).shr(128), token1?.decimal)
   if (quoteTokenIndex === 0) {
     price = weiToNumber(bn(numberToWei(1, 36)).div(bn(numberToWei(price))))

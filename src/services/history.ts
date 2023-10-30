@@ -90,12 +90,12 @@ export class History {
         positions[tokenOutAddress].balance = positions[tokenOutAddress].balance.add(amountOut)
       }
 
-      if ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) && priceR) {
+      if ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) && priceR?.gt(0)) {
         const pool = pools[poolIn]
         const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
         const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0])
         //@ts-ignore
-        const priceRFormated = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote, 1)
+        const priceRFormated = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote)
 
         positions[tokenOutAddress].totalEntryR = add(positions[tokenOutAddress].totalEntryR ?? 0, amountIn)
         positions[tokenOutAddress].entry = add(
@@ -112,7 +112,6 @@ export class History {
           price,
           tokens.find((t) => t?.address === baseToken) as TokenType,
           tokens.find((t) => t?.address === quoteToken) as TokenType,
-          1,
         )
         positions[tokenOutAddress].value = add(positions[tokenOutAddress].value, mul(amountOut, indexPrice))
         positions[tokenOutAddress].balanceToCalculatePrice = positions[tokenOutAddress].balanceToCalculatePrice.add(amountOut)
@@ -165,13 +164,13 @@ export class History {
         const { TOKEN_R, baseToken, quoteToken } = pool
         if (
           ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) || [POOL_IDS.R, POOL_IDS.native].includes(sideOut.toNumber())) &&
-          priceR
+          priceR?.gt(0)
         ) {
           const amount = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut
           const tokenR = tokens.find((t) => t.address === TOKEN_R)
           const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0])
           //@ts-ignore
-          const priceRFormated = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote, 1)
+          const priceRFormated = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote)
           entryValue = weiToNumber(amount.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18))
         }
 
@@ -180,7 +179,6 @@ export class History {
             price,
             tokens.find((t) => t?.address === baseToken) as TokenType,
             tokens.find((t) => t?.address === quoteToken) as TokenType,
-            1,
           )
         }
 
