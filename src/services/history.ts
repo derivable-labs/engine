@@ -1,17 +1,15 @@
 import { BigNumber, ethers } from 'ethers'
-import { PowerState } from 'powerLib/dist/powerLib'
-import { LogType, PoolType, TokenType } from '../types'
+import { LogType, TokenType } from '../types'
 import { NATIVE_ADDRESS, POOL_IDS } from '../utils/constant'
 import {
   add,
   bn,
   div,
-  formatMultiCallBignumber,
   getTopics,
   max,
   mul,
   numberToWei,
-  parseSqrtSpotPrice,
+  parsePrice,
   sub,
   weiToNumber,
 } from '../utils/helper'
@@ -94,9 +92,8 @@ export class History {
         const pool = pools[poolIn]
         const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
         const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0])
-        //@ts-ignore
-        const priceRFormated = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote)
-
+        // priceR is independent to the pool index, so no pool is passed in here
+        const priceRFormated = parsePrice(priceR, tokenR!, tokenRQuote!)
         positions[tokenOutAddress].totalEntryR = add(positions[tokenOutAddress].totalEntryR ?? 0, amountIn)
         positions[tokenOutAddress].entry = add(
           positions[tokenOutAddress].entry,
@@ -108,10 +105,11 @@ export class History {
         const pool = pools[poolOut]
         const { baseToken, quoteToken } = pool
         //@ts-ignore
-        const indexPrice = parseSqrtSpotPrice(
+        const indexPrice = parsePrice(
           price,
           tokens.find((t) => t?.address === baseToken) as TokenType,
           tokens.find((t) => t?.address === quoteToken) as TokenType,
+          pool,
         )
         positions[tokenOutAddress].value = add(positions[tokenOutAddress].value, mul(amountOut, indexPrice))
         positions[tokenOutAddress].balanceToCalculatePrice = positions[tokenOutAddress].balanceToCalculatePrice.add(amountOut)
@@ -169,16 +167,17 @@ export class History {
           const amount = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut
           const tokenR = tokens.find((t) => t.address === TOKEN_R)
           const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0])
-          //@ts-ignore
-          const priceRFormated = parseSqrtSpotPrice(priceR, tokenR, tokenRQuote)
+          // priceR is independent to the pool index, so no pool is passed in here
+          const priceRFormated = parsePrice(priceR, tokenR!, tokenRQuote!)
           entryValue = weiToNumber(amount.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18))
         }
 
         if (price) {
-          entryPrice = parseSqrtSpotPrice(
+          entryPrice = parsePrice(
             price,
             tokens.find((t) => t?.address === baseToken) as TokenType,
             tokens.find((t) => t?.address === quoteToken) as TokenType,
+            pool,
           )
         }
 

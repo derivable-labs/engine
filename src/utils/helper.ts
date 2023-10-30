@@ -1,7 +1,7 @@
 import {BigNumber, ethers} from 'ethers'
-import {TokenType} from '../types'
+import {PoolType, TokenType} from '../types'
 import EventsAbi from '../abi/Events.json'
-import {SECONDS_PER_DAY} from './constant'
+import {SECONDS_PER_DAY, ZERO_ADDRESS} from './constant'
 
 const mdp = require('move-decimal-point')
 
@@ -154,26 +154,17 @@ export const parseUq128x128 = (value: BigNumber, unit = 1000) => {
   return value.mul(unit).shr(112).toNumber() / unit
 }
 
-export const parseSqrtSpotPrice = (value: BigNumber, baseToken: TokenType, quoteToken: TokenType) => {
-  const quoteTokenIndex =
-    baseToken.address.localeCompare(quoteToken.address, undefined, {sensitivity: 'base'}) < 0 ?
-    1 : 0
-  const [token0, token1] = quoteTokenIndex == 1 ?
-    [baseToken, quoteToken] : [quoteToken, baseToken]
-  let price = weiToNumber(value.mul(value).mul(numberToWei(1, token0?.decimal)).shr(256), token1?.decimal)
-  if (quoteTokenIndex === 0) {
-    price = weiToNumber(bn(numberToWei(1, 36)).div(bn(numberToWei(price))))
+export const parsePrice = (value: BigNumber, baseToken: TokenType, quoteToken: TokenType, pool?: PoolType) => {
+  const exp = (pool?.FETCHER && pool?.FETCHER != ZERO_ADDRESS) ? 1 : 2
+  if (exp == 2) {
+    value = value.mul(value)
   }
-  return formatFloat(price, 18)
-}
-
-export const parseSpotPrice = (value: BigNumber, baseToken: TokenType, quoteToken: TokenType) => {
   const quoteTokenIndex =
     baseToken.address.localeCompare(quoteToken.address, undefined, {sensitivity: 'base'}) < 0 ?
     1 : 0
   const [token0, token1] = quoteTokenIndex == 1 ?
     [baseToken, quoteToken] : [quoteToken, baseToken]
-  let price = weiToNumber(value.mul(numberToWei(1, token0?.decimal)).shr(128), token1?.decimal)
+  let price = weiToNumber(value.mul(numberToWei(1, token0?.decimal)).shr(128*exp), token1?.decimal)
   if (quoteTokenIndex === 0) {
     price = weiToNumber(bn(numberToWei(1, 36)).div(bn(numberToWei(price))))
   }

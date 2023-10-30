@@ -1,4 +1,4 @@
-import {BigNumber, Contract, ethers} from 'ethers'
+import {BigNumber, ethers} from 'ethers'
 import {LOCALSTORAGE_KEY, POOL_IDS, ZERO_ADDRESS} from '../utils/constant'
 import {Multicall} from 'ethereum-multicall'
 import {LogType, ParseLogType, PoolGroupsType, PoolsType, PoolType, Storage, TokenType} from '../types'
@@ -8,11 +8,9 @@ import {
   formatMultiCallBignumber,
   getNormalAddress,
   getTopics,
-  mul,
-  parseSqrtSpotPrice,
   kx,
   rateFromHL,
-  parseSpotPrice
+  parsePrice
 } from '../utils/helper'
 import {JsonRpcProvider} from '@ethersproject/providers'
 import _ from 'lodash'
@@ -434,10 +432,7 @@ export class Resource {
           spotBase: poolsState[i].spot,
           ...poolsState[i],
         }
-        const exp = (!pools[i].FETCHER || pools[i].FETCHER == ZERO_ADDRESS) ? 2 : 1
-        poolGroups[id].basePrice = exp == 2
-          ? parseSqrtSpotPrice(poolsState[i].spot, baseToken, quoteToken)
-          : parseSpotPrice(poolsState[i].spot, baseToken, quoteToken)
+        poolGroups[id].basePrice = parsePrice(poolsState[i].spot, baseToken, quoteToken, pools[i])
       }
 
       const rdc = this.getRdc(Object.values(poolGroups[id].pools))
