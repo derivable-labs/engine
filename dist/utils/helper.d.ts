@@ -23,8 +23,8 @@ export declare const add: (a: any, b: any) => any;
 export declare const detectDecimalFromPrice: (price: number | string) => any;
 export declare const packId: (kind: string, address: string) => BigNumber;
 export declare const parseUq128x128: (value: BigNumber, unit?: number) => number;
-export declare const parseSqrtSpotPrice: (value: BigNumber, token0: TokenType, token1: TokenType, quoteTokenIndex: number) => string;
-export declare const parseSpotPrice: (value: BigNumber, token0: TokenType, token1: TokenType, quoteTokenIndex: number) => string;
+export declare const parseSqrtSpotPrice: (value: BigNumber, baseToken: TokenType, quoteToken: TokenType) => string;
+export declare const parseSpotPrice: (value: BigNumber, baseToken: TokenType, quoteToken: TokenType) => string;
 export declare const parseSqrtX96: (price: BigNumber, baseToken: TokenType, quoteToken: TokenType) => any;
 export declare const mergeDeep: (target: any, ...sources: any) => any;
 export declare const getTopics: () => {
@@ -69,4 +69,3 @@ export type EthGetStorageAt = (address: bigint, position: bigint, block: bigint 
 export type EthGetProof = (address: bigint, positions: readonly bigint[], block: bigint) => Promise<ProofResult>;
 export type EthGetBlockByNumber = (blockNumber: bigint | 'latest') => Promise<Block | null>;
 export declare function addressToString(value: bigint): string;
-export declare function getPrice(eth_getStorageAt: EthGetStorageAt, eth_getBlockByNumber: EthGetBlockByNumber, exchangeAddress: bigint, quoteTokenIndex: number, blockNumber: bigint): Promise<bigint>;

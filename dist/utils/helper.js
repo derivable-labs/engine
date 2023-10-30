@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPrice = exports.addressToString = exports.kx = exports.rateFromHL = exports.rateToHL = exports.getTopics = exports.mergeDeep = exports.parseSqrtX96 = exports.parseSpotPrice = exports.parseSqrtSpotPrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.max = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
+exports.addressToString = exports.kx = exports.rateFromHL = exports.rateToHL = exports.getTopics = exports.mergeDeep = exports.parseSqrtX96 = exports.parseSpotPrice = exports.parseSqrtSpotPrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.max = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
 const ethers_1 = require("ethers");
 const Events_json_1 = __importDefault(require("../abi/Events.json"));
 const constant_1 = require("./constant");
@@ -158,15 +158,24 @@ const parseUq128x128 = (value, unit = 1000) => {
     return value.mul(unit).shr(112).toNumber() / unit;
 };
 exports.parseUq128x128 = parseUq128x128;
-const parseSqrtSpotPrice = (value, token0, token1, quoteTokenIndex) => {
+const parseSqrtSpotPrice = (value, baseToken, quoteToken) => {
+    const quoteTokenIndex = baseToken.address.localeCompare(quoteToken.address, undefined, { sensitivity: 'base' }) < 0 ?
+        1 : 0;
+    const [token0, token1] = quoteTokenIndex == 1 ?
+        [baseToken, quoteToken] : [quoteToken, baseToken];
     let price = (0, exports.weiToNumber)(value.mul(value).mul((0, exports.numberToWei)(1, token0?.decimal)).shr(256), token1?.decimal);
+    console.log(value.toString(), value.mul(value).mul((0, exports.numberToWei)(1, token0?.decimal)).shr(256).toString(), price);
     if (quoteTokenIndex === 0) {
         price = (0, exports.weiToNumber)((0, exports.bn)((0, exports.numberToWei)(1, 36)).div((0, exports.bn)((0, exports.numberToWei)(price))));
     }
     return (0, exports.formatFloat)(price, 18);
 };
 exports.parseSqrtSpotPrice = parseSqrtSpotPrice;
-const parseSpotPrice = (value, token0, token1, quoteTokenIndex) => {
+const parseSpotPrice = (value, baseToken, quoteToken) => {
+    const quoteTokenIndex = baseToken.address.localeCompare(quoteToken.address, undefined, { sensitivity: 'base' }) < 0 ?
+        1 : 0;
+    const [token0, token1] = quoteTokenIndex == 1 ?
+        [baseToken, quoteToken] : [quoteToken, baseToken];
     let price = (0, exports.weiToNumber)(value.mul((0, exports.numberToWei)(1, token0?.decimal)).shr(128), token1?.decimal);
     if (quoteTokenIndex === 0) {
         price = (0, exports.weiToNumber)((0, exports.bn)((0, exports.numberToWei)(1, 36)).div((0, exports.bn)((0, exports.numberToWei)(price))));
@@ -247,47 +256,4 @@ function addressToString(value) {
     return `0x${value.toString(16).padStart(40, '0')}`;
 }
 exports.addressToString = addressToString;
-async function getPrice(eth_getStorageAt, eth_getBlockByNumber, exchangeAddress, quoteTokenIndex, blockNumber) {
-    async function getAccumulatorValue(innerBlockNumber, timestamp) {
-        const [reservesAndTimestamp, accumulator0, accumulator1] = await Promise.all([
-            eth_getStorageAt(exchangeAddress, 8n, innerBlockNumber),
-            eth_getStorageAt(exchangeAddress, 9n, innerBlockNumber),
-            eth_getStorageAt(exchangeAddress, 10n, innerBlockNumber)
-        ]);
-        const blockTimestampLast = reservesAndTimestamp >> (112n + 112n);
-        const reserve1 = (reservesAndTimestamp >> 112n) & (2n ** 112n - 1n);
-        const reserve0 = reservesAndTimestamp & (2n ** 112n - 1n);
-        // if (token0 !== denominationToken && token1 !== denominationToken) throw new Error(`Denomination token ${addressToString(denominationToken)} is not one of the tokens for exchange ${exchangeAddress}`)
-        if (reserve0 === 0n)
-            throw new Error(`Exchange ${addressToString(exchangeAddress)} does not have any reserves for token0.`);
-        if (reserve1 === 0n)
-            throw new Error(`Exchange ${addressToString(exchangeAddress)} does not have any reserves for token1.`);
-        if (blockTimestampLast === 0n)
-            throw new Error(`Exchange ${addressToString(exchangeAddress)} has not had its first accumulator update (or it is year 2106).`);
-        if (accumulator0 === 0n)
-            throw new Error(`Exchange ${addressToString(exchangeAddress)} has not had its first accumulator update (or it is 136 years since launch).`);
-        if (accumulator1 === 0n)
-            throw new Error(`Exchange ${addressToString(exchangeAddress)} has not had its first accumulator update (or it is 136 years since launch).`);
-        const numeratorReserve = (0 === quoteTokenIndex) ? reserve0 : reserve1;
-        const denominatorReserve = (0 === quoteTokenIndex) ? reserve1 : reserve0;
-        const accumulator = (0 === quoteTokenIndex) ? accumulator1 : accumulator0;
-        const timeElapsedSinceLastAccumulatorUpdate = timestamp - blockTimestampLast;
-        const priceNow = numeratorReserve * 2n ** 112n / denominatorReserve;
-        return accumulator + timeElapsedSinceLastAccumulatorUpdate * priceNow;
-    }
-    const latestBlock = await eth_getBlockByNumber('latest');
-    if (latestBlock === null)
-        throw new Error(`Block 'latest' does not exist.`);
-    const historicBlock = await eth_getBlockByNumber(blockNumber);
-    if (historicBlock === null)
-        throw new Error(`Block ${blockNumber} does not exist.`);
-    const [latestAccumulator, historicAccumulator] = await Promise.all([
-        await getAccumulatorValue(latestBlock.number, latestBlock.timestamp),
-        await getAccumulatorValue(blockNumber, historicBlock.timestamp)
-    ]);
-    const accumulatorDelta = latestAccumulator - historicAccumulator;
-    const timeDelta = latestBlock.timestamp - historicBlock.timestamp;
-    return timeDelta === 0n ? accumulatorDelta : accumulatorDelta / timeDelta;
-}
-exports.getPrice = getPrice;
 //# sourceMappingURL=helper.js.map

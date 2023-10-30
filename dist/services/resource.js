@@ -359,8 +359,8 @@ class Resource {
                 };
                 const exp = (!pools[i].FETCHER || pools[i].FETCHER == constant_1.ZERO_ADDRESS) ? 2 : 1;
                 poolGroups[id].basePrice = exp == 2
-                    ? (0, helper_1.parseSqrtSpotPrice)(poolsState[i].spot, baseToken, quoteToken, 1)
-                    : (0, helper_1.parseSpotPrice)(poolsState[i].spot, baseToken, quoteToken, 1);
+                    ? (0, helper_1.parseSqrtSpotPrice)(poolsState[i].spot, baseToken, quoteToken)
+                    : (0, helper_1.parseSpotPrice)(poolsState[i].spot, baseToken, quoteToken);
             }
             const rdc = this.getRdc(Object.values(poolGroups[id].pools));
             poolGroups[id].states = {
