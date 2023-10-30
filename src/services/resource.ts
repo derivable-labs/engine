@@ -436,8 +436,8 @@ export class Resource {
         }
         const exp = (!pools[i].FETCHER || pools[i].FETCHER == ZERO_ADDRESS) ? 2 : 1
         poolGroups[id].basePrice = exp == 2
-          ? parseSqrtSpotPrice(poolsState[i].spot, baseToken, quoteToken, 1)
-          : parseSpotPrice(poolsState[i].spot, baseToken, quoteToken, 1)
+          ? parseSqrtSpotPrice(poolsState[i].spot, baseToken, quoteToken)
+          : parseSpotPrice(poolsState[i].spot, baseToken, quoteToken)
       }
 
       const rdc = this.getRdc(Object.values(poolGroups[id].pools))
