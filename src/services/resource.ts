@@ -808,9 +808,9 @@ export class Resource {
     const twap = await OracleSdk.getPrice(
       getStorageAt,
       getBlockByNumber,
-      BigInt(pool.pair),
+      pool.pair,
       pool.quoteTokenIndex,
-      bn(blockNumber).sub(Math.floor(pool.window.toNumber() / 2)).toBigInt()
+      bn(blockNumber).sub(Math.floor(pool.window.toNumber() / 2)).toNumber()
     )
 
     let spot
@@ -823,8 +823,8 @@ export class Resource {
 
     return {
       poolAddress: pool.poolAddress,
-      twap: bn((twap * 2n ** 16n).toString()),
-      spot: twap === 0n ? bn(0) : spot
+      twap: twap.mul(bn(2).pow(16)),
+      spot: twap.eq(0) ? bn(0) : spot
     }
   }
 }
