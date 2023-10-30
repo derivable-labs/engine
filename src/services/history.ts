@@ -84,7 +84,7 @@ export class History {
           totalEntryR: 0, // totalEntryR
         }
       }
-      if (priceR) {
+      if (priceR?.gt(0)) {
         positions[tokenOutAddress].balance = positions[tokenOutAddress].balance.add(amountOut)
       }
 
