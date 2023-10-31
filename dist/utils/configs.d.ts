@@ -22,6 +22,7 @@ export interface INetworkConfig {
     gasLimitDefault: number;
     gasForProof: number;
     name: string;
+    geckoTerminalSymbol: string;
     nativeSymbol: string;
     wrappedTokenAddress: string;
     nativePriceUSD: number;
