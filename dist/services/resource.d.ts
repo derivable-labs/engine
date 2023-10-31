@@ -39,7 +39,7 @@ export declare class Resource {
     profile: Profile;
     stableCoins: string[];
     constructor(engineConfigs: IEngineConfig, profile: Profile);
-    fetchResourceData(account: string): Promise<any>;
+    fetchResourceData(account: string, playMode?: boolean): Promise<any>;
     getLastBlockCached(account: string): number;
     cacheDdlLog({ swapLogs, ddlLogs, transferLogs, headBlock, account, }: {
         swapLogs: any;
@@ -49,15 +49,15 @@ export declare class Resource {
         account: string;
     }): void;
     cacheNewAccountLogs(key: string, blockKey: string, newLogs: any, headBlock: number): void;
-    getResourceCached(account: string): Promise<ResourceData>;
-    getNewResource(account: string): Promise<ResourceData>;
+    getResourceCached(account: string, playMode?: boolean): Promise<ResourceData>;
+    getNewResource(account: string, playMode?: boolean): Promise<ResourceData>;
     /**
      * parse DDL logs
      * @param logs
      * @param transferLogs
      * @param tokenAddresses
      */
-    generatePoolData(logs: ParseLogType[], transferLogs: ParseLogType[]): Promise<{
+    generatePoolData(logs: ParseLogType[], transferLogs: ParseLogType[], playMode?: boolean): Promise<{
         tokens: TokenType[];
         pools: any;
         poolGroups: any;
