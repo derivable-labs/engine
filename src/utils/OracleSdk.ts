@@ -2,6 +2,9 @@ import { rlpEncode, rlpDecode } from '@zoltu/rlp-encoder'
 import { ethers } from 'ethers'
 const bn = ethers.BigNumber.from
 
+const Q112 = bn(1).shl(112)
+const M112 = Q112.sub(1)
+
 export interface Proof {
   readonly block: Uint8Array
   readonly accountProofNodesRlp: Uint8Array
@@ -56,8 +59,8 @@ export async function getPrice(
     ])
 
     const blockTimestampLast = bn(reservesAndTimestamp).shr(224)
-    const reserve1 = bn(reservesAndTimestamp).shr(112).and(bn(2).pow(112).sub(1))
-    const reserve0 = bn(reservesAndTimestamp).and(bn(2).pow(112).sub(1))
+    const reserve1 = bn(reservesAndTimestamp).shr(112).and(M112)
+    const reserve0 = bn(reservesAndTimestamp).and(M112)
     if (reserve0.eq(0)) throw new Error(`Exchange ${exchangeAddress} does not have any reserves for token0.`)
     if (reserve1.eq(0)) throw new Error(`Exchange ${exchangeAddress} does not have any reserves for token1.`)
     if (blockTimestampLast.eq(0))
@@ -67,7 +70,7 @@ export async function getPrice(
     const numeratorReserve = 0 === quoteTokenIndex ? reserve0 : reserve1
     const denominatorReserve = 0 === quoteTokenIndex ? reserve1 : reserve0
     const timeElapsedSinceLastAccumulatorUpdate = bn(timestamp).sub(blockTimestampLast)
-    const priceNow = numeratorReserve.mul(bn(2).pow(bn(112))).div(denominatorReserve)
+    const priceNow = numeratorReserve.shl(112).div(denominatorReserve)
     return timeElapsedSinceLastAccumulatorUpdate.mul(priceNow).add(accumulator)
   }
 
@@ -96,8 +99,8 @@ export async function getAccumulatorPrice(
     eth_getStorageAt(exchangeAddress, priceAccumulatorSlot, blockNumber),
   ])
   const blockTimestampLast = bn(reservesAndTimestamp).shr(224)
-  const reserve1 = bn(reservesAndTimestamp).shr(112).and(bn(2).pow(112).sub(1))
-  const reserve0 = bn(reservesAndTimestamp).and(bn(2).pow(112).sub(1))
+  const reserve1 = bn(reservesAndTimestamp).shr(112).and(M112)
+  const reserve0 = bn(reservesAndTimestamp).and(M112)
   if (reserve0.eq(0)) throw new Error(`Exchange ${exchangeAddress} does not have any reserves for token0.`)
   if (reserve1.eq(0)) throw new Error(`Exchange ${exchangeAddress} does not have any reserves for token1.`)
   if (blockTimestampLast.eq(0))

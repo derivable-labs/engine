@@ -1,4 +1,4 @@
-export type Primitive = string | number | boolean | bigint | symbol | undefined | null
+export type Primitive = string | number | boolean | symbol | undefined | null
 export type Builtin = Primitive | Function | Date | Error | RegExp
 export type IsTuple<T> = T extends any[] ? (any[] extends T ? never : T) : never
 export type IsAny<T> = 0 extends 1 & T ? true : false
