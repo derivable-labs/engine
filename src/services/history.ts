@@ -15,7 +15,7 @@ import {
 } from '../utils/helper'
 import { Profile } from '../profile'
 import { IEngineConfig } from '../utils/configs'
-import { Resource } from './resource'
+import { M256, Resource } from './resource'
 import Erc20 from '../abi/ERC20.json'
 
 export class History {
@@ -40,10 +40,7 @@ export class History {
       let positions = {}
       logs = logs.sort((a, b) => a.blockNumber - b.blockNumber)
       logs.forEach((log: LogType) => {
-        const abi = this.getSwapAbi(log.topics[0])
-        const encodeData = ethers.utils.defaultAbiCoder.encode(abi, log.args.args)
-        const formatedData = ethers.utils.defaultAbiCoder.decode(abi, encodeData)
-        positions = this.generatePositionBySwapLog(positions, tokens, formatedData)
+        positions = this.generatePositionBySwapLog(positions, tokens, log)
       })
 
       for (let i in positions) {
@@ -59,9 +56,13 @@ export class History {
     }
   }
 
-  generatePositionBySwapLog(positions: any, tokens: TokenType[], formatedData: any) {
+  generatePositionBySwapLog(positions: any, tokens: TokenType[], log: LogType) {
     const pools = this.RESOURCE.pools
     const poolAddresses = Object.keys(this.RESOURCE.pools)
+
+    const abi = this.getSwapAbi(log.topics[0])
+    const encodeData = ethers.utils.defaultAbiCoder.encode(abi, log.args.args)
+    const formatedData = ethers.utils.defaultAbiCoder.decode(abi, encodeData)
 
     const { poolIn, poolOut, sideIn, sideOut, amountOut, amountIn, priceR, price } = formatedData
 
@@ -91,14 +92,21 @@ export class History {
       if ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) && priceR?.gt(0)) {
         const pool = pools[poolIn]
         const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
-        const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0])
-        // priceR is independent to the pool index, so no pool is passed in here
-        const priceRFormated = parsePrice(priceR, tokenR!, tokenRQuote!)
-        positions[tokenOutAddress].totalEntryR = add(positions[tokenOutAddress].totalEntryR ?? 0, amountIn)
-        positions[tokenOutAddress].entry = add(
-          positions[tokenOutAddress].entry,
-          weiToNumber(amountIn.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18)),
-        )
+        if (!tokenR) {
+          console.warn('missing token info for TOKEN_R', tokenR)
+        } else {
+          const priceRFormated = this.extractPriceR(tokenR, tokens, priceR, log)
+          if (!priceRFormated) {
+            console.warn('unable to extract priceR')
+          } else {
+            positions[tokenOutAddress].totalEntryR = add(positions[tokenOutAddress].totalEntryR ?? 0, amountIn)
+            positions[tokenOutAddress].entry = add(
+              positions[tokenOutAddress].entry,
+              weiToNumber(amountIn.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18)),
+            )
+            // console.log(positions[tokenOutAddress].totalEntryR, positions[tokenOutAddress].entry)
+          }
+        }
       }
 
       if (price) {
@@ -166,10 +174,17 @@ export class History {
         ) {
           const amount = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut
           const tokenR = tokens.find((t) => t.address === TOKEN_R)
-          const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0])
-          // priceR is independent to the pool index, so no pool is passed in here
-          const priceRFormated = parsePrice(priceR, tokenR!, tokenRQuote!)
-          entryValue = weiToNumber(amount.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18))
+          if (!tokenR) {
+            console.warn('missing token info for TOKEN_R', tokenR)
+          } else {
+            const priceRFormated = this.extractPriceR(tokenR, tokens, priceR, log)
+            if (!priceRFormated) {
+              console.warn('unable to extract priceR')
+            } else {
+              entryValue = weiToNumber(amount.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18))
+              // console.log(tokenR.symbol, tokenRQuote.symbol, _priceR.toString(), priceRFormated, entryValue)
+            }
+          }
         }
 
         if (price) {
@@ -214,6 +229,28 @@ export class History {
     } catch (e) {
       throw e
     }
+  }
+
+  extractPriceR(tokenR: TokenType, tokens: TokenType[], priceR: any, log: LogType) {
+    const { address, stablecoin } = this.RESOURCE.getSingleRouteToUSD(tokenR.address) ?? {}
+    if (!address) {
+      console.warn('missing route to USD', tokenR)
+      return undefined
+    }
+    const tokenRQuote = tokens.find((t) => t.address == stablecoin)
+    if (!tokenRQuote) {
+      console.warn('missing token info for TOKEN_R quote', stablecoin)
+      return undefined
+    }
+    let _priceR = priceR
+    // fix a historical bug in BSC
+    if (this.config.chainId == 56 && log.blockNumber < 33077333) {
+      if (tokenR.address.localeCompare(tokenRQuote.address, undefined, { sensitivity: 'accent' }) > 0) {
+        _priceR = M256.div(_priceR)
+      }
+    }
+    // priceR is independent to the pool index, so no pool is passed in here
+    return parsePrice(_priceR, tokenR, tokenRQuote)
   }
 
   getTokenAddressByPoolAndSide(poolAddress: string, side: BigNumber) {
