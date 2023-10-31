@@ -351,14 +351,11 @@ class Swap {
         return new ethers_1.ethers.Contract(this.derivableAdr.stateCalHelper, this.profile.getAbi('Helper'), provider || this.provider);
     }
     getIndexR(tokenR) {
-        const routeKey = Object.keys(this.profile.routes).find((r) => {
-            return [
-                ...this.profile.configs.stablecoins.map((stablecoin) => stablecoin + '-' + tokenR),
-                ...this.profile.configs.stablecoins.map((stablecoin) => tokenR + '-' + stablecoin),
-            ].includes(r);
-        });
-        const pool = this.profile.routes[routeKey || ''] ? this.profile.routes[routeKey || ''][0] : undefined;
-        return pool?.address ? (0, helper_1.bn)(ethers_1.ethers.utils.hexZeroPad((0, helper_1.bn)(1).shl(255).add(pool.address).toHexString(), 32)) : (0, helper_1.bn)(0);
+        const { quoteTokenIndex, address } = this.RESOURCE.getSingleRouteToUSD(tokenR) ?? {};
+        if (!address) {
+            return (0, helper_1.bn)(0);
+        }
+        return (0, helper_1.bn)(ethers_1.ethers.utils.hexZeroPad((0, helper_1.bn)(quoteTokenIndex).shl(255).add(address).toHexString(), 32));
     }
     getUniPool(tokenIn, tokenR) {
         const routeKey = Object.keys(this.profile.routes).find((r) => {

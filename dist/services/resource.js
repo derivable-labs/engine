@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Resource = exports.Q128 = void 0;
+exports.Resource = exports.M256 = exports.Q128 = void 0;
 const ethers_1 = require("ethers");
 const constant_1 = require("../utils/constant");
 const ethereum_multicall_1 = require("ethereum-multicall");
@@ -40,6 +40,7 @@ const OracleSdkAdapter = __importStar(require("../utils/OracleSdkAdapter"));
 const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider');
 const MAX_BLOCK = 4294967295;
 exports.Q128 = (0, helper_1.bn)(1).shl(128);
+exports.M256 = (0, helper_1.bn)(1).shl(256).sub(1);
 const { A, B, C } = constant_1.POOL_IDS;
 function numDiv(b, unit = 1) {
     try {
@@ -699,6 +700,30 @@ class Resource {
             twap: twap.shl(16),
             spot: twap.eq(0) ? (0, helper_1.bn)(0) : spot
         };
+    }
+    getSingleRouteToUSD(token, types = ['uniswap3']) {
+        const { routes, configs: { stablecoins } } = this.profile;
+        for (const stablecoin of stablecoins) {
+            for (const asSecond of [false, true]) {
+                const key = asSecond ? stablecoin + '-' + token : token + '-' + stablecoin;
+                const route = routes[key];
+                if (route?.length != 1) {
+                    continue;
+                }
+                const { type, address } = route[0];
+                if (!types.includes(type)) {
+                    continue;
+                }
+                const quoteTokenIndex = token.localeCompare(stablecoin, undefined, { sensitivity: 'accent' }) < 0
+                    ? 1 : 0;
+                return {
+                    quoteTokenIndex,
+                    stablecoin,
+                    address,
+                };
+            }
+        }
+        return undefined;
     }
 }
 exports.Resource = Resource;

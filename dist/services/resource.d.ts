@@ -5,6 +5,7 @@ import { IPairInfo, IPairsInfo, UniV3Pair } from './uniV3Pair';
 import { IDerivableContractAddress, IEngineConfig } from '../utils/configs';
 import { Profile } from '../profile';
 export declare const Q128: BigNumber;
+export declare const M256: BigNumber;
 type ResourceData = {
     pools: PoolsType;
     tokens: TokenType[];
@@ -124,5 +125,10 @@ export declare class Resource {
         twap: BigNumber;
         spot: BigNumber;
     }>;
+    getSingleRouteToUSD(token: string, types?: string[]): {
+        quoteTokenIndex: number;
+        stablecoin: string;
+        address: string;
+    } | undefined;
 }
 export {};

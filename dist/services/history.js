@@ -7,6 +7,7 @@ exports.History = void 0;
 const ethers_1 = require("ethers");
 const constant_1 = require("../utils/constant");
 const helper_1 = require("../utils/helper");
+const resource_1 = require("./resource");
 const ERC20_json_1 = __importDefault(require("../abi/ERC20.json"));
 class History {
     constructor(config, profile) {
@@ -35,10 +36,7 @@ class History {
             let positions = {};
             logs = logs.sort((a, b) => a.blockNumber - b.blockNumber);
             logs.forEach((log) => {
-                const abi = this.getSwapAbi(log.topics[0]);
-                const encodeData = ethers_1.ethers.utils.defaultAbiCoder.encode(abi, log.args.args);
-                const formatedData = ethers_1.ethers.utils.defaultAbiCoder.decode(abi, encodeData);
-                positions = this.generatePositionBySwapLog(positions, tokens, formatedData);
+                positions = this.generatePositionBySwapLog(positions, tokens, log);
             });
             for (let i in positions) {
                 positions[i].entryPrice =
@@ -52,9 +50,12 @@ class History {
             throw e;
         }
     }
-    generatePositionBySwapLog(positions, tokens, formatedData) {
+    generatePositionBySwapLog(positions, tokens, log) {
         const pools = this.RESOURCE.pools;
         const poolAddresses = Object.keys(this.RESOURCE.pools);
+        const abi = this.getSwapAbi(log.topics[0]);
+        const encodeData = ethers_1.ethers.utils.defaultAbiCoder.encode(abi, log.args.args);
+        const formatedData = ethers_1.ethers.utils.defaultAbiCoder.decode(abi, encodeData);
         const { poolIn, poolOut, sideIn, sideOut, amountOut, amountIn, priceR, price } = formatedData;
         if (!poolAddresses.includes(poolIn) || !poolAddresses.includes(poolOut)) {
             return positions;
@@ -79,11 +80,20 @@ class History {
             if ([constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) && priceR?.gt(0)) {
                 const pool = pools[poolIn];
                 const tokenR = tokens.find((t) => t.address === pool.TOKEN_R);
-                const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0]);
-                // priceR is independent to the pool index, so no pool is passed in here
-                const priceRFormated = (0, helper_1.parsePrice)(priceR, tokenR, tokenRQuote);
-                positions[tokenOutAddress].totalEntryR = (0, helper_1.add)(positions[tokenOutAddress].totalEntryR ?? 0, amountIn);
-                positions[tokenOutAddress].entry = (0, helper_1.add)(positions[tokenOutAddress].entry, (0, helper_1.weiToNumber)(amountIn.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18)));
+                if (!tokenR) {
+                    console.warn('missing token info for TOKEN_R', tokenR);
+                }
+                else {
+                    const priceRFormated = this.extractPriceR(tokenR, tokens, priceR, log);
+                    if (!priceRFormated) {
+                        console.warn('unable to extract priceR');
+                    }
+                    else {
+                        positions[tokenOutAddress].totalEntryR = (0, helper_1.add)(positions[tokenOutAddress].totalEntryR ?? 0, amountIn);
+                        positions[tokenOutAddress].entry = (0, helper_1.add)(positions[tokenOutAddress].entry, (0, helper_1.weiToNumber)(amountIn.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18)));
+                        // console.log(positions[tokenOutAddress].totalEntryR, positions[tokenOutAddress].entry)
+                    }
+                }
             }
             if (price) {
                 const pool = pools[poolOut];
@@ -136,10 +146,19 @@ class History {
                     priceR?.gt(0)) {
                     const amount = [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut;
                     const tokenR = tokens.find((t) => t.address === TOKEN_R);
-                    const tokenRQuote = tokens.find((t) => t.address === this.profile.configs.stablecoins[0]);
-                    // priceR is independent to the pool index, so no pool is passed in here
-                    const priceRFormated = (0, helper_1.parsePrice)(priceR, tokenR, tokenRQuote);
-                    entryValue = (0, helper_1.weiToNumber)(amount.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18));
+                    if (!tokenR) {
+                        console.warn('missing token info for TOKEN_R', tokenR);
+                    }
+                    else {
+                        const priceRFormated = this.extractPriceR(tokenR, tokens, priceR, log);
+                        if (!priceRFormated) {
+                            console.warn('unable to extract priceR');
+                        }
+                        else {
+                            entryValue = (0, helper_1.weiToNumber)(amount.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18));
+                            // console.log(tokenR.symbol, tokenRQuote.symbol, _priceR.toString(), priceRFormated, entryValue)
+                        }
+                    }
                 }
                 if (price) {
                     entryPrice = (0, helper_1.parsePrice)(price, tokens.find((t) => t?.address === baseToken), tokens.find((t) => t?.address === quoteToken), pool);
@@ -177,6 +196,27 @@ class History {
         catch (e) {
             throw e;
         }
+    }
+    extractPriceR(tokenR, tokens, priceR, log) {
+        const { address, stablecoin } = this.RESOURCE.getSingleRouteToUSD(tokenR.address) ?? {};
+        if (!address) {
+            console.warn('missing route to USD', tokenR);
+            return undefined;
+        }
+        const tokenRQuote = tokens.find((t) => t.address == stablecoin);
+        if (!tokenRQuote) {
+            console.warn('missing token info for TOKEN_R quote', stablecoin);
+            return undefined;
+        }
+        let _priceR = priceR;
+        // fix a historical bug in BSC
+        if (this.config.chainId == 56 && log.blockNumber < 33077333) {
+            if (tokenR.address.localeCompare(tokenRQuote.address, undefined, { sensitivity: 'accent' }) > 0) {
+                _priceR = resource_1.M256.div(_priceR);
+            }
+        }
+        // priceR is independent to the pool index, so no pool is passed in here
+        return (0, helper_1.parsePrice)(_priceR, tokenR, tokenRQuote);
     }
     getTokenAddressByPoolAndSide(poolAddress, side) {
         const pool = this.RESOURCE.pools[poolAddress];

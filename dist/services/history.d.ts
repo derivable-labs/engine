@@ -15,12 +15,13 @@ export declare class History {
         tokens: TokenType[];
         logs: LogType[];
     }): {};
-    generatePositionBySwapLog(positions: any, tokens: TokenType[], formatedData: any): any;
+    generatePositionBySwapLog(positions: any, tokens: TokenType[], log: LogType): any;
     formatSwapHistory({ transferLogs, swapLogs, tokens }: {
         transferLogs: LogType[];
         swapLogs: LogType[];
         tokens: TokenType[];
     }): any[];
+    extractPriceR(tokenR: TokenType, tokens: TokenType[], priceR: any, log: LogType): string | undefined;
     getTokenAddressByPoolAndSide(poolAddress: string, side: BigNumber): string;
     getSwapAbi: (topic0: string) => string[];
     decodeTransferLog(data: string, topics: string[]): ethers.utils.Result;
