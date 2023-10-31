@@ -377,7 +377,7 @@ class Swap {
         const getProof = OracleSdkAdapter.getProofFactory(this.providerGetProof);
         const getBlockByNumber = OracleSdkAdapter.getBlockByNumberFactory(this.overrideProvider);
         // get the proof from the SDK
-        const proof = await OracleSdk.getProof(getProof, getBlockByNumber, BigInt(pool.pair), pool.quoteTokenIndex, (0, helper_1.bn)(blockNumber).sub(pool.window.toNumber() >> 1).toBigInt());
+        const proof = await OracleSdk.getProof(getProof, getBlockByNumber, pool.pair, pool.quoteTokenIndex, blockNumber - (pool.window.toNumber() >> 1));
         // Connect to the network
         const contractWithSigner = new ethers_1.Contract(pool.FETCHER, this.profile.getAbi('FetcherV2'), this.signer);
         const data = await contractWithSigner.populateTransaction.submit(pool.ORACLE, proof);
@@ -391,12 +391,12 @@ class Swap {
         if (blockNumber == null) {
             blockNumber = await this.provider.getBlockNumber();
         }
-        const targetBlock = (0, helper_1.bn)(blockNumber).sub(pool.window.toNumber() >> 1);
+        const targetBlock = blockNumber - (pool.window.toNumber() >> 1);
         const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider);
-        const accumulator = await OracleSdk.getAccumulatorPrice(getStorageAt, BigInt(pool.pair), pool.quoteTokenIndex, targetBlock.toBigInt());
+        const accumulator = await OracleSdk.getAccumulatorPrice(getStorageAt, pool.pair, pool.quoteTokenIndex, targetBlock);
         // Connect to the network
         const contractWithSigner = new ethers_1.Contract(pool.FETCHER, this.profile.getAbi('FetcherV2Mock').abi, this.signer);
-        const data = await contractWithSigner.populateTransaction.submitPrice(pool.ORACLE, (0, helper_1.bn)(accumulator.price), targetBlock.toBigInt(), accumulator.timestamp);
+        const data = await contractWithSigner.populateTransaction.submitPrice(pool.ORACLE, (0, helper_1.bn)(accumulator.price), targetBlock, accumulator.timestamp);
         return {
             inputs: [],
             code: pool.FETCHER,
