@@ -50,6 +50,7 @@ export interface IDerivableContractAddress {
   poolFactory: string
   logic: string
   token: string
+  playToken: string
   stateCalHelper: string
   feeReceiver: string
   tokenDescriptor: string

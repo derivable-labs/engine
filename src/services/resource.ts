@@ -90,10 +90,13 @@ export class Resource {
     this.stableCoins = profile.configs.stablecoins
   }
 
-  async fetchResourceData(account: string) {
+  async fetchResourceData(account: string, playMode?: boolean) {
     let result: any = {}
     if (!this.chainId) return result
-    const [resultCached, newResource] = await Promise.all([this.getResourceCached(account), this.getNewResource(account)])
+    const [resultCached, newResource] = await Promise.all([
+      this.getResourceCached(account, playMode),
+      this.getNewResource(account, playMode),
+    ])
     this.poolGroups = {...resultCached.poolGroups, ...newResource.poolGroups}
     this.pools = {...resultCached.pools, ...newResource.pools}
     this.tokens = [...resultCached.tokens, ...newResource.tokens]
@@ -161,7 +164,7 @@ export class Resource {
     this.storage.setItem(key, JSON.stringify(newCacheSwapLogs))
   }
 
-  async getResourceCached(account: string): Promise<ResourceData> {
+  async getResourceCached(account: string, playMode?: boolean): Promise<ResourceData> {
     const results: ResourceData = {
       pools: {},
       tokens: this._whitelistTokens(),
@@ -181,7 +184,7 @@ export class Resource {
     ]
 
     if (ddlLogsParsed && ddlLogsParsed.length > 0) {
-      const {tokens, pools, poolGroups} = await this.generatePoolData(ddlLogsParsed, transferLogsParsed)
+      const {tokens, pools, poolGroups} = await this.generatePoolData(ddlLogsParsed, transferLogsParsed, playMode)
       results.tokens = [...tokens, ...results.tokens]
       results.pools = pools
       results.poolGroups = poolGroups
@@ -196,7 +199,7 @@ export class Resource {
     return results
   }
 
-  async getNewResource(account: string): Promise<ResourceData> {
+  async getNewResource(account: string, playMode?: boolean): Promise<ResourceData> {
     // TODO: move this part to constructor
     const etherscanConfig =
       typeof this.scanApi === 'string'
@@ -269,7 +272,7 @@ export class Resource {
           result.transferLogs = transferLogs
         }
         if (ddlLogs && ddlLogs.length > 0) {
-          const {tokens, pools, poolGroups} = await this.generatePoolData(ddlLogs, transferLogs)
+          const {tokens, pools, poolGroups} = await this.generatePoolData(ddlLogs, transferLogs, playMode)
           result.tokens = tokens
           result.pools = pools
           result.poolGroups = poolGroups
@@ -289,13 +292,16 @@ export class Resource {
    * @param transferLogs
    * @param tokenAddresses
    */
-  generatePoolData(logs: ParseLogType[], transferLogs: ParseLogType[]) {
+  generatePoolData(logs: ParseLogType[], transferLogs: ParseLogType[], playMode?: boolean) {
     const allTokens: string[] = [...this._tokenInRoutes()]
     const allUniPools: string[] = []
     const poolData = {}
     logs.forEach((log) => {
       if (log.name === 'PoolCreated') {
         const data = log.args
+        if (!!playMode != (data.TOKEN_R == this.profile.configs.derivable.playToken)) {
+          return
+        }
         const powers = [log.args.k.toNumber(), -log.args.k.toNumber()]
         const pair = ethers.utils.getAddress('0x' + data.ORACLE.slice(-40))
         const quoteTokenIndex = bn(data.ORACLE.slice(0, 3)).gt(0) ? 1 : 0
