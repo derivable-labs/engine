@@ -24,6 +24,7 @@ import * as OracleSdkAdapter from '../utils/OracleSdkAdapter'
 const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
 export const Q128 = bn(1).shl(128)
+export const M256 = bn(1).shl(256).sub(1)
 
 const {A, B, C} = POOL_IDS
 
@@ -826,5 +827,31 @@ export class Resource {
       twap: twap.shl(16),
       spot: twap.eq(0) ? bn(0) : spot
     }
+  }
+
+  getSingleRouteToUSD(token: string, types: string[] = ['uniswap3']) {
+    const { routes, configs: { stablecoins }} = this.profile
+    for (const stablecoin of stablecoins) {
+      for (const asSecond of [false, true]) {
+        const key = asSecond ? stablecoin + '-' + token : token + '-' + stablecoin
+        const route = routes[key]
+        if (route?.length != 1) {
+          continue
+        }
+        const { type, address } = route[0]
+        if (!types.includes(type)) {
+          continue
+        }
+        const quoteTokenIndex =
+          token.localeCompare(stablecoin, undefined, { sensitivity: 'accent' }) < 0
+          ? 1 : 0
+        return {
+          quoteTokenIndex,
+          stablecoin,
+          address,
+        }
+      }
+    }
+    return undefined
   }
 }

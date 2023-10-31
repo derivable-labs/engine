@@ -445,14 +445,11 @@ export class Swap {
   }
 
   getIndexR(tokenR: string) {
-    const routeKey = Object.keys(this.profile.routes).find((r) => {
-      return [
-        ...this.profile.configs.stablecoins.map((stablecoin) => stablecoin + '-' + tokenR),
-        ...this.profile.configs.stablecoins.map((stablecoin) => tokenR + '-' + stablecoin),
-      ].includes(r)
-    })
-    const pool = this.profile.routes[routeKey || ''] ? this.profile.routes[routeKey || ''][0] : undefined
-    return pool?.address ? bn(ethers.utils.hexZeroPad(bn(1).shl(255).add(pool.address).toHexString(), 32)) : bn(0)
+    const { quoteTokenIndex, address } = this.RESOURCE.getSingleRouteToUSD(tokenR) ?? {}
+    if (!address) {
+      return bn(0)
+    }
+    return bn(ethers.utils.hexZeroPad(bn(quoteTokenIndex).shl(255).add(address).toHexString(), 32))
   }
 
   getUniPool(tokenIn: string, tokenR: string) {
