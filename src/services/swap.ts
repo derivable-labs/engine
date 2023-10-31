@@ -476,9 +476,9 @@ export class Swap {
     const proof = await OracleSdk.getProof(
       getProof,
       getBlockByNumber,
-      BigInt(pool.pair),
+      pool.pair,
       pool.quoteTokenIndex,
-      bn(blockNumber).sub(pool.window.toNumber() >> 1).toBigInt()
+      blockNumber - (pool.window.toNumber() >> 1),
     )
     // Connect to the network
     const contractWithSigner = new Contract(pool.FETCHER, this.profile.getAbi('FetcherV2'), this.signer)
@@ -494,13 +494,13 @@ export class Swap {
     if (blockNumber == null) {
       blockNumber = await this.provider.getBlockNumber()
     }
-    const targetBlock = bn(blockNumber).sub(pool.window.toNumber() >> 1)
+    const targetBlock = blockNumber - (pool.window.toNumber() >> 1)
     const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider)
     const accumulator = await OracleSdk.getAccumulatorPrice(
       getStorageAt,
-      BigInt(pool.pair),
+      pool.pair,
       pool.quoteTokenIndex,
-      targetBlock.toBigInt()
+      targetBlock,
     )
 
     // Connect to the network
@@ -508,7 +508,7 @@ export class Swap {
     const data = await contractWithSigner.populateTransaction.submitPrice(
       pool.ORACLE,
       bn(accumulator.price),
-      targetBlock.toBigInt(),
+      targetBlock,
       accumulator.timestamp
     )
     return {

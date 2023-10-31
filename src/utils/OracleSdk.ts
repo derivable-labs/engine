@@ -1,170 +1,181 @@
 import { rlpEncode, rlpDecode } from '@zoltu/rlp-encoder'
+import { ethers } from 'ethers'
+const bn = ethers.BigNumber.from
+
+const Q112 = bn(1).shl(112)
+const M112 = Q112.sub(1)
 
 export interface Proof {
-	readonly block: Uint8Array
-	readonly accountProofNodesRlp: Uint8Array
-	readonly reserveAndTimestampProofNodesRlp: Uint8Array
-	readonly priceAccumulatorProofNodesRlp: Uint8Array
+  readonly block: Uint8Array
+  readonly accountProofNodesRlp: Uint8Array
+  readonly reserveAndTimestampProofNodesRlp: Uint8Array
+  readonly priceAccumulatorProofNodesRlp: Uint8Array
 }
 
 export type ProofResult = {
-	readonly accountProof: readonly Uint8Array[]
-	readonly storageProof: readonly {
-		readonly key: bigint
-		readonly value: bigint
-		readonly proof: readonly Uint8Array[]
-	}[]
+  readonly accountProof: readonly Uint8Array[]
+  readonly storageProof: readonly {
+    readonly key: string
+    readonly value: string
+    readonly proof: readonly Uint8Array[]
+  }[]
 }
 
 export type Block = {
-	readonly parentHash: bigint
-	readonly sha3Uncles: bigint
-	readonly miner: bigint
-	readonly stateRoot: bigint
-	readonly transactionsRoot: bigint
-	readonly receiptsRoot: bigint
-	readonly logsBloom: bigint
-	readonly difficulty: bigint
-	readonly number: bigint
-	readonly gasLimit: bigint
-	readonly gasUsed: bigint
-	readonly timestamp: bigint
-	readonly extraData: Uint8Array
-	readonly mixHash: bigint | undefined
-	readonly nonce: bigint | null
-    readonly baseFeePerGas: bigint | null
+  readonly parentHash: string
+  readonly sha3Uncles: string
+  readonly miner: string
+  readonly stateRoot: string
+  readonly transactionsRoot: string
+  readonly receiptsRoot: string
+  readonly logsBloom: string
+  readonly difficulty: string
+  readonly number: string
+  readonly gasLimit: string
+  readonly gasUsed: string
+  readonly timestamp: string
+  readonly extraData: Uint8Array
+  readonly mixHash: string | undefined
+  readonly nonce: string | null
+  readonly baseFeePerGas: string | null
 }
 
-export type EthGetStorageAt = (address: bigint, position: bigint, block: bigint | 'latest') => Promise<bigint>
-export type EthGetProof = (address: bigint, positions: readonly bigint[], block: bigint) => Promise<ProofResult>
-export type EthGetBlockByNumber = (blockNumber: bigint | 'latest') => Promise<Block | null>
+export type EthGetStorageAt = (address: string, position: number, block: number | 'latest') => Promise<string>
+export type EthGetProof = (address: string, positions: readonly number[], block: number) => Promise<ProofResult>
+export type EthGetBlockByNumber = (blockNumber: number | 'latest') => Promise<Block | null>
 
-export function addressToString(value: bigint) {
-	return `0x${value.toString(16).padStart(40, '0')}`
+export async function getPrice(
+  eth_getStorageAt: EthGetStorageAt,
+  eth_getBlockByNumber: EthGetBlockByNumber,
+  exchangeAddress: string,
+  quoteTokenIndex: number,
+  blockNumber: number,
+): Promise<ethers.BigNumber> {
+  async function getAccumulatorValue(innerBlockNumber: number | 'latest', timestamp: number) {
+    const priceAccumulatorSlot = quoteTokenIndex == 0 ? 10 : 9
+    const [reservesAndTimestamp, accumulator] = await Promise.all([
+      eth_getStorageAt(exchangeAddress, 8, innerBlockNumber),
+      eth_getStorageAt(exchangeAddress, priceAccumulatorSlot, innerBlockNumber),
+    ])
+
+    const blockTimestampLast = bn(reservesAndTimestamp).shr(224)
+    const reserve1 = bn(reservesAndTimestamp).shr(112).and(M112)
+    const reserve0 = bn(reservesAndTimestamp).and(M112)
+    if (reserve0.eq(0)) throw new Error(`Exchange ${exchangeAddress} does not have any reserves for token0.`)
+    if (reserve1.eq(0)) throw new Error(`Exchange ${exchangeAddress} does not have any reserves for token1.`)
+    if (blockTimestampLast.eq(0))
+      throw new Error(`Exchange ${exchangeAddress} has not had its first accumulator update (or it is year 2106).`)
+    if (bn(accumulator).eq(0))
+      throw new Error(`Exchange ${exchangeAddress} has not had its first accumulator update (or it is 136 years since launch).`)
+    const numeratorReserve = 0 === quoteTokenIndex ? reserve0 : reserve1
+    const denominatorReserve = 0 === quoteTokenIndex ? reserve1 : reserve0
+    const timeElapsedSinceLastAccumulatorUpdate = bn(timestamp).sub(blockTimestampLast)
+    const priceNow = numeratorReserve.shl(112).div(denominatorReserve)
+    return timeElapsedSinceLastAccumulatorUpdate.mul(priceNow).add(accumulator)
+  }
+
+  const latestBlock = { timestamp: Math.floor(new Date().getTime() / 1000) }
+  const historicBlock = await eth_getBlockByNumber(blockNumber)
+  if (historicBlock === null) throw new Error(`Block ${blockNumber} does not exist.`)
+  const [latestAccumulator, historicAccumulator] = await Promise.all([
+    getAccumulatorValue('latest', latestBlock.timestamp),
+    getAccumulatorValue(blockNumber, Number(historicBlock.timestamp)),
+  ])
+
+  const accumulatorDelta = latestAccumulator.sub(historicAccumulator)
+  const timeDelta = bn(latestBlock.timestamp).sub(bn(historicBlock.timestamp))
+  return timeDelta.eq(0) ? accumulatorDelta : accumulatorDelta.div(timeDelta)
 }
 
-export async function getPrice(eth_getStorageAt: EthGetStorageAt, eth_getBlockByNumber: EthGetBlockByNumber, exchangeAddress: bigint, quoteTokenIndex: number, blockNumber: bigint): Promise<bigint> {
-	async function getAccumulatorValue(innerBlockNumber: bigint | 'latest', timestamp: bigint) {
-	  const priceAccumulatorSlot = quoteTokenIndex == 0 ? 10n : 9n
-	  const [reservesAndTimestamp, accumulator] = await Promise.all([
-		eth_getStorageAt(exchangeAddress, 8n, innerBlockNumber),
-		eth_getStorageAt(exchangeAddress, priceAccumulatorSlot, innerBlockNumber),
-	  ])
-
-	  const blockTimestampLast = reservesAndTimestamp >> (112n + 112n)
-	  const reserve1 = (reservesAndTimestamp >> 112n) & (2n ** 112n - 1n)
-	  const reserve0 = reservesAndTimestamp & (2n ** 112n - 1n)
-	  // if (token0 !== denominationToken && token1 !== denominationToken) throw new Error(`Denomination token ${addressToString(denominationToken)} is not one of the tokens for exchange ${exchangeAddress}`)
-	  if (reserve0 === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} does not have any reserves for token0.`)
-	  if (reserve1 === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} does not have any reserves for token1.`)
-	  if (blockTimestampLast === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} has not had its first accumulator update (or it is year 2106).`)
-	  if (accumulator === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} has not had its first accumulator update (or it is 136 years since launch).`)
-	  const numeratorReserve = (0 === quoteTokenIndex) ? reserve0 : reserve1
-	  const denominatorReserve = (0 === quoteTokenIndex) ? reserve1 : reserve0
-	  const timeElapsedSinceLastAccumulatorUpdate = timestamp - blockTimestampLast
-	  const priceNow = numeratorReserve * 2n ** 112n / denominatorReserve
-	  return accumulator + timeElapsedSinceLastAccumulatorUpdate * priceNow
-	}
-
-	const latestBlock = {
-		timestamp: BigInt(Math.floor(new Date().getTime() / 1000)),
-	}
-	const historicBlock = await eth_getBlockByNumber(blockNumber)
-	if (historicBlock === null) throw new Error(`Block ${blockNumber} does not exist.`)
-	const [latestAccumulator, historicAccumulator] = await Promise.all([
-	  getAccumulatorValue('latest', latestBlock.timestamp),
-	  getAccumulatorValue(blockNumber, historicBlock.timestamp)
-	])
-
-	const accumulatorDelta = latestAccumulator - historicAccumulator
-	const timeDelta = latestBlock.timestamp - historicBlock.timestamp
-	return timeDelta === 0n ? accumulatorDelta : accumulatorDelta / timeDelta
+export async function getAccumulatorPrice(
+  eth_getStorageAt: EthGetStorageAt,
+  exchangeAddress: string,
+  quoteTokenIndex: number,
+  blockNumber: number,
+): Promise<{ price: ethers.BigNumber; timestamp: ethers.BigNumber }> {
+  const priceAccumulatorSlot = quoteTokenIndex == 0 ? 10 : 9
+  const [reservesAndTimestamp, accumulator] = await Promise.all([
+    eth_getStorageAt(exchangeAddress, 8, blockNumber),
+    eth_getStorageAt(exchangeAddress, priceAccumulatorSlot, blockNumber),
+  ])
+  const blockTimestampLast = bn(reservesAndTimestamp).shr(224)
+  const reserve1 = bn(reservesAndTimestamp).shr(112).and(M112)
+  const reserve0 = bn(reservesAndTimestamp).and(M112)
+  if (reserve0.eq(0)) throw new Error(`Exchange ${exchangeAddress} does not have any reserves for token0.`)
+  if (reserve1.eq(0)) throw new Error(`Exchange ${exchangeAddress} does not have any reserves for token1.`)
+  if (blockTimestampLast.eq(0))
+    throw new Error(`Exchange ${exchangeAddress} has not had its first accumulator update (or it is year 2106).`)
+  if (bn(accumulator).eq(0))
+    throw new Error(`Exchange ${exchangeAddress} has not had its first accumulator update (or it is 136 years since launch).`)
+  return {
+    price: bn(accumulator),
+    timestamp: blockTimestampLast,
+  }
 }
 
-export async function getAccumulatorPrice(eth_getStorageAt: EthGetStorageAt, exchangeAddress: bigint, quoteTokenIndex: number, blockNumber: bigint): Promise<{price: bigint, timestamp: bigint}> {
-	const priceAccumulatorSlot = quoteTokenIndex == 0 ? 10n : 9n
-	const [
-		reservesAndTimestamp,
-		accumulator,
-	] = await Promise.all([
-		eth_getStorageAt(exchangeAddress, 8n, blockNumber),
-		eth_getStorageAt(exchangeAddress, priceAccumulatorSlot, blockNumber),
-	])
-	const blockTimestampLast = reservesAndTimestamp >> (112n + 112n)
-	const reserve1 = (reservesAndTimestamp >> 112n) & (2n**112n - 1n)
-	const reserve0 = reservesAndTimestamp & (2n**112n - 1n)
-	if (reserve0 === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} does not have any reserves for token0.`)
-	if (reserve1 === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} does not have any reserves for token1.`)
-	if (blockTimestampLast === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} has not had its first accumulator update (or it is year 2106).`)
-	if (accumulator === 0n) throw new Error(`Exchange ${addressToString(exchangeAddress)} has not had its first accumulator update (or it is 136 years since launch).`)
-	return {
-		price: accumulator,
-		timestamp: blockTimestampLast
-	}
-}
-
-export async function getProof(eth_getProof: EthGetProof, eth_getBlockByNumber: EthGetBlockByNumber, exchangeAddress: bigint, quoteTokenIndex: number, blockNumber: bigint): Promise<Proof> {
-	const priceAccumulatorSlot = quoteTokenIndex == 0 ? 10n : 9n
-	const [ block, proof ] = await Promise.all([
-		eth_getBlockByNumber(blockNumber),
-		eth_getProof(exchangeAddress, [8n, priceAccumulatorSlot], blockNumber),
-	])
-	if (block === null) throw new Error(`Received null for block ${Number(blockNumber)}`)
-	const blockRlp = rlpEncodeBlock(block)
-	const accountProofNodesRlp = rlpEncode(proof.accountProof.map(rlpDecode))
-	const reserveAndTimestampProofNodesRlp = rlpEncode(proof.storageProof[0].proof.map(rlpDecode))
-	const priceAccumulatorProofNodesRlp = rlpEncode(proof.storageProof[1].proof.map(rlpDecode))
-	return {
-		block: blockRlp,
-		accountProofNodesRlp,
-		reserveAndTimestampProofNodesRlp,
-		priceAccumulatorProofNodesRlp,
-	}
+export async function getProof(
+  eth_getProof: EthGetProof,
+  eth_getBlockByNumber: EthGetBlockByNumber,
+  exchangeAddress: string,
+  quoteTokenIndex: number,
+  blockNumber: number,
+): Promise<Proof> {
+  const priceAccumulatorSlot = quoteTokenIndex == 0 ? 10 : 9
+  const [block, proof] = await Promise.all([
+    eth_getBlockByNumber(blockNumber),
+    eth_getProof(exchangeAddress, [8, priceAccumulatorSlot], blockNumber),
+  ])
+  if (block === null) throw new Error(`Received null for block ${Number(blockNumber)}`)
+  const blockRlp = rlpEncodeBlock(block)
+  const accountProofNodesRlp = rlpEncode(proof.accountProof.map(rlpDecode))
+  const reserveAndTimestampProofNodesRlp = rlpEncode(proof.storageProof[0].proof.map(rlpDecode))
+  const priceAccumulatorProofNodesRlp = rlpEncode(proof.storageProof[1].proof.map(rlpDecode))
+  return {
+    block: blockRlp,
+    accountProofNodesRlp,
+    reserveAndTimestampProofNodesRlp,
+    priceAccumulatorProofNodesRlp,
+  }
 }
 
 function rlpEncodeBlock(block: Block) {
-	return rlpEncode([
-		unsignedIntegerToUint8Array(block.parentHash, 32),
-		unsignedIntegerToUint8Array(block.sha3Uncles, 32),
-		unsignedIntegerToUint8Array(block.miner, 20),
-		unsignedIntegerToUint8Array(block.stateRoot, 32),
-		unsignedIntegerToUint8Array(block.transactionsRoot, 32),
-		unsignedIntegerToUint8Array(block.receiptsRoot, 32),
-		unsignedIntegerToUint8Array(block.logsBloom, 256),
-		stripLeadingZeros(unsignedIntegerToUint8Array(block.difficulty, 32)),
-		stripLeadingZeros(unsignedIntegerToUint8Array(block.number, 32)),
-		stripLeadingZeros(unsignedIntegerToUint8Array(block.gasLimit, 32)),
-		stripLeadingZeros(unsignedIntegerToUint8Array(block.gasUsed, 32)),
-		stripLeadingZeros(unsignedIntegerToUint8Array(block.timestamp, 32)),
-		stripLeadingZeros(block.extraData),
-		...(block.mixHash != null ? [unsignedIntegerToUint8Array(block.mixHash, 32)] : []),
-		...(block.nonce != null ? [unsignedIntegerToUint8Array(block.nonce, 8)] : []),
-		...(block.baseFeePerGas != null ? [stripLeadingZeros(unsignedIntegerToUint8Array(block.baseFeePerGas, 32))] : []),
-	])
-}
-
-export function unsignedIntegerToUint8Array(value: bigint | number, widthInBytes: 8|20|32|256 = 32) {
-	if (typeof value === 'number') {
-		if (!Number.isSafeInteger(value)) throw new Error(`${value} is not able to safely be cast into a bigint.`)
-		value = BigInt(value)
-	}
-	if (value >= 2n ** (BigInt(widthInBytes) * 8n) || value < 0n) throw new Error(`Cannot fit ${value} into a ${widthInBytes * 8}-bit unsigned integer.`)
-	const result = new Uint8Array(widthInBytes)
-	if (result.length !== widthInBytes) throw new Error(`Cannot a ${widthInBytes} value into a ${result.length} byte array.`)
-	for (let i = 0; i < result.length; ++i) {
-		result[i] = Number((value >> BigInt((widthInBytes - i) * 8 - 8)) & 0xffn)
-	}
-	return result
+  return rlpEncode([
+    hexStringToUint8Array(block.parentHash),
+    hexStringToUint8Array(block.sha3Uncles),
+    hexStringToUint8Array(block.miner),
+    hexStringToUint8Array(block.stateRoot),
+    hexStringToUint8Array(block.transactionsRoot),
+    hexStringToUint8Array(block.receiptsRoot),
+    hexStringToUint8Array(block.logsBloom),
+    stripLeadingZeros(hexStringToUint8Array(block.difficulty)),
+    stripLeadingZeros(hexStringToUint8Array(block.number)),
+    stripLeadingZeros(hexStringToUint8Array(block.gasLimit)),
+    stripLeadingZeros(hexStringToUint8Array(block.gasUsed)),
+    stripLeadingZeros(hexStringToUint8Array(block.timestamp)),
+    stripLeadingZeros(block.extraData),
+    ...(block.mixHash != null ? [hexStringToUint8Array(block.mixHash)] : []),
+    ...(block.nonce != null ? [hexStringToUint8Array(block.nonce)] : []),
+    ...(block.baseFeePerGas != null ? [stripLeadingZeros(hexStringToUint8Array(block.baseFeePerGas))] : []),
+  ])
 }
 
 export function stripLeadingZeros(byteArray: Uint8Array): Uint8Array {
-	let i = 0
-	for (; i < byteArray.length; ++i) {
-		if (byteArray[i] !== 0) break
-	}
-	const result = new Uint8Array(byteArray.length - i)
-	for (let j = 0; j < result.length; ++j) {
-		result[j] = byteArray[i + j]
-	}
-	return result
+  let i = 0
+  for (; i < byteArray.length; ++i) {
+    if (byteArray[i] !== 0) break
+  }
+  const result = new Uint8Array(byteArray.length - i)
+  for (let j = 0; j < result.length; ++j) {
+    result[j] = byteArray[i + j]
+  }
+  return result
+}
+
+export function hexStringToUint8Array(value: string) {
+  value = value.substring(2)
+  if (value.length % 2 != 0) {
+    value = '0' + value
+  }
+  const result = Uint8Array.from(Buffer.from(value, 'hex'))
+  return result
 }
