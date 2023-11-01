@@ -29,7 +29,7 @@ export interface INetworkConfig {
     stablecoins: string[];
     tokens?: {
         [address: string]: {
-            price?: number;
+            price?: number | string;
             symbol: string;
             name: string;
             decimals: number;

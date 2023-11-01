@@ -62,7 +62,7 @@ class Price {
             if (whiteListToken) {
                 for (let address in whiteListToken) {
                     if (whiteListToken[address].price) {
-                        result[address] = (0, helper_1.bn)(whiteListToken[address].price || '0x01000000000000000000000000');
+                        result[address] = (0, helper_1.bn)(whiteListToken[address].price ?? '0x01000000000000000000000000');
                     }
                 }
             }

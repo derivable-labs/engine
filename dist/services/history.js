@@ -74,24 +74,32 @@ class History {
                     totalEntryR: 0, // totalEntryR
                 };
             }
-            if (priceR?.gt(0)) {
-                positions[tokenOutAddress].balance = positions[tokenOutAddress].balance.add(amountOut);
-            }
-            if ([constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) && priceR?.gt(0)) {
+            if ([constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber())) {
                 const pool = pools[poolIn];
-                const tokenR = tokens.find((t) => t.address === pool.TOKEN_R);
-                if (!tokenR) {
-                    console.warn('missing token info for TOKEN_R', tokenR);
-                }
-                else {
-                    const priceRFormated = this.extractPriceR(tokenR, tokens, priceR, log);
-                    if (!priceRFormated) {
-                        console.warn('unable to extract priceR');
+                const { derivable: { playToken }, tokens: whiteListToken } = this.profile.configs;
+                if (priceR?.gt(0) || pool.TOKEN_R == playToken) {
+                    const tokenR = tokens.find((t) => t.address === pool.TOKEN_R);
+                    if (!tokenR) {
+                        console.warn('missing token info for TOKEN_R', tokenR);
                     }
                     else {
-                        positions[tokenOutAddress].totalEntryR = (0, helper_1.add)(positions[tokenOutAddress].totalEntryR ?? 0, amountIn);
-                        positions[tokenOutAddress].entry = (0, helper_1.add)(positions[tokenOutAddress].entry, (0, helper_1.weiToNumber)(amountIn.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18)));
-                        // console.log(positions[tokenOutAddress].totalEntryR, positions[tokenOutAddress].entry)
+                        let playTokenPrice = whiteListToken?.[playToken]?.price ?? 1;
+                        if (typeof playTokenPrice === 'string' && playTokenPrice?.startsWith('0x')) {
+                            // ignore the x96 price here
+                            playTokenPrice = 1;
+                        }
+                        const priceRFormated = pool.TOKEN_R == playToken
+                            ? playTokenPrice
+                            : this.extractPriceR(tokenR, tokens, priceR, log);
+                        if (!priceRFormated) {
+                            console.warn('unable to extract priceR');
+                        }
+                        else {
+                            positions[tokenOutAddress].balance = positions[tokenOutAddress].balance.add(amountOut);
+                            positions[tokenOutAddress].totalEntryR = (0, helper_1.add)(positions[tokenOutAddress].totalEntryR ?? 0, amountIn);
+                            positions[tokenOutAddress].entry = (0, helper_1.add)(positions[tokenOutAddress].entry, (0, helper_1.weiToNumber)(amountIn.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18)));
+                            // console.log(positions[tokenOutAddress].totalEntryR, positions[tokenOutAddress].entry)
+                        }
                     }
                 }
             }
@@ -142,15 +150,24 @@ class History {
                 let entryPrice;
                 const pool = [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) ? pools[poolIn] : pools[poolOut];
                 const { TOKEN_R, baseToken, quoteToken } = pool;
-                if (([constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) || [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideOut.toNumber())) &&
-                    priceR?.gt(0)) {
+                const { derivable: { playToken }, tokens: whiteListToken } = this.profile.configs;
+                if (([constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) ||
+                    [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideOut.toNumber())) &&
+                    (priceR?.gt(0) || TOKEN_R == playToken)) {
                     const amount = [constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut;
                     const tokenR = tokens.find((t) => t.address === TOKEN_R);
                     if (!tokenR) {
                         console.warn('missing token info for TOKEN_R', tokenR);
                     }
                     else {
-                        const priceRFormated = this.extractPriceR(tokenR, tokens, priceR, log);
+                        let playTokenPrice = whiteListToken?.[playToken]?.price ?? 1;
+                        if (typeof playTokenPrice === 'string' && playTokenPrice?.startsWith('0x')) {
+                            // ignore the x96 price here
+                            playTokenPrice = 1;
+                        }
+                        const priceRFormated = pool.TOKEN_R == playToken
+                            ? playTokenPrice
+                            : this.extractPriceR(tokenR, tokens, priceR, log);
                         if (!priceRFormated) {
                             console.warn('unable to extract priceR');
                         }
