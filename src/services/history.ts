@@ -85,26 +85,34 @@ export class History {
           totalEntryR: 0, // totalEntryR
         }
       }
-      if (priceR?.gt(0)) {
-        positions[tokenOutAddress].balance = positions[tokenOutAddress].balance.add(amountOut)
-      }
 
-      if ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) && priceR?.gt(0)) {
+      if ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber())) {
         const pool = pools[poolIn]
-        const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
-        if (!tokenR) {
-          console.warn('missing token info for TOKEN_R', tokenR)
-        } else {
-          const priceRFormated = this.extractPriceR(tokenR, tokens, priceR, log)
-          if (!priceRFormated) {
-            console.warn('unable to extract priceR')
+        const { derivable: { playToken }, tokens: whiteListToken } = this.profile.configs
+        if (priceR?.gt(0) || pool.TOKEN_R == playToken) {
+          const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
+          if (!tokenR) {
+            console.warn('missing token info for TOKEN_R', tokenR)
           } else {
-            positions[tokenOutAddress].totalEntryR = add(positions[tokenOutAddress].totalEntryR ?? 0, amountIn)
-            positions[tokenOutAddress].entry = add(
-              positions[tokenOutAddress].entry,
-              weiToNumber(amountIn.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18)),
-            )
-            // console.log(positions[tokenOutAddress].totalEntryR, positions[tokenOutAddress].entry)
+            let playTokenPrice: any = whiteListToken?.[playToken]?.price ?? 1
+            if (typeof playTokenPrice === 'string' && playTokenPrice?.startsWith('0x')) {
+              // ignore the x96 price here
+              playTokenPrice = 1
+            }
+            const priceRFormated = pool.TOKEN_R == playToken
+              ? playTokenPrice
+              : this.extractPriceR(tokenR, tokens, priceR, log)
+            if (!priceRFormated) {
+              console.warn('unable to extract priceR')
+            } else {
+              positions[tokenOutAddress].balance = positions[tokenOutAddress].balance.add(amountOut)
+              positions[tokenOutAddress].totalEntryR = add(positions[tokenOutAddress].totalEntryR ?? 0, amountIn)
+              positions[tokenOutAddress].entry = add(
+                positions[tokenOutAddress].entry,
+                weiToNumber(amountIn.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18)),
+              )
+              // console.log(positions[tokenOutAddress].totalEntryR, positions[tokenOutAddress].entry)
+            }
           }
         }
       }
@@ -168,16 +176,25 @@ export class History {
         let entryPrice
         const pool = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? pools[poolIn] : pools[poolOut]
         const { TOKEN_R, baseToken, quoteToken } = pool
+        const { derivable: { playToken }, tokens: whiteListToken } = this.profile.configs
         if (
-          ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) || [POOL_IDS.R, POOL_IDS.native].includes(sideOut.toNumber())) &&
-          priceR?.gt(0)
+          ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ||
+          [POOL_IDS.R, POOL_IDS.native].includes(sideOut.toNumber())) &&
+          (priceR?.gt(0) || TOKEN_R == playToken)
         ) {
           const amount = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut
           const tokenR = tokens.find((t) => t.address === TOKEN_R)
           if (!tokenR) {
             console.warn('missing token info for TOKEN_R', tokenR)
           } else {
-            const priceRFormated = this.extractPriceR(tokenR, tokens, priceR, log)
+            let playTokenPrice: any = whiteListToken?.[playToken]?.price ?? 1
+            if (typeof playTokenPrice === 'string' && playTokenPrice?.startsWith('0x')) {
+              // ignore the x96 price here
+              playTokenPrice = 1
+            }
+            const priceRFormated = pool.TOKEN_R == playToken
+              ? playTokenPrice
+              : this.extractPriceR(tokenR, tokens, priceR, log)
             if (!priceRFormated) {
               console.warn('unable to extract priceR')
             } else {

@@ -92,7 +92,7 @@ export class Price {
       if (whiteListToken) {
         for (let address in whiteListToken) {
           if (whiteListToken[address].price) {
-            result[address] = bn(whiteListToken[address].price || '0x01000000000000000000000000')
+            result[address] = bn(whiteListToken[address].price ?? '0x01000000000000000000000000')
           }
         }
       }
