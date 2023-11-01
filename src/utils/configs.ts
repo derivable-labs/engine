@@ -29,7 +29,7 @@ export interface INetworkConfig {
   wrappedTokenAddress: string
   nativePriceUSD: number
   stablecoins: string[]
-  tokens?: { [address: string]: { price?: number; symbol: string; name: string; decimals: number, logo: string } }
+  tokens?: { [address: string]: { price?: number | string; symbol: string; name: string; decimals: number, logo: string } }
   helperContract: IHelperContract
   uniswap: IUniswapContractAddress
   derivable: IDerivableContractAddress
