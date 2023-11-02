@@ -155,7 +155,7 @@ export const parseUq128x128 = (value: BigNumber, unit = 1000) => {
 }
 
 export const parsePrice = (value: BigNumber, baseToken: TokenType, quoteToken: TokenType, pool?: PoolType) => {
-  const exp = (pool?.FETCHER && pool?.FETCHER != ZERO_ADDRESS) ? 1 : 2
+  const exp = pool?.exp ?? 2
   if (exp == 2) {
     value = value.mul(value)
   }
