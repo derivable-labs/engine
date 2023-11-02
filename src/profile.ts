@@ -16,6 +16,7 @@ import UTR from './abi/UTR.json'
 import FetcherV2 from './abi/FetcherV2.json'
 import UTROverride from './abi/UTROverride.json'
 import fetch from 'node-fetch'
+import { PoolType } from './types'
 
 const abis = {
   BnA,
@@ -70,5 +71,9 @@ export class Profile {
 
   getEventDataAbi() {
     return EventDataAbis
+  }
+
+  getExp(pool: PoolType): number {
+    return this.configs?.fetchers?.[pool.FETCHER]?.type?.endsWith('3') ? 2 : 1
   }
 }

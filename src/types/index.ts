@@ -112,6 +112,7 @@ export type PoolType = {
   pair: string
   quoteTokenIndex: number
   window: BigNumber
+  exp: number
 }
 
 export type SwapLog = {

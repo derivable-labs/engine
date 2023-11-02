@@ -307,7 +307,7 @@ export class Resource {
         const quoteTokenIndex = bn(data.ORACLE.slice(0, 3)).gt(0) ? 1 : 0
         const window = bn('0x' + data.ORACLE.substring(2 + 8, 2 + 8 + 8))
 
-        if(data.FETCHER !== ZERO_ADDRESS && data.FETCHER !== this.profile.configs.derivable.uniswapV2Fetcher) {
+        if (this.profile.configs.fetchers[data.FETCHER] == null) {
           return
         }
 
@@ -327,7 +327,8 @@ export class Resource {
           cToken: data.TOKEN_R,
           pair,
           window,
-          quoteTokenIndex
+          quoteTokenIndex,
+          exp: this.profile.getExp(data),
         }
 
         allUniPools.push(pair)
@@ -617,8 +618,7 @@ export class Resource {
   }
 
   calcPoolInfo(pool: PoolType) {
-    const {FETCHER, MARK, states} = pool
-    const version = (!FETCHER || FETCHER == ZERO_ADDRESS) ? 3 : 2
+    const {exp, MARK, states} = pool
     const {R, rA, rB, rC, a, b, spot} = states
     const riskFactor = rC.gt(0) ? div(rA.sub(rB), rC) : '0'
     const deleverageRiskA = R.isZero()
@@ -634,7 +634,7 @@ export class Resource {
       .div(R)
       .toNumber() / this.unit
     const k = pool.k.toNumber()
-    const power = version == 3 ? k/2 : k
+    const power = k / exp
     const sides = {
       [A]: {} as any,
       [B]: {} as any,
@@ -796,7 +796,7 @@ export class Resource {
   async getPrices(pools: { [key: string]: PoolType }, pairs: IPairsInfo): Promise<IPriceInfo> {
     const blockNumber = await this.overrideProvider.getBlockNumber()
 
-    const promises = Object.values(pools).filter((pool) => pool.FETCHER !== ZERO_ADDRESS).map((pool) => {
+    const promises = Object.values(pools).filter((pool) => pool.exp == 1).map((pool) => {
       return this.getPrice(pool, blockNumber, pairs[pool.pair])
     })
 
