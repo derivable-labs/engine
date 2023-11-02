@@ -63,6 +63,9 @@ class Profile {
     getEventDataAbi() {
         return constant_1.EventDataAbis;
     }
+    getExp(pool) {
+        return this.configs?.fetchers?.[pool.FETCHER]?.type?.endsWith('3') ? 2 : 1;
+    }
 }
 exports.Profile = Profile;
 //# sourceMappingURL=profile.js.map

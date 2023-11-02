@@ -1,4 +1,5 @@
 import { IEngineConfig, INetworkConfig } from './utils/configs';
+import { PoolType } from './types';
 export declare class Profile {
     chainId: number;
     env: 'development' | 'production';
@@ -18,4 +19,5 @@ export declare class Profile {
         Swap1: string[];
         Swap2: string[];
     };
+    getExp(pool: PoolType): number;
 }

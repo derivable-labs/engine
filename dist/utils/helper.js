@@ -159,7 +159,7 @@ const parseUq128x128 = (value, unit = 1000) => {
 };
 exports.parseUq128x128 = parseUq128x128;
 const parsePrice = (value, baseToken, quoteToken, pool) => {
-    const exp = (pool?.FETCHER && pool?.FETCHER != constant_1.ZERO_ADDRESS) ? 1 : 2;
+    const exp = pool?.exp ?? 2;
     if (exp == 2) {
         value = value.mul(value);
     }

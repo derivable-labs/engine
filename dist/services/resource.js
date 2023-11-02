@@ -262,7 +262,7 @@ class Resource {
                 const pair = ethers_1.ethers.utils.getAddress('0x' + data.ORACLE.slice(-40));
                 const quoteTokenIndex = (0, helper_1.bn)(data.ORACLE.slice(0, 3)).gt(0) ? 1 : 0;
                 const window = (0, helper_1.bn)('0x' + data.ORACLE.substring(2 + 8, 2 + 8 + 8));
-                if (data.FETCHER !== constant_1.ZERO_ADDRESS && data.FETCHER !== this.profile.configs.derivable.uniswapV2Fetcher) {
+                if (this.profile.configs.fetchers[data.FETCHER] == null) {
                     return;
                 }
                 data.dTokens = powers.map((value, key) => {
@@ -276,7 +276,8 @@ class Resource {
                     cToken: data.TOKEN_R,
                     pair,
                     window,
-                    quoteTokenIndex
+                    quoteTokenIndex,
+                    exp: this.profile.getExp(data),
                 };
                 allUniPools.push(pair);
                 allTokens.push(data.TOKEN_R);
@@ -521,8 +522,7 @@ class Resource {
         return { tokens, poolsState: pools };
     }
     calcPoolInfo(pool) {
-        const { FETCHER, MARK, states } = pool;
-        const version = (!FETCHER || FETCHER == constant_1.ZERO_ADDRESS) ? 3 : 2;
+        const { exp, MARK, states } = pool;
         const { R, rA, rB, rC, a, b, spot } = states;
         const riskFactor = rC.gt(0) ? (0, helper_1.div)(rA.sub(rB), rC) : '0';
         const deleverageRiskA = R.isZero()
@@ -538,7 +538,7 @@ class Resource {
                 .div(R)
                 .toNumber() / this.unit;
         const k = pool.k.toNumber();
-        const power = version == 3 ? k / 2 : k;
+        const power = k / exp;
         const sides = {
             [A]: {},
             [B]: {},
@@ -679,7 +679,7 @@ class Resource {
     //@ts-ignore
     async getPrices(pools, pairs) {
         const blockNumber = await this.overrideProvider.getBlockNumber();
-        const promises = Object.values(pools).filter((pool) => pool.FETCHER !== constant_1.ZERO_ADDRESS).map((pool) => {
+        const promises = Object.values(pools).filter((pool) => pool.exp == 1).map((pool) => {
             return this.getPrice(pool, blockNumber, pairs[pool.pair]);
         });
         const result = {};

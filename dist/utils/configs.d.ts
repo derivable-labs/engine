@@ -37,6 +37,15 @@ export interface INetworkConfig {
         };
     };
     helperContract: IHelperContract;
+    fetchers: {
+        [fetcher: string]: {
+            type: 'uniswap2' | 'uniswap3' | 'pancake3';
+            factory: string[];
+        };
+    };
+    chartReplacements?: {
+        [origin: string]: string;
+    };
     uniswap: IUniswapContractAddress;
     derivable: IDerivableContractAddress;
 }
