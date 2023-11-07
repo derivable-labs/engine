@@ -817,7 +817,7 @@ export class Resource {
       getBlockByNumber,
       pool.pair,
       pool.quoteTokenIndex,
-      blockNumber - (pool.window.toNumber() >> 1)
+      blockNumber - Math.floor(pool.window.toNumber() * 2 / 3),
     )
 
     let spot
