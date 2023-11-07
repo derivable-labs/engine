@@ -42,7 +42,7 @@ export class Price {
   }) {
     try {
       const toTime = Math.floor((new Date().getTime() - MINI_SECOND_PER_DAY) / 1000)
-      const result = await historyProvider.getBars({
+      let result = await historyProvider.getBars({
         to: toTime,
         limit: 1,
         chainId,
@@ -52,8 +52,26 @@ export class Price {
         inputToken: baseToken,
         barValueType: 'string',
       })
-      const beforePrice = result[0].open
-      return formatPercent(div(sub(currentPrice, beforePrice), beforePrice))
+      if (result?.length > 0) {
+        const beforePrice = result[0].open
+        return formatPercent(div(sub(currentPrice, beforePrice), beforePrice))
+      }
+      result = await historyProvider.getBars({
+        from: toTime,
+        limit: 1,
+        chainId,
+        resolution: '1',
+        route: `${baseToken.address}/${cToken}/${quoteToken.address}`,
+        outputToken: quoteToken,
+        inputToken: baseToken,
+        barValueType: 'string',
+      })
+      if (result?.length > 0) {
+        const beforePrice = result[0].open
+        console.log('zerg', beforePrice, result[0])
+        return formatPercent(div(sub(currentPrice, beforePrice), beforePrice))
+      }
+      return undefined
     } catch (e) {
       throw e
     }

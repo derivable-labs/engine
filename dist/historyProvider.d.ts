@@ -25,14 +25,15 @@ export type CandleFromApiType = {
 };
 declare const _default: {
     history: {};
-    getBars: ({ route, resolution, inputToken, outputToken, limit, chainId, to, barValueType, }: {
+    getBars: ({ route, resolution, inputToken, outputToken, limit, chainId, from, to, barValueType, }: {
         inputToken: TokenType;
         outputToken: TokenType;
         route: string;
         resolution: string;
         limit: number;
         chainId: string;
-        to: number;
+        from?: number | undefined;
+        to?: number | undefined;
         barValueType?: "string" | undefined;
     }) => Promise<CandleType[]>;
 };

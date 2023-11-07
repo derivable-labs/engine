@@ -23,7 +23,7 @@ class Price {
     async get24hChange({ baseToken, cToken, quoteToken, chainId, currentPrice, }) {
         try {
             const toTime = Math.floor((new Date().getTime() - constant_1.MINI_SECOND_PER_DAY) / 1000);
-            const result = await historyProvider_1.default.getBars({
+            let result = await historyProvider_1.default.getBars({
                 to: toTime,
                 limit: 1,
                 chainId,
@@ -33,8 +33,26 @@ class Price {
                 inputToken: baseToken,
                 barValueType: 'string',
             });
-            const beforePrice = result[0].open;
-            return (0, helper_1.formatPercent)((0, helper_1.div)((0, helper_1.sub)(currentPrice, beforePrice), beforePrice));
+            if (result?.length > 0) {
+                const beforePrice = result[0].open;
+                return (0, helper_1.formatPercent)((0, helper_1.div)((0, helper_1.sub)(currentPrice, beforePrice), beforePrice));
+            }
+            result = await historyProvider_1.default.getBars({
+                from: toTime,
+                limit: 1,
+                chainId,
+                resolution: '1',
+                route: `${baseToken.address}/${cToken}/${quoteToken.address}`,
+                outputToken: quoteToken,
+                inputToken: baseToken,
+                barValueType: 'string',
+            });
+            if (result?.length > 0) {
+                const beforePrice = result[0].open;
+                console.log('zerg', beforePrice, result[0]);
+                return (0, helper_1.formatPercent)((0, helper_1.div)((0, helper_1.sub)(currentPrice, beforePrice), beforePrice));
+            }
+            return undefined;
         }
         catch (e) {
             throw e;

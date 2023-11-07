@@ -60,6 +60,7 @@ export default {
     outputToken,
     limit,
     chainId,
+    from,
     to,
     barValueType,
   }: {
@@ -69,13 +70,20 @@ export default {
     resolution: string
     limit: number
     chainId: string
-    to: number
+    from?: number
+    to?: number
     barValueType?: 'string'
   }): Promise<CandleType[]> {
     const q = route.split('/').join(',')
-    const url = `${CHART_API_ENDPOINT.replaceAll('{chartId}', chainId)}candleline4?q=${q}&r=${convertResolution(
+    let url = `${CHART_API_ENDPOINT.replaceAll('{chartId}', chainId)}candleline4?q=${q}&r=${convertResolution(
       resolution,
-    )}&l=${limit}&t=${to}`
+    )}&l=${limit}`
+    if (to != null) {
+      url += `&t=${to}`
+    }
+    if (from != null) {
+      url += `&f=${from}`
+    }
 
     return fetch(url)
       .then((r: any) => r.json())

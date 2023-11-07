@@ -17,6 +17,6 @@ export declare class Price {
         chainId: string;
         quoteToken: TokenType;
         currentPrice: string;
-    }): Promise<string>;
+    }): Promise<string | undefined>;
     getTokenPrices(tokens: string[]): Promise<{}>;
 }
