@@ -692,7 +692,7 @@ class Resource {
     async getPrice(pool, blockNumber, pair) {
         const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider);
         const getBlockByNumber = OracleSdkAdapter.getBlockByNumberFactory(this.overrideProvider);
-        const twap = await OracleSdk.getPrice(getStorageAt, getBlockByNumber, pool.pair, pool.quoteTokenIndex, blockNumber - Math.floor(pool.window.toNumber() * 2 / 3));
+        const twap = await OracleSdk.getPrice(getStorageAt, getBlockByNumber, pool.pair, pool.quoteTokenIndex, blockNumber - (pool.window.toNumber() >> 1));
         let spot;
         const [r0, r1] = [pair.token0.reserve, pair.token1.reserve];
         if (pool.quoteTokenIndex == 0) {
