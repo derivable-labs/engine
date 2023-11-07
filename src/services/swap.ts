@@ -475,7 +475,7 @@ export class Swap {
       getBlockByNumber,
       pool.pair,
       pool.quoteTokenIndex,
-      blockNumber - Math.floor(pool.window.toNumber() * 2 / 3),
+      blockNumber - (pool.window.toNumber() >> 1),
     )
     // Connect to the network
     const contractWithSigner = new Contract(pool.FETCHER, this.profile.getAbi('FetcherV2'), this.signer)
@@ -491,7 +491,7 @@ export class Swap {
     if (blockNumber == null) {
       blockNumber = await this.provider.getBlockNumber()
     }
-    const targetBlock = blockNumber - Math.floor(pool.window.toNumber() * 2 / 3)
+    const targetBlock = blockNumber - (pool.window.toNumber() >> 1)
     const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider)
     const accumulator = await OracleSdk.getAccumulatorPrice(
       getStorageAt,
