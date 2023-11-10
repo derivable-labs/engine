@@ -1,16 +1,16 @@
-import { PoolsType, Storage, SwapLog, TokenType } from './types'
-import { ethers } from 'ethers'
-import { Price } from './services/price'
-import { Resource } from './services/resource'
-import { BnA } from './services/balanceAndAllowance'
-import { UniV2Pair } from './services/uniV2Pair'
-import { History } from './services/history'
-import { Swap } from './services/swap'
-import { CurrentPool } from './services/currentPool'
-import { CreatePool } from './services/createPool'
-import { UniV3Pair } from './services/uniV3Pair'
-import { IEngineConfig } from './utils/configs'
-import { Profile } from './profile'
+import {PoolsType, Storage, SwapLog, TokenType} from './types'
+import {ethers} from 'ethers'
+import {Price} from './services/price'
+import {Resource} from './services/resource'
+import {BnA} from './services/balanceAndAllowance'
+import {UniV2Pair} from './services/uniV2Pair'
+import {History} from './services/history'
+import {Swap} from './services/swap'
+import {CurrentPool} from './services/currentPool'
+import {CreatePool} from './services/createPool'
+import {UniV3Pair} from './services/uniV3Pair'
+import {IEngineConfig} from './utils/configs'
+import {Profile} from './profile'
 
 export class Engine {
   chainId: number
@@ -30,6 +30,7 @@ export class Engine {
   CURRENT_POOL: CurrentPool
   CREATE_POOL: CreatePool
   enginConfigs: IEngineConfig
+
   constructor(enginConfigs: IEngineConfig, profile = Profile) {
     this.enginConfigs = enginConfigs
     this.account = enginConfigs.account
@@ -45,7 +46,13 @@ export class Engine {
     this.UNIV3PAIR = new UniV3Pair(this.enginConfigs, this.profile)
     this.BNA = new BnA(this.enginConfigs, this.profile)
     this.RESOURCE = new Resource(this.enginConfigs, this.profile)
-    this.PRICE = new Price(this.enginConfigs, this.profile)
+    this.PRICE = new Price(
+      {
+        ...this.enginConfigs,
+        RESOURCE: this.RESOURCE,
+      },
+      this.profile
+    )
     this.CURRENT_POOL = new CurrentPool(this.enginConfigs)
     this.HISTORY = new History(
       {
