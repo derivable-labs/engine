@@ -5,6 +5,9 @@ const test = async () => {
   const configs = getTestConfigs(8453)
   const engine = new Engine(configs)
   await engine.initServices()
+  await engine.RESOURCE.fetchResourceData(
+    '0xE3C75f8963E4CA02ea9a281c32b41FdfC248e07f',
+  )
 
   const changedIn24h = await engine.PRICE.get24hChange({
     baseToken: {
@@ -23,6 +26,8 @@ const test = async () => {
     currentPrice: '1900',
     chainId: '42161'
   })
+
+  const prices = await engine.PRICE.getTokenPriceByRoutes()
 
   const res = await engine.PRICE.getTokenPrices([
     "0x4200000000000000000000000000000000000006",

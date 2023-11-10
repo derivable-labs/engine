@@ -195,7 +195,13 @@ export class Resource {
     if (transferLogsParsed && transferLogsParsed.length > 0) {
       results.transferLogs = transferLogsParsed
     }
-    this.pools = {...results.pools, ...this.pools}
+
+    this.poolGroups = {...this.poolGroups, ...results.poolGroups}
+    this.pools = {...this.pools, ...results.pools}
+    this.tokens = [...this.tokens, ...results.tokens]
+    this.swapLogs = [...this.swapLogs, ...results.swapLogs]
+    this.transferLogs = [...this.transferLogs, ...results.transferLogs]
+
     return results
   }
 
@@ -278,6 +284,13 @@ export class Resource {
           result.poolGroups = poolGroups
         }
         this.pools = {...result.pools, ...this.pools}
+
+        this.poolGroups = {...this.poolGroups, ...result.poolGroups}
+        this.pools = {...this.pools, ...result.pools}
+        this.tokens = [...this.tokens, ...result.tokens]
+        this.swapLogs = [...this.swapLogs, ...result.swapLogs]
+        this.transferLogs = [...this.transferLogs, ...result.transferLogs]
+
         return result
       })
       .catch((e: any) => {
