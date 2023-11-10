@@ -24,7 +24,10 @@ class Engine {
         this.UNIV3PAIR = new uniV3Pair_1.UniV3Pair(this.enginConfigs, this.profile);
         this.BNA = new balanceAndAllowance_1.BnA(this.enginConfigs, this.profile);
         this.RESOURCE = new resource_1.Resource(this.enginConfigs, this.profile);
-        this.PRICE = new price_1.Price(this.enginConfigs, this.profile);
+        this.PRICE = new price_1.Price({
+            ...this.enginConfigs,
+            RESOURCE: this.RESOURCE,
+        }, this.profile);
         this.CURRENT_POOL = new currentPool_1.CurrentPool(this.enginConfigs);
         this.HISTORY = new history_1.History({
             ...this.enginConfigs,
