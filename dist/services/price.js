@@ -66,6 +66,12 @@ class Price {
                 results[tokenBase] = (0, helper_1.parseSqrtX96)(prices[0][key], tokenBaseObject, tokenQuoteObject);
             });
         }
+        const whiteListToken = this.profile.configs.tokens;
+        for (let address in whiteListToken) {
+            if (whiteListToken[address].price) {
+                results[address] = whiteListToken[address].price ?? 1;
+            }
+        }
         return results;
     }
     _genFetchTokenParams() {
