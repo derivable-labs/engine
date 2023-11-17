@@ -554,7 +554,7 @@ class Resource {
             [C]: {},
         };
         sides[A].k = Math.min(k, (0, helper_1.kx)(k, R, a, spot, MARK));
-        sides[B].k = Math.min(k, -(0, helper_1.kx)(-k, R, b, spot, MARK));
+        sides[B].k = Math.min(k, (0, helper_1.kx)(-k, R, b, spot, MARK));
         sides[C].k = numDiv(rA.mul(Math.round(sides[A].k * this.unit))
             .add(rB.mul(Math.round(sides[B].k * this.unit)))
             .div(rA.add(rB)), this.unit);

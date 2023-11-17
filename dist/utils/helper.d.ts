@@ -31,4 +31,12 @@ export declare const getTopics: () => {
 };
 export declare function rateToHL(r: number, k: number, DURATION?: number): number;
 export declare function rateFromHL(HL: number, k: number, DURATION?: number): number;
-export declare const kx: (k: number, R: BigNumber, v: BigNumber, spot: BigNumber, MARK: BigNumber, PRECISION?: number) => number;
+export declare const kx: (k: number, R: BigNumber, v: BigNumber, spot: BigNumber, MARK: BigNumber) => number;
+export declare const STR: (num: number | string | BigNumber) => string;
+export declare const NUM: (num: number | string | BigNumber) => number;
+export declare const BIG: (num: number | string | BigNumber) => BigNumber;
+export declare const truncate: (num: string, decimals?: number, rounding?: boolean) => string;
+export declare const round: (num: string, decimals?: number) => string;
+export declare const IEW: (wei: BigNumber | string, decimals?: number, decimalsToDisplay?: number) => string;
+export declare const WEI: (num: number | string, decimals?: number) => string;
+export declare const DIV: (a: BigNumber, b: BigNumber, precision?: number) => string;

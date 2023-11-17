@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.kx = exports.rateFromHL = exports.rateToHL = exports.getTopics = exports.mergeDeep = exports.parseSqrtX96 = exports.parsePrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.max = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
+exports.DIV = exports.WEI = exports.IEW = exports.round = exports.truncate = exports.BIG = exports.NUM = exports.STR = exports.kx = exports.rateFromHL = exports.rateToHL = exports.getTopics = exports.mergeDeep = exports.parseSqrtX96 = exports.parsePrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.max = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
 const ethers_1 = require("ethers");
 const Events_json_1 = __importDefault(require("../abi/Events.json"));
 const constant_1 = require("./constant");
@@ -219,16 +219,13 @@ function rateFromHL(HL, k, DURATION = constant_1.SECONDS_PER_DAY) {
     return (DURATION * Math.LN2) / HL / k / k;
 }
 exports.rateFromHL = rateFromHL;
-const kx = (k, R, v, spot, MARK, PRECISION = 1000000) => {
+const kx = (k, R, v, spot, MARK) => {
     try {
-        const xk = Math.pow(spot.mul(PRECISION).div(MARK).toNumber() / PRECISION, k);
-        const vxk4 = v
-            .mul(Math.round(xk * PRECISION))
-            .shl(2)
-            .div(PRECISION);
+        const xk = k > 0 ? spot.pow(k).div(MARK.pow(k)) : MARK.pow(-k).div(spot.pow(-k));
+        const vxk4 = v.mul(xk).shl(2);
         const denom = vxk4.gt(R) ? vxk4.sub(R) : R.sub(vxk4);
-        const num = R.mul(k);
-        return num.mul(PRECISION).div(denom).toNumber() / PRECISION;
+        const num = R.mul(Math.abs(k));
+        return (0, exports.NUM)((0, exports.DIV)(num, denom));
     }
     catch (err) {
         console.warn(err);
@@ -236,4 +233,131 @@ const kx = (k, R, v, spot, MARK, PRECISION = 1000000) => {
     }
 };
 exports.kx = kx;
+const STR = (num) => {
+    if (!num) {
+        return '0';
+    }
+    switch (typeof num) {
+        case 'string':
+            if (!num?.includes('e')) {
+                return num;
+            }
+            num = Number(num);
+        case 'number':
+            if (!isFinite(num)) {
+                return num > 0 ? '∞' : '-∞';
+            }
+            return num.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
+        default:
+            return String(num);
+    }
+};
+exports.STR = STR;
+const NUM = (num) => {
+    if (!num) {
+        return 0;
+    }
+    switch (typeof num) {
+        case 'number':
+            return num;
+        case 'string':
+            if (num == '∞') {
+                return Number.POSITIVE_INFINITY;
+            }
+            if (num == '-∞') {
+                return Number.NEGATIVE_INFINITY;
+            }
+            return Number.parseFloat(num);
+        default:
+            return num.toNumber();
+    }
+};
+exports.NUM = NUM;
+const BIG = (num) => {
+    if (!num) {
+        return ethers_1.BigNumber.from(0);
+    }
+    switch (typeof num) {
+        case 'string':
+            if (num?.includes('e')) {
+                num = Number(num);
+            }
+        case 'number':
+            return ethers_1.BigNumber.from(num || 0);
+        default:
+            return num;
+    }
+};
+exports.BIG = BIG;
+const truncate = (num, decimals = 0, rounding = false) => {
+    let index = Math.max(num.lastIndexOf('.'), num.lastIndexOf(','));
+    if (index < 0) {
+        index = num.length;
+    }
+    index += decimals + (decimals > 0 ? 1 : 0);
+    if (rounding) {
+        let shouldRoundUp = false;
+        for (let i = index; i < num.length; ++i) {
+            if (num.charAt(i) == '.') {
+                continue;
+            }
+            if (Number(num.charAt(i)) >= 5) {
+                shouldRoundUp = true;
+                break;
+            }
+        }
+        for (let i = index - 1; shouldRoundUp && i >= 0; --i) {
+            let char = num.charAt(i);
+            if (char == '.') {
+                continue;
+            }
+            if (char == '9') {
+                char = '0';
+            }
+            else {
+                char = (Number(char) + 1).toString();
+                shouldRoundUp = false;
+            }
+            num = _replaceAt(num, i, char);
+        }
+    }
+    return num.substring(0, index);
+};
+exports.truncate = truncate;
+const round = (num, decimals = 0) => {
+    return (0, exports.truncate)(num, decimals, true);
+};
+exports.round = round;
+function _replaceAt(str, index, replacement) {
+    return str.substring(0, index) + replacement + str.substring(index + replacement.length);
+}
+/// revert of WEI: weiToNumber
+const IEW = (wei, decimals = 18, decimalsToDisplay) => {
+    let num = mdp((0, exports.STR)(wei), -decimals);
+    if (decimalsToDisplay != null) {
+        num = (0, exports.truncate)(num, decimalsToDisplay);
+    }
+    return num;
+};
+exports.IEW = IEW;
+/// numberToWei
+const WEI = (num, decimals = 18) => {
+    return (0, exports.truncate)(mdp((0, exports.STR)(num), decimals));
+};
+exports.WEI = WEI;
+const DIV = (a, b, precision = 4) => {
+    const al = a.toString().length;
+    const bl = b.toString().length;
+    const d = al - bl;
+    if (d > 0) {
+        b = b.mul((0, exports.WEI)(1, d));
+    }
+    else if (d < 0) {
+        a = a.mul((0, exports.WEI)(1, -d));
+    }
+    a = a.mul((0, exports.WEI)(1, precision));
+    const c = (0, exports.truncate)(a.div(b).toString(), 0, true);
+    return mdp(c, d - precision);
+};
+exports.DIV = DIV;
 //# sourceMappingURL=helper.js.map
