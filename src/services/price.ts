@@ -98,6 +98,12 @@ export class Price {
         )
       })
     }
+    const whiteListToken = this.profile.configs.tokens
+    for (let address in whiteListToken) {
+      if (whiteListToken[address].price) {
+        results[address] = whiteListToken[address].price ?? 1
+      }
+    }
     return results
   }
 
