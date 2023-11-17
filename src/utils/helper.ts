@@ -217,18 +217,151 @@ export function rateFromHL(HL: number, k: number, DURATION = SECONDS_PER_DAY) {
   return (DURATION * Math.LN2) / HL / k / k
 }
 
-export const kx = (k: number, R: BigNumber, v: BigNumber, spot: BigNumber, MARK: BigNumber, PRECISION: number = 1000000): number => {
+export const kx = (
+  k: number,
+  R: BigNumber,
+  v: BigNumber,
+  spot: BigNumber,
+  MARK: BigNumber
+): number => {
   try {
-    const xk = Math.pow(spot.mul(PRECISION).div(MARK).toNumber() / PRECISION, k)
-    const vxk4 = v
-      .mul(Math.round(xk * PRECISION))
-      .shl(2)
-      .div(PRECISION)
+    const xk = k > 0 ? spot.pow(k).div(MARK.pow(k)) : MARK.pow(-k).div(spot.pow(-k))
+    const vxk4 = v.mul(xk).shl(2)
     const denom = vxk4.gt(R) ? vxk4.sub(R) : R.sub(vxk4)
-    const num = R.mul(k)
-    return num.mul(PRECISION).div(denom).toNumber() / PRECISION
+    const num = R.mul(Math.abs(k))
+    return NUM(DIV(num, denom))
   } catch (err) {
     console.warn(err)
     return 0
   }
+}
+
+export const STR = (num: number | string | BigNumber): string => {
+  if (!num) {
+    return '0'
+  }
+  switch (typeof num) {
+    case 'string':
+      if (!num?.includes('e')) {
+        return num
+      }
+      num = Number(num)
+    case 'number':
+      if (!isFinite(num)) {
+        return num > 0 ? '∞' : '-∞'
+      }
+      return num.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
+    default:
+      return String(num)
+  }
+}
+
+export const NUM = (num: number | string | BigNumber): number => {
+  if (!num) {
+    return 0
+  }
+  switch (typeof num) {
+    case 'number':
+      return num
+    case 'string':
+      if (num == '∞') {
+        return Number.POSITIVE_INFINITY
+      }
+      if (num == '-∞') {
+        return Number.NEGATIVE_INFINITY
+      }
+      return Number.parseFloat(num)
+    default:
+      return num.toNumber()
+  }
+}
+
+export const BIG = (num: number | string | BigNumber): BigNumber => {
+  if (!num) {
+    return BigNumber.from(0)
+  }
+  switch (typeof num) {
+    case 'string':
+      if (num?.includes('e')) {
+        num = Number(num)
+      }
+    case 'number':
+      return BigNumber.from(num || 0)
+    default:
+      return num
+  }
+}
+
+export const truncate = (num: string, decimals: number = 0, rounding: boolean = false): string => {
+  let index = Math.max(num.lastIndexOf('.'), num.lastIndexOf(','))
+  if (index < 0) {
+    index = num.length
+  }
+  index += decimals + (decimals > 0 ? 1 : 0)
+  if (rounding) {
+    let shouldRoundUp = false
+    for (let i = index; i < num.length; ++i) {
+      if (num.charAt(i) == '.') {
+        continue
+      }
+      if (Number(num.charAt(i)) >= 5) {
+        shouldRoundUp = true
+        break
+      }
+    }
+    for (let i = index - 1; shouldRoundUp && i >= 0; --i) {
+      let char = num.charAt(i)
+      if (char == '.') {
+        continue
+      }
+      if (char == '9') {
+        char = '0'
+      } else {
+        char = (Number(char) + 1).toString()
+        shouldRoundUp = false
+      }
+      num = _replaceAt(num, i, char)
+    }
+  }
+  return num.substring(0, index)
+}
+
+export const round = (num: string, decimals: number = 0): string => {
+  return truncate(num, decimals, true)
+}
+
+function _replaceAt(str: string, index: number, replacement: string) {
+  return str.substring(0, index) + replacement + str.substring(index + replacement.length)
+}
+
+/// revert of WEI: weiToNumber
+export const IEW = (
+  wei: BigNumber | string,
+  decimals: number = 18,
+  decimalsToDisplay?: number
+): string => {
+  let num = mdp(STR(wei), -decimals)
+  if (decimalsToDisplay != null) {
+    num = truncate(num, decimalsToDisplay)
+  }
+  return num
+}
+
+/// numberToWei
+export const WEI = (num: number | string, decimals: number = 18): string => {
+  return truncate(mdp(STR(num), decimals))
+}
+
+export const DIV = (a: BigNumber, b: BigNumber, precision = 4): string => {
+  const al = a.toString().length
+  const bl = b.toString().length
+  const d = al - bl
+  if (d > 0) {
+      b = b.mul(WEI(1, d))
+  } else if (d < 0) {
+      a = a.mul(WEI(1, -d))
+  }
+  a = a.mul(WEI(1, precision))
+  const c = truncate(a.div(b).toString(), 0, true)
+  return mdp(c, d - precision)
 }
