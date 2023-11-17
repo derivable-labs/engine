@@ -654,7 +654,7 @@ export class Resource {
       [C]: {} as any,
     }
     sides[A].k = Math.min(k, kx(k, R, a, spot, MARK))
-    sides[B].k = Math.min(k, -kx(-k, R, b, spot, MARK))
+    sides[B].k = Math.min(k, kx(-k, R, b, spot, MARK))
     sides[C].k = numDiv(
       rA.mul(Math.round(sides[A].k * this.unit))
         .add(rB.mul(Math.round(sides[B].k * this.unit)))
