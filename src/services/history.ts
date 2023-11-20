@@ -3,6 +3,7 @@ import { LogType, TokenType } from '../types'
 import { NATIVE_ADDRESS, POOL_IDS } from '../utils/constant'
 import {
   BIG,
+  DIV,
   IEW,
   WEI,
   add,
@@ -46,13 +47,6 @@ export class History {
         positions = this.generatePositionBySwapLog(positions, tokens, log)
       })
 
-      for (let i in positions) {
-        positions[i].entryPrice =
-          positions[i].value && positions[i].balanceToCalculatePrice && positions[i].balanceToCalculatePrice.gt(0)
-            ? div(positions[i].value, positions[i].balanceToCalculatePrice)
-            : 0
-      }
-
       return positions
     } catch (e) {
       throw e
@@ -87,11 +81,7 @@ export class History {
           avgPrice: 0,
           balanceForPriceR: bn(0),
           balanceForPrice: bn(0),
-          balance: bn(0),
-          balanceToCalculatePrice: bn(0), // to calculate entry price, balanceToCalculatePrice = total amountOut
-          value: 0, // to calculate entry price, value = amountOut * indexPrice => entry price = total value / total amount out
-          entry: 0, // totalEntryUSD
-          totalEntryR: 0, // totalEntryR
+          amountR: bn(0),
         }
       }
 
@@ -123,13 +113,7 @@ export class History {
                 .div(pos.balanceForPriceR.add(amountOut))
               )
               pos.balanceForPriceR = pos.balanceForPriceR.add(amountOut)
-              pos.balance = pos.balance.add(amountOut)
-              pos.totalEntryR = add(pos.totalEntryR ?? 0, amountIn)
-              pos.entry = add(
-                pos.entry,
-                weiToNumber(amountIn.mul(numberToWei(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18)),
-              )
-              // console.log(pos.totalEntryR, pos.entry)
+              pos.amountR = pos.amountR.add(amountIn)
             }
           }
         }
@@ -144,8 +128,6 @@ export class History {
           tokens.find((t) => t?.address === quoteToken) as TokenType,
           pool,
         )
-        pos.value = add(pos.value, mul(amountOut, indexPrice))
-        pos.balanceToCalculatePrice = pos.balanceToCalculatePrice.add(amountOut)
         pos.avgPrice = IEW(
           BIG(WEI(pos.avgPrice)).mul(pos.balanceForPrice)
           .add(
@@ -153,9 +135,8 @@ export class History {
           )
           .div(pos.balanceForPrice.add(amountOut))
         )
+        pos.balanceForPrice = pos.balanceForPrice.add(amountOut)
       }
-
-      pos.balanceForPrice = pos.balanceForPrice.add(amountOut)
     }
 
     if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber())) {
@@ -168,16 +149,8 @@ export class History {
         pos.balanceForPrice = pos.balanceForPrice.sub(amountIn)
       }
       if (pos && pos.entry) {
-        const oldEntry = div(mul(pos.entry, amountIn), pos.balance)
-        const oldEntryR = div(mul(pos.totalEntryR, amountIn), pos.balance)
-        const oldValue = div(mul(pos.value, amountIn), pos.balance)
-        positions[tokenInAddress] = {
-          balance: max(pos.balance.sub(amountIn), bn(0)),
-          entry: max(sub(pos.entry, oldEntry), 0),
-          totalEntryR: max(sub(pos.totalEntryR, oldEntryR), 0),
-          value: max(sub(pos.value, oldValue), 0),
-          balanceToCalculatePrice: max(pos.balanceToCalculatePrice.sub(amountIn), bn(0)),
-        }
+        const exitR = pos.amountR.mul(amountIn).div(pos.balance)
+        pos.amountR = pos.amountR.sub(exitR)
       }
     }
     return positions
