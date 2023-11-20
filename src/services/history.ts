@@ -2,6 +2,9 @@ import { BigNumber, ethers } from 'ethers'
 import { LogType, TokenType } from '../types'
 import { NATIVE_ADDRESS, POOL_IDS } from '../utils/constant'
 import {
+  BIG,
+  IEW,
+  WEI,
   add,
   bn,
   div,
@@ -57,6 +60,8 @@ export class History {
   }
 
   generatePositionBySwapLog(positions: any, tokens: TokenType[], log: LogType) {
+    const { derivable: { playToken }, tokens: whiteListToken } = this.profile.configs
+
     const pools = this.RESOURCE.pools
     const poolAddresses = Object.keys(this.RESOURCE.pools)
 
@@ -78,6 +83,10 @@ export class History {
     if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideOut.toNumber())) {
       if (!positions[tokenOutAddress]) {
         positions[tokenOutAddress] = {
+          avgPriceR: 0,
+          avgPrice: 0,
+          balanceForPriceR: bn(0),
+          balanceForPrice: bn(0),
           balance: bn(0),
           balanceToCalculatePrice: bn(0), // to calculate entry price, balanceToCalculatePrice = total amountOut
           value: 0, // to calculate entry price, value = amountOut * indexPrice => entry price = total value / total amount out
@@ -87,8 +96,7 @@ export class History {
       }
 
       if ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber())) {
-        const pool = pools[poolIn]
-        const { derivable: { playToken }, tokens: whiteListToken } = this.profile.configs
+        const pool = pools[poolIn] // TODO: should be poolOut here
         if (priceR?.gt(0) || pool.TOKEN_R == playToken) {
           const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
           if (!tokenR) {
@@ -105,6 +113,16 @@ export class History {
             if (!priceRFormated) {
               console.warn('unable to extract priceR')
             } else {
+              positions[tokenOutAddress].avgPriceR =
+                IEW(
+                  BIG(WEI(positions[tokenOutAddress].avgPriceR)).mul(positions[tokenOutAddress].balanceForPriceR)
+                  .add(
+                    BIG(WEI(priceRFormated)).mul(amountOut)
+                  )
+                  .div(positions[tokenOutAddress].balanceForPriceR.add(amountOut))
+                )
+              positions[tokenOutAddress].balanceForPriceR =
+                positions[tokenOutAddress].balanceForPriceR.add(amountOut)
               positions[tokenOutAddress].balance = positions[tokenOutAddress].balance.add(amountOut)
               positions[tokenOutAddress].totalEntryR = add(positions[tokenOutAddress].totalEntryR ?? 0, amountIn)
               positions[tokenOutAddress].entry = add(
@@ -129,10 +147,27 @@ export class History {
         )
         positions[tokenOutAddress].value = add(positions[tokenOutAddress].value, mul(amountOut, indexPrice))
         positions[tokenOutAddress].balanceToCalculatePrice = positions[tokenOutAddress].balanceToCalculatePrice.add(amountOut)
+        positions[tokenOutAddress].avgPrice =
+        IEW(
+          BIG(WEI(positions[tokenOutAddress].avgPrice)).mul(positions[tokenOutAddress].balanceForPrice)
+          .add(
+            BIG(WEI(indexPrice)).mul(amountOut)
+          )
+          .div(positions[tokenOutAddress].balanceForPrice.add(amountOut))
+        )
       }
+
+      positions[tokenOutAddress].balanceForPrice = positions[tokenOutAddress].balanceForPrice.add(amountOut)
     }
 
     if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber())) {
+      const pool = pools[poolIn]
+      if (priceR?.gt(0) || pool.TOKEN_R == playToken) {
+        positions[tokenInAddress].balanceForPriceR = positions[tokenInAddress].balanceForPriceR.sub(amountIn)
+      }
+      if (price) {
+        positions[tokenInAddress].balanceForPrice = positions[tokenInAddress].balanceForPrice.sub(amountIn)
+      }
       if (positions[tokenInAddress] && positions[tokenInAddress].entry) {
         const oldEntry = div(mul(positions[tokenInAddress].entry, amountIn), positions[tokenInAddress].balance)
         const oldEntryR = div(mul(positions[tokenInAddress].totalEntryR, amountIn), positions[tokenInAddress].balance)
