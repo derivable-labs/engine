@@ -81,6 +81,8 @@ export class History {
     const tokenOut = tokens.find((t) => t.address === tokenOutAddress)
 
     if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideOut.toNumber())) {
+      const pool = pools[poolOut]
+
       if (!positions[tokenOutAddress]) {
         positions[tokenOutAddress] = {
           avgPriceR: 0,
@@ -96,7 +98,6 @@ export class History {
       }
 
       if ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber())) {
-        const pool = pools[poolIn] // TODO: should be poolOut here
         if (priceR?.gt(0) || pool.TOKEN_R == playToken) {
           const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
           if (!tokenR) {
@@ -136,7 +137,6 @@ export class History {
       }
 
       if (price) {
-        const pool = pools[poolOut]
         const { baseToken, quoteToken } = pool
         //@ts-ignore
         const indexPrice = parsePrice(
