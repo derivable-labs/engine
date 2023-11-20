@@ -38,12 +38,6 @@ class History {
             logs.forEach((log) => {
                 positions = this.generatePositionBySwapLog(positions, tokens, log);
             });
-            for (let i in positions) {
-                positions[i].entryPrice =
-                    positions[i].value && positions[i].balanceToCalculatePrice && positions[i].balanceToCalculatePrice.gt(0)
-                        ? (0, helper_1.div)(positions[i].value, positions[i].balanceToCalculatePrice)
-                        : 0;
-            }
             return positions;
         }
         catch (e) {
@@ -51,6 +45,7 @@ class History {
         }
     }
     generatePositionBySwapLog(positions, tokens, log) {
+        const { derivable: { playToken }, tokens: whiteListToken } = this.profile.configs;
         const pools = this.RESOURCE.pools;
         const poolAddresses = Object.keys(this.RESOURCE.pools);
         const abi = this.getSwapAbi(log.topics[0]);
@@ -67,16 +62,16 @@ class History {
         if ([constant_1.POOL_IDS.A, constant_1.POOL_IDS.B, constant_1.POOL_IDS.C].includes(sideOut.toNumber())) {
             if (!positions[tokenOutAddress]) {
                 positions[tokenOutAddress] = {
-                    balance: (0, helper_1.bn)(0),
-                    balanceToCalculatePrice: (0, helper_1.bn)(0),
-                    value: 0,
-                    entry: 0,
-                    totalEntryR: 0, // totalEntryR
+                    avgPriceR: 0,
+                    avgPrice: 0,
+                    balanceForPriceR: (0, helper_1.bn)(0),
+                    balanceForPrice: (0, helper_1.bn)(0),
+                    amountR: (0, helper_1.bn)(0),
                 };
             }
+            const pool = pools[poolOut];
+            const pos = positions[tokenOutAddress];
             if ([constant_1.POOL_IDS.R, constant_1.POOL_IDS.native].includes(sideIn.toNumber())) {
-                const pool = pools[poolIn];
-                const { derivable: { playToken }, tokens: whiteListToken } = this.profile.configs;
                 if (priceR?.gt(0) || pool.TOKEN_R == playToken) {
                     const tokenR = tokens.find((t) => t.address === pool.TOKEN_R);
                     if (!tokenR) {
@@ -95,35 +90,37 @@ class History {
                             console.warn('unable to extract priceR');
                         }
                         else {
-                            positions[tokenOutAddress].balance = positions[tokenOutAddress].balance.add(amountOut);
-                            positions[tokenOutAddress].totalEntryR = (0, helper_1.add)(positions[tokenOutAddress].totalEntryR ?? 0, amountIn);
-                            positions[tokenOutAddress].entry = (0, helper_1.add)(positions[tokenOutAddress].entry, (0, helper_1.weiToNumber)(amountIn.mul((0, helper_1.numberToWei)(priceRFormated) || 0), 18 + (tokenIn?.decimal || 18)));
-                            // console.log(positions[tokenOutAddress].totalEntryR, positions[tokenOutAddress].entry)
+                            pos.avgPriceR = (0, helper_1.IEW)((0, helper_1.BIG)((0, helper_1.WEI)(pos.avgPriceR)).mul(pos.balanceForPriceR)
+                                .add((0, helper_1.BIG)((0, helper_1.WEI)(priceRFormated)).mul(amountOut))
+                                .div(pos.balanceForPriceR.add(amountOut)));
+                            pos.balanceForPriceR = pos.balanceForPriceR.add(amountOut);
+                            pos.amountR = pos.amountR.add(amountIn);
                         }
                     }
                 }
             }
             if (price) {
-                const pool = pools[poolOut];
                 const { baseToken, quoteToken } = pool;
                 //@ts-ignore
                 const indexPrice = (0, helper_1.parsePrice)(price, tokens.find((t) => t?.address === baseToken), tokens.find((t) => t?.address === quoteToken), pool);
-                positions[tokenOutAddress].value = (0, helper_1.add)(positions[tokenOutAddress].value, (0, helper_1.mul)(amountOut, indexPrice));
-                positions[tokenOutAddress].balanceToCalculatePrice = positions[tokenOutAddress].balanceToCalculatePrice.add(amountOut);
+                pos.avgPrice = (0, helper_1.IEW)((0, helper_1.BIG)((0, helper_1.WEI)(pos.avgPrice)).mul(pos.balanceForPrice)
+                    .add((0, helper_1.BIG)((0, helper_1.WEI)(indexPrice)).mul(amountOut))
+                    .div(pos.balanceForPrice.add(amountOut)));
+                pos.balanceForPrice = pos.balanceForPrice.add(amountOut);
             }
         }
         if ([constant_1.POOL_IDS.A, constant_1.POOL_IDS.B, constant_1.POOL_IDS.C].includes(sideIn.toNumber())) {
-            if (positions[tokenInAddress] && positions[tokenInAddress].entry) {
-                const oldEntry = (0, helper_1.div)((0, helper_1.mul)(positions[tokenInAddress].entry, amountIn), positions[tokenInAddress].balance);
-                const oldEntryR = (0, helper_1.div)((0, helper_1.mul)(positions[tokenInAddress].totalEntryR, amountIn), positions[tokenInAddress].balance);
-                const oldValue = (0, helper_1.div)((0, helper_1.mul)(positions[tokenInAddress].value, amountIn), positions[tokenInAddress].balance);
-                positions[tokenInAddress] = {
-                    balance: (0, helper_1.max)(positions[tokenInAddress].balance.sub(amountIn), (0, helper_1.bn)(0)),
-                    entry: (0, helper_1.max)((0, helper_1.sub)(positions[tokenInAddress].entry, oldEntry), 0),
-                    totalEntryR: (0, helper_1.max)((0, helper_1.sub)(positions[tokenInAddress].totalEntryR, oldEntryR), 0),
-                    value: (0, helper_1.max)((0, helper_1.sub)(positions[tokenInAddress].value, oldValue), 0),
-                    balanceToCalculatePrice: (0, helper_1.max)(positions[tokenInAddress].balanceToCalculatePrice.sub(amountIn), (0, helper_1.bn)(0)),
-                };
+            const pool = pools[poolIn];
+            const pos = positions[tokenInAddress];
+            if (priceR?.gt(0) || pool.TOKEN_R == playToken) {
+                pos.balanceForPriceR = pos.balanceForPriceR.sub(amountIn);
+            }
+            if (price) {
+                pos.balanceForPrice = pos.balanceForPrice.sub(amountIn);
+            }
+            if (pos && pos.entry) {
+                const exitR = pos.amountR.mul(amountIn).div(pos.balance);
+                pos.amountR = pos.amountR.sub(exitR);
             }
         }
         return positions;
