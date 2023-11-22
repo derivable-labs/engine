@@ -89,6 +89,7 @@ export class Swap {
         return this.calculateAmountOuts({
           steps,
           fetcherV2: true,
+          fetcherData
         })
       }
       throw e
@@ -192,7 +193,7 @@ export class Swap {
         promises.push(...populateTxData)
       }
 
-      if (submitFetcherV2) {
+      if (submitFetcherV2 && !fetcherData) {
         const pool = isErc1155Address(step.tokenIn) ? this.RESOURCE.pools[poolIn] : this.RESOURCE.pools[poolOut]
         promises.push(isCalculate ? this.fetchPriceMockTx(pool) : this.fetchPriceTx(pool))
       }
@@ -205,12 +206,12 @@ export class Swap {
       actions.push({...metaData, data: datas[key].data})
     })
 
-    if(fetcherData) {
-      actions.unshift(fetcherData)
-    } else if (submitFetcherV2) {
+    if (submitFetcherV2 && !fetcherData) {
       for (let i = metaDatas.length; i < datas.length; i++) {
         actions.unshift(datas[datas.length - 1])
       }
+    } else if (submitFetcherV2 && fetcherData) {
+      actions.unshift(fetcherData)
     }
 
     return {params: [outputs, actions], value: nativeAmountToWrap}
@@ -454,7 +455,7 @@ export class Swap {
       return tx
     } catch (e) {
       if (e?.reason === "OLD" && !submitFetcherV2) {
-        return this.multiSwap(steps, {gasLimit, gasPrice, submitFetcherV2: true, onSubmitted})
+        return this.multiSwap(steps, {gasLimit, gasPrice, submitFetcherV2: true, onSubmitted}, fetcherData)
       }
       throw e
     }
