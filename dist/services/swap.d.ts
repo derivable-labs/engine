@@ -20,9 +20,18 @@ export declare class Swap {
     constructor(config: IEngineConfig & {
         RESOURCE: Resource;
     }, profile: Profile);
-    calculateAmountOuts(steps: SwapStepType[], fetcherV2?: boolean): Promise<any>;
+    calculateAmountOuts({ steps, fetcherV2, fetcherData }: {
+        steps: SwapStepType[];
+        fetcherV2?: boolean;
+        fetcherData?: any;
+    }): Promise<any>;
     callStaticMultiSwap({ params, value, gasLimit }: any): Promise<any>;
-    convertStepToActions(steps: SwapStepType[], submitFetcherV2: boolean, isCalculate?: boolean): Promise<{
+    convertStepToActions({ steps, submitFetcherV2, isCalculate, fetcherData }: {
+        steps: SwapStepType[];
+        submitFetcherV2: boolean;
+        isCalculate?: boolean;
+        fetcherData?: any;
+    }): Promise<{
         params: any;
         value: BigNumber;
     }>;
@@ -76,17 +85,20 @@ export declare class Swap {
         pools: {};
         TOKEN_R: string;
     };
-    multiSwap(steps: SwapStepType[], { gasLimit, gasPrice, submitFetcherV2, onSubmitted }: {
+    multiSwap({ steps, gasLimit, gasPrice, fetcherData, onSubmitted, submitFetcherV2 }: {
+        steps: SwapStepType[];
+        fetcherData?: any;
+        onSubmitted?: (pendingTx: PendingSwapTransactionType) => void;
+        submitFetcherV2?: boolean;
         gasLimit?: BigNumber;
         gasPrice?: BigNumber;
-        submitFetcherV2?: boolean;
-        onSubmitted?: (pendingTx: PendingSwapTransactionType) => void;
     }): Promise<TransactionReceipt>;
     getAddressByErc1155Address(address: string, TOKEN_R: string): string;
     getRouterContract(provider: any): Contract;
     getStateCalHelperContract(provider?: any): Contract;
     getIndexR(tokenR: string): BigNumber;
     getUniPool(tokenIn: string, tokenR: string): string;
+    needToSubmitFetcher(pool: PoolType): Promise<boolean>;
     fetchPriceTx(pool: PoolType, blockNumber?: number): Promise<{
         inputs: never[];
         code: string;

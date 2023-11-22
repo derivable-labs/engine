@@ -48,7 +48,7 @@ class Swap {
         this.profile = profile;
         this.derivableAdr = profile.configs.derivable;
     }
-    async calculateAmountOuts(steps, fetcherV2 = false) {
+    async calculateAmountOuts({ steps, fetcherV2 = false, fetcherData }) {
         if (!this.signer)
             return [[(0, helper_1.bn)(0)], (0, helper_1.bn)(0)];
         try {
@@ -56,7 +56,12 @@ class Swap {
             const stepsToSwap = [...steps].map((step) => {
                 return { ...step, amountOutMin: 0 };
             });
-            const { params, value } = await this.convertStepToActions(stepsToSwap, fetcherV2, true);
+            const { params, value } = await this.convertStepToActions({
+                steps: stepsToSwap,
+                submitFetcherV2: fetcherV2,
+                isCalculate: true,
+                fetcherData
+            });
             const router = helperContract.utr;
             const contract = new ethers_1.ethers.Contract(router, this.profile.getAbi('UTROverride').abi, this.getOverrideProvider());
             const res = await contract.callStatic.exec(...params, {
@@ -75,9 +80,6 @@ class Swap {
             return [result, (0, helper_1.bn)(gasUsed)];
         }
         catch (e) {
-            if (e?.reason === "OLD" && !fetcherV2) {
-                return this.calculateAmountOuts(steps, true);
-            }
             throw e;
         }
     }
@@ -88,7 +90,7 @@ class Swap {
             gasLimit: gasLimit || undefined,
         });
     }
-    async convertStepToActions(steps, submitFetcherV2, isCalculate = false) {
+    async convertStepToActions({ steps, submitFetcherV2, isCalculate = false, fetcherData }) {
         // @ts-ignore
         const stateCalHelper = this.getStateCalHelperContract();
         let outputs = [];
@@ -107,7 +109,6 @@ class Swap {
         let nativeAmountToWrap = (0, helper_1.bn)(0);
         const metaDatas = [];
         const promises = [];
-        const fetcherData = {};
         steps.forEach((step) => {
             const poolGroup = this.getPoolPoolGroup(step.tokenIn, step.tokenOut);
             if ((step.tokenIn === constant_1.NATIVE_ADDRESS || step.tokenOut === constant_1.NATIVE_ADDRESS) &&
@@ -140,9 +141,11 @@ class Swap {
                 });
                 promises.push(...populateTxData);
             }
-            if (submitFetcherV2) {
+            if (submitFetcherV2 && !fetcherData) {
                 const pool = (0, helper_1.isErc1155Address)(step.tokenIn) ? this.RESOURCE.pools[poolIn] : this.RESOURCE.pools[poolOut];
-                promises.push(isCalculate ? this.fetchPriceMockTx(pool) : this.fetchPriceTx(pool));
+                if (pool?.window) {
+                    promises.push(isCalculate ? this.fetchPriceMockTx(pool) : this.fetchPriceTx(pool));
+                }
             }
         });
         const datas = await Promise.all(promises);
@@ -151,11 +154,13 @@ class Swap {
         metaDatas.forEach((metaData, key) => {
             actions.push({ ...metaData, data: datas[key].data });
         });
-        if (submitFetcherV2) {
-            // data in last of `datas` is submitFetchV2 data
+        if (submitFetcherV2 && !fetcherData) {
             for (let i = metaDatas.length; i < datas.length; i++) {
                 actions.unshift(datas[datas.length - 1]);
             }
+        }
+        else if (submitFetcherV2 && fetcherData) {
+            actions.unshift(fetcherData);
         }
         return { params: [outputs, actions], value: nativeAmountToWrap };
     }
@@ -306,15 +311,19 @@ class Swap {
         }
         return result;
     }
-    async multiSwap(steps, { gasLimit, gasPrice, submitFetcherV2 = false, onSubmitted }) {
+    async multiSwap({ steps, gasLimit, gasPrice, fetcherData, onSubmitted, submitFetcherV2 = false }) {
         try {
-            const { params, value } = await this.convertStepToActions([...steps], submitFetcherV2);
-            await this.callStaticMultiSwap({
-                params,
-                value,
-                gasLimit,
-                gasPrice: gasPrice || undefined
+            const { params, value } = await this.convertStepToActions({
+                steps: [...steps],
+                submitFetcherV2,
+                fetcherData
             });
+            // await this.callStaticMultiSwap({
+            //   params,
+            //   value,
+            //   gasLimit,
+            //   gasPrice: gasPrice || undefined
+            // })
             const contract = this.getRouterContract(this.signer);
             const res = await contract.exec(...params, {
                 value,
@@ -329,9 +338,6 @@ class Swap {
             return tx;
         }
         catch (e) {
-            if (e?.reason === "OLD" && !submitFetcherV2) {
-                return this.multiSwap(steps, { gasLimit, gasPrice, submitFetcherV2: true, onSubmitted });
-            }
             throw e;
         }
     }
@@ -366,6 +372,18 @@ class Swap {
             throw `Can't find router, please select other token`;
         }
         return this.profile.routes[routeKey || ''][0].address;
+    }
+    async needToSubmitFetcher(pool) {
+        try {
+            const fetcherContract = new ethers_1.Contract(pool.FETCHER, this.profile.getAbi('FetcherV2'), this.signer);
+            await fetcherContract.callStatic.fetch(pool.ORACLE);
+        }
+        catch (e) {
+            if (e?.reason === "OLD") {
+                return true;
+            }
+        }
+        return false;
     }
     async fetchPriceTx(pool, blockNumber) {
         if (blockNumber == null) {
