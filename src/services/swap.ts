@@ -195,7 +195,9 @@ export class Swap {
 
       if (submitFetcherV2 && !fetcherData) {
         const pool = isErc1155Address(step.tokenIn) ? this.RESOURCE.pools[poolIn] : this.RESOURCE.pools[poolOut]
-        promises.push(isCalculate ? this.fetchPriceMockTx(pool) : this.fetchPriceTx(pool))
+        if (pool?.window) {
+          promises.push(isCalculate ? this.fetchPriceMockTx(pool) : this.fetchPriceTx(pool))
+        }
       }
     })
     const datas: any[] = await Promise.all(promises)
