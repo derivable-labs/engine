@@ -85,13 +85,6 @@ export class Swap {
       }
       return [result, bn(gasUsed)]
     } catch (e) {
-      if (e?.reason === "OLD" && !fetcherV2) {
-        return this.calculateAmountOuts({
-          steps,
-          fetcherV2: true,
-          fetcherData
-        })
-      }
       throw e
     }
   }
@@ -416,19 +409,21 @@ export class Swap {
   }
 
   async multiSwap(
-    steps: SwapStepType[],
     {
+      steps,
       gasLimit,
       gasPrice,
-      submitFetcherV2 = false,
-      onSubmitted
+      fetcherData,
+      onSubmitted,
+      submitFetcherV2 = false
     }: {
+      steps: SwapStepType[],
+      fetcherData?: any,
+      onSubmitted?: (pendingTx: PendingSwapTransactionType) => void,
+      submitFetcherV2?: boolean,
       gasLimit?: BigNumber,
       gasPrice?: BigNumber,
-      submitFetcherV2?: boolean,
-      onSubmitted?: (pendingTx: PendingSwapTransactionType) => void,
-    },
-    fetcherData?: any
+    }
   ): Promise<TransactionReceipt> {
     try {
       const {params, value} = await this.convertStepToActions({
@@ -437,12 +432,12 @@ export class Swap {
         fetcherData
       })
 
-      await this.callStaticMultiSwap({
-        params,
-        value,
-        gasLimit,
-        gasPrice: gasPrice || undefined
-      })
+      // await this.callStaticMultiSwap({
+      //   params,
+      //   value,
+      //   gasLimit,
+      //   gasPrice: gasPrice || undefined
+      // })
       const contract = this.getRouterContract(this.signer)
       const res = await contract.exec(...params, {
         value,
@@ -456,9 +451,6 @@ export class Swap {
       console.log('tx', tx)
       return tx
     } catch (e) {
-      if (e?.reason === "OLD" && !submitFetcherV2) {
-        return this.multiSwap(steps, {gasLimit, gasPrice, submitFetcherV2: true, onSubmitted}, fetcherData)
-      }
       throw e
     }
   }
@@ -499,6 +491,18 @@ export class Swap {
       throw `Can't find router, please select other token`
     }
     return this.profile.routes[routeKey || ''][0].address
+  }
+
+  async needToSubmitFetcher(pool: PoolType) {
+    try {
+      const fetcherContract = new Contract(pool.FETCHER, this.profile.getAbi('FetcherV2'), this.signer)
+      await fetcherContract.callStatic.fetch(pool.ORACLE)
+    } catch (e) {
+      if (e?.reason === "OLD") {
+        return true
+      }
+    }
+    return false
   }
 
   async fetchPriceTx(pool: PoolType, blockNumber?: number) {

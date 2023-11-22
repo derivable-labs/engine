@@ -33,8 +33,13 @@ const testLocal = async () => {
   ]
 
   try {
+    const fetcherV2 = await engine.SWAP.needToSubmitFetcher(currentPool)
     const fetcherData = await engine.SWAP.fetchPriceMockTx(currentPool)
-    const res = await engine.SWAP.calculateAmountOuts({steps, fetcherData})
+    const res = await engine.SWAP.calculateAmountOuts({
+      steps,
+      fetcherData,
+      fetcherV2
+    })
     console.log(res[0][0].amountOut.toString())
     console.log(res)
   } catch (e) {

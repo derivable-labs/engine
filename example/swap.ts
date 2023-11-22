@@ -33,11 +33,15 @@ const testLocal = async () => {
   ]
 
   try {
+    const fetcherV2 = await engine.SWAP.needToSubmitFetcher(currentPool)
     const fetcherData = await engine.SWAP.fetchPriceTx(currentPool)
-    const res = await engine.SWAP.multiSwap(steps, {
+    const res = await engine.SWAP.multiSwap({
+      fetcherData,
+      submitFetcherV2: fetcherV2,
+      steps,
       gasLimit: bn(2000000),
       gasPrice: bn(3e9),
-    }, fetcherData)
+    })
     console.log(res)
   } catch (e) {
     console.log(e)
