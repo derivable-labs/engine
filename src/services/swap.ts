@@ -43,14 +43,29 @@ export class Swap {
     this.derivableAdr = profile.configs.derivable
   }
 
-  async calculateAmountOuts(steps: SwapStepType[], fetcherV2 = false): Promise<any> {
+  async calculateAmountOuts(
+    {
+      steps,
+      fetcherV2 = false,
+      fetcherData
+    }: {
+      steps: SwapStepType[],
+      fetcherV2?: boolean
+      fetcherData?: any
+    }
+  ): Promise<any> {
     if (!this.signer) return [[bn(0)], bn(0)]
     try {
-      const { helperContract, gasLimitDefault, gasForProof } = this.profile.configs
+      const {helperContract, gasLimitDefault, gasForProof} = this.profile.configs
       const stepsToSwap: SwapStepType[] = [...steps].map((step) => {
         return {...step, amountOutMin: 0}
       })
-      const {params, value} = await this.convertStepToActions(stepsToSwap, fetcherV2, true)
+      const {params, value} = await this.convertStepToActions({
+        steps: stepsToSwap,
+        submitFetcherV2: fetcherV2,
+        isCalculate: true,
+        fetcherData
+      })
 
       const router = helperContract.utr as string
 
@@ -71,7 +86,10 @@ export class Swap {
       return [result, bn(gasUsed)]
     } catch (e) {
       if (e?.reason === "OLD" && !fetcherV2) {
-        return this.calculateAmountOuts(steps, true)
+        return this.calculateAmountOuts({
+          steps,
+          fetcherV2: true,
+        })
       }
       throw e
     }
@@ -85,7 +103,19 @@ export class Swap {
     })
   }
 
-  async convertStepToActions(steps: SwapStepType[], submitFetcherV2: boolean, isCalculate = false): Promise<{
+  async convertStepToActions(
+    {
+      steps,
+      submitFetcherV2,
+      isCalculate = false,
+      fetcherData
+    }: {
+      steps: SwapStepType[],
+      submitFetcherV2: boolean,
+      isCalculate?: boolean
+      fetcherData?: any
+    }
+  ): Promise<{
     params: any;
     value: BigNumber
   }> {
@@ -119,7 +149,6 @@ export class Swap {
 
     const metaDatas: any = []
     const promises: any = []
-    const fetcherData = {}
     steps.forEach((step) => {
       const poolGroup = this.getPoolPoolGroup(step.tokenIn, step.tokenOut)
 
@@ -176,8 +205,9 @@ export class Swap {
       actions.push({...metaData, data: datas[key].data})
     })
 
-    if (submitFetcherV2) {
-      // data in last of `datas` is submitFetchV2 data
+    if(fetcherData) {
+      actions.unshift(fetcherData)
+    } else if (submitFetcherV2) {
       for (let i = metaDatas.length; i < datas.length; i++) {
         actions.unshift(datas[datas.length - 1])
       }
@@ -394,10 +424,15 @@ export class Swap {
       gasPrice?: BigNumber,
       submitFetcherV2?: boolean,
       onSubmitted?: (pendingTx: PendingSwapTransactionType) => void,
-    }
+    },
+    fetcherData?: any
   ): Promise<TransactionReceipt> {
     try {
-      const {params, value} = await this.convertStepToActions([...steps], submitFetcherV2)
+      const {params, value} = await this.convertStepToActions({
+        steps: [...steps],
+        submitFetcherV2,
+        fetcherData
+      })
 
       await this.callStaticMultiSwap({
         params,
@@ -445,7 +480,7 @@ export class Swap {
   }
 
   getIndexR(tokenR: string) {
-    const { quoteTokenIndex, address } = this.RESOURCE.getSingleRouteToUSD(tokenR) ?? {}
+    const {quoteTokenIndex, address} = this.RESOURCE.getSingleRouteToUSD(tokenR) ?? {}
     if (!address) {
       return bn(0)
     }

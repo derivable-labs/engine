@@ -11,7 +11,7 @@ const testLocal = async () => {
   await engine.initServices()
   await engine.RESOURCE.fetchResourceData(configs.account)
 
-  const currentPool = engine.RESOURCE.pools['0x1A7b61cFc379873C1eC57D4f9ca6A6B5b69306b0']
+  const currentPool = engine.RESOURCE.pools['0x3Db6cB9E2F52673C978AdF99477C73eC0d5b5712']
   engine.setCurrentPool({
     ...currentPool,
   })
@@ -24,7 +24,7 @@ const testLocal = async () => {
   const steps = [
     {
       amountIn: bn(numberToWei(1, 6)),
-      tokenIn: "0xa70926b457618DD7F7a181a5B1b964208159fdD6",
+      tokenIn: NATIVE_ADDRESS,
       tokenOut: poolOut + '-' + POOL_IDS.C,
       amountOutMin: 0,
       currentBalanceOut,
@@ -33,10 +33,11 @@ const testLocal = async () => {
   ]
 
   try {
+    const fetcherData = await engine.SWAP.fetchPriceTx(currentPool)
     const res = await engine.SWAP.multiSwap(steps, {
       gasLimit: bn(2000000),
       gasPrice: bn(3e9),
-    })
+    }, fetcherData)
     console.log(res)
   } catch (e) {
     console.log(e)
