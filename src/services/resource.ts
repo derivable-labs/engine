@@ -141,7 +141,7 @@ export class Resource {
     this.tokens = uniqBy([...this.tokens, ...this._whitelistTokens()], 'address')
     return {
       ...results,
-      tokens: [results.tokens, this._whitelistTokens()]
+      tokens: [...results.tokens, ...this._whitelistTokens()]
     }
   }
 
