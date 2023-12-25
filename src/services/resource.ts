@@ -13,7 +13,7 @@ import {
   parsePrice
 } from '../utils/helper'
 import {JsonRpcProvider} from '@ethersproject/providers'
-import _, {uniq, uniqBy} from 'lodash'
+import _, {concat, uniqBy} from 'lodash'
 import {IPairInfo, IPairsInfo, UniV3Pair} from './uniV3Pair'
 import {IDerivableContractAddress, IEngineConfig} from '../utils/configs'
 import {defaultAbiCoder} from 'ethers/lib/utils'
@@ -154,7 +154,10 @@ export class Resource {
     const topics = getTopics()
 
     if (!this.storage || !this.storage.getItem) return results
-    const accountLogs = this.parseDdlLogs(JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.ACCOUNT_LOGS + '-' + account) || '[]'))
+    const accountLogs = this.parseDdlLogs(
+      JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.ACCOUNT_LOGS + '-' + account) || '[]')
+      .filter((data: {topics: string[]}) => concat(...Object.values(topics)).includes(data.topics[0]))
+    )
 
     results.swapLogs = accountLogs.filter((log: any) => {
       return log.address && topics.Swap.includes(log.topics[0])
