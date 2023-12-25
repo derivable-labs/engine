@@ -77,5 +77,6 @@ export const EventDataAbis = {
     'uint amountOut',
     'uint price',
     'uint priceR',
+    'uint amountR',
   ],
 }
