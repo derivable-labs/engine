@@ -2,17 +2,20 @@ import { Engine } from '../src/engine'
 import { getTestConfigs } from './shared/testConfigs'
 import {LOCALSTORAGE_KEY} from "../src/utils/constant";
 
+const chainId = 42161
+const wallet = '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'
+
 const testLocal = async () => {
-  const configs = getTestConfigs(42161)
+  const configs = getTestConfigs(chainId)
   const engine = new Engine(configs)
   await engine.initServices()
 
   const searchResult = await engine.RESOURCE.searchIndex("PENDLE")
   console.log(searchResult)
-  const newResource = await engine.RESOURCE.getNewResource("0x0dbca96184eed4c6a1291403c93311ebe6646785")
-  console.log(newResource.tokens)
-  const cached = configs.storage.getItem(42161 + '-' + LOCALSTORAGE_KEY.ACCOUNT_LOGS + '-' + "0x0dbca96184eed4c6a1291403c93311ebe6646785")
-  const cachedResource = await engine.RESOURCE.getResourceCached("0x0dbca96184eed4c6a1291403c93311ebe6646785")
+  const newResource = await engine.RESOURCE.getNewResource(wallet)
+  console.log(newResource.swapLogs)
+  const cached = configs.storage.getItem(chainId + '-' + LOCALSTORAGE_KEY.ACCOUNT_LOGS + '-' + wallet)
+  const cachedResource = await engine.RESOURCE.getResourceCached(wallet)
   console.log(cachedResource.tokens)
 
   // await engine.RESOURCE.fetchResourceData(
