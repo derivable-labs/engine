@@ -583,17 +583,23 @@ export class Resource {
       .then((logs: LogType[]) => {
         const _poolGroups = {}
         logs.forEach((log) => {
-          const poolData =
+          const decodedData =
             defaultAbiCoder.decode(this.profile.getEventDataAbi().PoolCreated, log.data)
-          const pair = ethers.utils.getAddress('0x' + poolData.ORACLE.slice(-40))
-          const quoteTokenIndex = bn(poolData.ORACLE.slice(0, 3)).gt(0) ? 1 : 0
-          const id = this.getPoolGroupId({pair, quoteTokenIndex, tokenR: poolData.TOKEN_R})
+          const pair = ethers.utils.getAddress('0x' + decodedData.ORACLE.slice(-40))
+          const quoteTokenIndex = bn(decodedData.ORACLE.slice(0, 3)).gt(0) ? 1 : 0
+          const id = this.getPoolGroupId({pair, quoteTokenIndex, tokenR: decodedData.TOKEN_R})
+          const pool = {
+            ...decodedData,
+            exp: this.profile.getExp(decodedData.FETCHER),
+            blockNumber: log.blockNumber, timeStamp: log.timeStamp,
+          }
           if (_poolGroups[id]?.pools) {
-            _poolGroups[id].pools.push({ blockNumber: log.blockNumber, timeStamp: log.timeStamp, ...poolData })
+            _poolGroups[id].pools.push(pool)
           } else {
             _poolGroups[id] = {
-              pools: [{ blockNumber: log.blockNumber, timeStamp: log.timeStamp, ...poolData }],
-              pairAddress: pair
+              pools: [pool],
+              pairAddress: pair,
+              exp: pool.exp,
             }
           }
         })
