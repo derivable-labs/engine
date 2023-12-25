@@ -15,6 +15,7 @@ import PoolOverride from './abi/PoolOverride.json'
 import UTR from './abi/UTR.json'
 import FetcherV2 from './abi/FetcherV2.json'
 import UTROverride from './abi/UTROverride.json'
+import FetcherV2Override from './abi/FetcherV2Override.json'
 import fetch from 'node-fetch'
 import { PoolType } from './types'
 
@@ -33,7 +34,8 @@ const abis = {
   PoolOverride,
   UTR,
   UTROverride,
-  FetcherV2Mock
+  FetcherV2Mock,
+  FetcherV2Override
 }
 
 const DDL_CONFIGS_URL = {
@@ -73,7 +75,7 @@ export class Profile {
     return EventDataAbis
   }
 
-  getExp(pool: PoolType): number {
-    return this.configs?.fetchers?.[pool.FETCHER]?.type?.endsWith('3') ? 2 : 1
+  getExp(fetcher: string): number {
+    return this.configs?.fetchers?.[fetcher]?.type?.endsWith('3') ? 2 : 1
   }
 }
