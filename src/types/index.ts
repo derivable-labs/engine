@@ -168,5 +168,3 @@ export type PendingSwapTransactionType = {
   hash: string
   steps: SwapStepType[]
 }
-
-export type LogType = any

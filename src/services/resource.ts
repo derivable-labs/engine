@@ -1,24 +1,33 @@
-import { BigNumber, Contract, ethers } from 'ethers'
-import { LOCALSTORAGE_KEY, POOL_IDS, ZERO_ADDRESS } from '../utils/constant'
-import { Multicall } from 'ethereum-multicall'
-import { LogType, ParseLogType, PoolGroupsType, PoolsType, PoolType, Storage, TokenType } from '../types'
-import { bn, div, formatMultiCallBignumber, getNormalAddress, getTopics, kx, rateFromHL, parsePrice } from '../utils/helper'
-import { JsonRpcProvider } from '@ethersproject/providers'
-import _, { uniq, uniqBy } from 'lodash'
-import { IPairInfo, IPairsInfo, UniV3Pair } from './uniV3Pair'
-import { IDerivableContractAddress, IEngineConfig } from '../utils/configs'
-import { defaultAbiCoder } from 'ethers/lib/utils'
-import { Profile } from '../profile'
+import {BigNumber, Contract, ethers} from 'ethers'
+import {LOCALSTORAGE_KEY, POOL_IDS, ZERO_ADDRESS} from '../utils/constant'
+import {Multicall} from 'ethereum-multicall'
+import {LogType, ParseLogType, PoolGroupsType, PoolsType, PoolType, Storage, TokenType} from '../types'
+import {
+  bn,
+  div,
+  formatMultiCallBignumber,
+  getNormalAddress,
+  getTopics,
+  kx,
+  rateFromHL,
+  parsePrice
+} from '../utils/helper'
+import {JsonRpcProvider} from '@ethersproject/providers'
+import _, {uniq, uniqBy} from 'lodash'
+import {IPairInfo, IPairsInfo, UniV3Pair} from './uniV3Pair'
+import {IDerivableContractAddress, IEngineConfig} from '../utils/configs'
+import {defaultAbiCoder} from 'ethers/lib/utils'
+import {Profile} from '../profile'
 import * as OracleSdk from '../utils/OracleSdk'
 import * as OracleSdkAdapter from '../utils/OracleSdkAdapter'
-import { unpackId } from '../utils/number'
+import {unpackId} from '../utils/number'
 
-const { AssistedJsonRpcProvider } = require('assisted-json-rpc-provider')
+const {AssistedJsonRpcProvider} = require('assisted-json-rpc-provider')
 const MAX_BLOCK = 4294967295
 export const Q128 = bn(1).shl(128)
 export const M256 = bn(1).shl(256).sub(1)
 
-const { A, B, C } = POOL_IDS
+const {A, B, C} = POOL_IDS
 
 function numDiv(b: BigNumber, unit: number = 1): number {
   try {
@@ -97,58 +106,26 @@ export class Resource {
     // this.transferLogs = [...resultCached.transferLogs, ...newResource.transferLogs]
   }
 
-  getLastBlockCached(account: string) {
-    if (!this.storage || !this.storage.getItem) return this.profile.configs.derivable.startBlock
-    const lastDDlBlock = Number(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS)) || 153785615 - 1
-    let lastWalletBlock = this.profile.configs.derivable.startBlock - 1
-    const walletBlockCached = this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account)
-    if (account && walletBlockCached) {
-      lastWalletBlock = Number(walletBlockCached)
-    }
-    return Math.min(lastDDlBlock + 1, lastWalletBlock + 1)
+  getLastBlockCached(account?: string) {
+    if (!this.storage || !this.storage.getItem || !account) return this.profile.configs.derivable.startBlock
+    return this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.ACCOUNT_BLOCK_LOGS + '-' + account) || this.profile.configs.derivable.startBlock
   }
 
   cacheDdlLog({
-    swapLogs,
-    ddlLogs,
-    //@ts-ignore
-    transferLogs,
-    headBlock,
-    account,
-  }: {
-    swapLogs: any
-    ddlLogs: any
-    transferLogs: any
+                logs,
+                headBlock,
+                account,
+              }: {
+    logs: any
     headBlock: number
     account: string
   }) {
-    if (!this.storage || !this.storage.getItem || !this.storage.setItem) return
-    const cachedDdlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) || '[]')
-    const newCachedDdlLogs = [...ddlLogs, ...cachedDdlLogs].filter((log, index, self) => {
-      return index === self.findIndex((t) => t.logIndex === log.logIndex && t.transactionHash === log.transactionHash)
-    })
-    this.storage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.LAST_BLOCK_DDL_LOGS, headBlock.toString())
-    this.storage.setItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS, JSON.stringify(newCachedDdlLogs))
-    if (account) {
-      this.cacheNewAccountLogs(
-        this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account,
-        this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_BLOCK_LOGS + '-' + account,
-        swapLogs,
-        headBlock,
-      )
-      this.cacheNewAccountLogs(
-        this.chainId + '-' + LOCALSTORAGE_KEY.TRANSFER_LOGS + '-' + account,
-        this.chainId + '-' + LOCALSTORAGE_KEY.TRANSFER_BLOCK_LOGS + '-' + account,
-        transferLogs,
-        headBlock,
-      )
-    }
-  }
+    if (!this.storage || !this.storage.getItem || !this.storage.setItem || !account) return
+    const key = this.chainId + '-' + LOCALSTORAGE_KEY.ACCOUNT_LOGS + '-' + account
+    const blockKey = this.chainId + '-' + LOCALSTORAGE_KEY.ACCOUNT_BLOCK_LOGS + '-' + account
 
-  cacheNewAccountLogs(key: string, blockKey: string, newLogs: any, headBlock: number) {
-    if (!this.storage || !this.storage.getItem || !this.storage.setItem) return
     const cachedogs = JSON.parse(this.storage.getItem(key) || '[]')
-    const newCacheSwapLogs = [...newLogs, ...cachedogs].filter((log, index, self) => {
+    const newCacheSwapLogs = [...logs, ...cachedogs].filter((log, index, self) => {
       return index === self.findIndex((t) => t.logIndex === log.logIndex && t.transactionHash === log.transactionHash)
     })
     this.storage.setItem(blockKey, headBlock.toString())
@@ -156,7 +133,11 @@ export class Resource {
   }
 
   async getWhiteListResource(playMode?: boolean) {
-    await this.generatePoolData(this.profile.whitelistPools, [], playMode)
+    await this.generateData({
+      poolAddresses: this.profile.whitelistPools,
+      transferLogs: [],
+      playMode
+    })
     // this.poolGroups = {...this.poolGroups, ...poolGroups}
     // this.pools = {...this.pools, ...pools}
     // this.tokens = uniqBy([...this.tokens, ...tokens], 'address')
@@ -170,37 +151,43 @@ export class Resource {
       transferLogs: [],
       poolGroups: {},
     }
+    const topics = getTopics()
+
     if (!this.storage || !this.storage.getItem) return results
-    const ddlLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.DDL_LOGS) || '[]')
-    const swapLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.SWAP_LOGS + '-' + account) || '[]')
+    const accountLogs = this.parseDdlLogs(JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.ACCOUNT_LOGS + '-' + account) || '[]'))
 
-    const transferLogs = JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.TRANSFER_LOGS + '-' + account) || '[]')
-    const [ddlLogsParsed, swapLogsParsed, transferLogsParsed] = [
-      this.parseDdlLogs(ddlLogs),
-      this.parseDdlLogs(swapLogs),
-      this.parseDdlLogs(transferLogs),
-    ]
+    const swapLogs = accountLogs.filter((log: any) => {
+      return log.address && topics.Swap.includes(log.topics[0])
+    })
+    const transferLogs = accountLogs.filter((log: any) => {
+      return log.address && topics.Transfer.includes(log.topics[0])
+    })
 
-    if (ddlLogsParsed && ddlLogsParsed.length > 0) {
-      const { tokens, pools, poolGroups } = await this.generatePoolData(ddlLogsParsed, transferLogsParsed, playMode)
-      results.tokens = [...tokens, ...results.tokens]
-      results.pools = pools
-      results.poolGroups = poolGroups
+    const ddlTokenTransferLogs = accountLogs.filter((log: any) => {
+      return (
+        log.address === this.profile.configs.derivable.token &&
+        (topics.TransferSingle.includes(log.topics[0]) || topics.TransferBatch.includes(log.topics[0]))
+      )
+    })
+
+    const poolAddresses = this.poolHasOpeningPosition(ddlTokenTransferLogs)
+
+    await this.generateData({
+      poolAddresses,
+      transferLogs,
+      playMode
+    })
+
+    this.swapLogs = [...this.swapLogs, ...swapLogs]
+    this.transferLogs = [...this.transferLogs, ...transferLogs]
+
+    return {
+      tokens: this.tokens,
+      pools: this.pools,
+      poolGroups: this.poolGroups,
+      swapLogs: this.swapLogs,
+      transferLogs: this.transferLogs,
     }
-    if (swapLogsParsed && swapLogsParsed.length > 0) {
-      results.swapLogs = swapLogsParsed
-    }
-    if (transferLogsParsed && transferLogsParsed.length > 0) {
-      results.transferLogs = transferLogsParsed
-    }
-
-    // this.poolGroups = {...this.poolGroups, ...results.poolGroups}
-    // this.pools = {...this.pools, ...results.pools}
-    // this.tokens = [...this.tokens, ...results.tokens]
-    this.swapLogs = [...this.swapLogs, ...results.swapLogs]
-    this.transferLogs = [...this.transferLogs, ...results.transferLogs]
-
-    return results
   }
 
   async getNewResource(account: string, playMode?: boolean): Promise<ResourceData> {
@@ -208,13 +195,13 @@ export class Resource {
     const etherscanConfig =
       typeof this.scanApi === 'string'
         ? {
-            url: this.scanApi,
-            maxResults: 1000,
-            rangeThreshold: 0,
-            rateLimitCount: 1,
-            rateLimitDuration: 5000,
-            apiKeys: this.scanApiKey ? [this.scanApiKey] : [],
-          }
+          url: this.scanApi,
+          maxResults: 1000,
+          rangeThreshold: 0,
+          rateLimitCount: 1,
+          rateLimitDuration: 5000,
+          apiKeys: this.scanApiKey ? [this.scanApiKey] : [],
+        }
         : this.scanApi
 
     const provider = new AssistedJsonRpcProvider(this.providerToGetLog, etherscanConfig)
@@ -222,15 +209,12 @@ export class Resource {
     const accTopic = account ? '0x' + '0'.repeat(24) + account.slice(2) : null
     const topics = getTopics()
 
-    // let filterTopics: any = [topics.Derivable[0], null, null, null]
-    // if (accTopic) {
     const filterTopics = [
       [null, null, null, null],
       [null, accTopic, null, null],
       [null, null, accTopic, null],
       [null, null, null, accTopic],
     ]
-    // }
 
     return await provider
       .getLogs({
@@ -257,15 +241,15 @@ export class Resource {
           )
         })
 
-        // this.cacheDdlLog({
-        //   swapLogs,
-        //   transferLogs,
-        //   headBlock,
-        //   account,
-        // })
+        this.cacheDdlLog({
+          logs,
+          // transferLogs,
+          headBlock,
+          account,
+        })
         return [this.parseDdlLogs(swapLogs), this.parseDdlLogs(ddlTokenTransferLogs), this.parseDdlLogs(transferLogs)]
       })
-      .then(async ([swapLogs, ddtTokenTransferLogs, transferLogs]: any) => {
+      .then(async ([swapLogs, ddlTokenTransferLogs, transferLogs]: any) => {
         const result: ResourceData = {
           pools: {},
           tokens: [],
@@ -280,10 +264,14 @@ export class Resource {
         if (transferLogs && transferLogs.length > 0) {
           result.transferLogs = transferLogs
         }
-        const poolAddresses = this.poolHasOpeningPosition(ddtTokenTransferLogs)
+        const poolAddresses = this.poolHasOpeningPosition(ddlTokenTransferLogs)
 
         if (poolAddresses && poolAddresses.length > 0) {
-          const { tokens, pools, poolGroups } = await this.generatePoolData(poolAddresses, transferLogs, playMode)
+          const {tokens, pools, poolGroups} = await this.generateData({
+            poolAddresses,
+            transferLogs,
+            playMode
+          })
           result.tokens = tokens
           result.pools = pools
           result.poolGroups = poolGroups
@@ -300,7 +288,7 @@ export class Resource {
       })
       .catch((e: any) => {
         console.error(e)
-        return { pools: {}, tokens: [], swapLogs: [], transferLogs: [] }
+        return {pools: {}, tokens: [], swapLogs: [], transferLogs: []}
       })
   }
 
@@ -310,7 +298,12 @@ export class Resource {
    * @param transferLogs
    * @param playMode
    */
-  generatePoolData(poolAddresses: string[], transferLogs: ParseLogType[], playMode?: boolean) {
+  generateData(
+    {
+      poolAddresses,
+      transferLogs,
+      playMode
+    }: { poolAddresses: string[], transferLogs: ParseLogType[], playMode?: boolean }) {
     const allTokens: string[] = [...this._tokenInRoutes()]
     // logs.forEach((log) => {
     //   if (log.name === 'PoolCreated') {
@@ -384,17 +377,17 @@ export class Resource {
 
     // @ts-ignore
     const context: ContractCallContext[] = this.getMultiCallRequest(normalTokens, poolAddresses || [])
-    const [{ results }] = await Promise.all([multicall.call(context)])
+    const [{results}] = await Promise.all([multicall.call(context)])
 
-    const { tokens: tokensArr, pools } = this.parseMultiCallResponse(results, poolAddresses || [])
+    const {tokens: tokensArr, pools} = this.parseMultiCallResponse(results, poolAddresses || [])
 
-    for(let poolAddress in pools) {
+    for (let poolAddress in pools) {
       if (!!playMode != (pools[poolAddress].TOKEN_R == this.profile.configs.derivable.playToken)) {
         delete pools[poolAddress]
       }
     }
 
-    const uniPools = Object.values(pools).map((p: {pair: string}) => p.pair)
+    const uniPools = Object.values(pools).map((p: { pair: string }) => p.pair)
     const pairsInfo = await this.UNIV3PAIR.getPairsInfo({
       pairAddresses: _.uniq(uniPools),
     })
@@ -422,7 +415,7 @@ export class Resource {
         ...this.calcPoolInfo(pools[i]),
       }
 
-      const { MARK: _MARK, ORACLE, k: _k } = pools[i]
+      const {MARK: _MARK, ORACLE, k: _k} = pools[i]
 
       const quoteTokenIndex = bn(ORACLE.slice(0, 3)).gt(0) ? 1 : 0
       const pair = ethers.utils.getAddress('0x' + ORACLE.slice(-40))
@@ -440,7 +433,7 @@ export class Resource {
       if (poolGroups[id]) {
         poolGroups[id].pools[i] = pools[i]
       } else {
-        poolGroups[id] = { pools: { [i]: pools[i] } }
+        poolGroups[id] = {pools: {[i]: pools[i]}}
         // poolGroups[id].UTR = pools[i].UTR
         poolGroups[id].pair = pairsInfo[pair]
         poolGroups[id].quoteTokenIndex = quoteTokenIndex
@@ -519,8 +512,8 @@ export class Resource {
       )
     }
 
-    this.poolGroups = { ...this.poolGroups, ...poolGroups }
-    this.pools = { ...this.pools, ...pools }
+    this.poolGroups = {...this.poolGroups, ...poolGroups}
+    this.pools = {...this.pools, ...pools}
     this.tokens = [...this.tokens, ...tokens]
 
     return {
@@ -535,13 +528,13 @@ export class Resource {
     const etherscanConfig =
       typeof this.scanApi === 'string'
         ? {
-            url: this.scanApi,
-            maxResults: 1000,
-            rangeThreshold: 0,
-            rateLimitCount: 1,
-            rateLimitDuration: 5000,
-            apiKeys: this.scanApiKey ? [this.scanApiKey] : [],
-          }
+          url: this.scanApi,
+          maxResults: 1000,
+          rangeThreshold: 0,
+          rateLimitCount: 1,
+          rateLimitDuration: 5000,
+          apiKeys: this.scanApiKey ? [this.scanApiKey] : [],
+        }
         : this.scanApi
 
     const provider = new AssistedJsonRpcProvider(this.providerToGetLog, etherscanConfig)
@@ -570,12 +563,12 @@ export class Resource {
           if (_poolGroups[uniPair]?.pools) {
             _poolGroups[uniPair].pools.push(poolData)
           } else {
-            _poolGroups[uniPair] = { pools: [poolData] }
+            _poolGroups[uniPair] = {pools: [poolData]}
           }
         })
         return _poolGroups
       })
-    const pairsInfo = await this.UNIV3PAIR.getPairsInfo({ pairAddresses: Object.keys(poolGroups) })
+    const pairsInfo = await this.UNIV3PAIR.getPairsInfo({pairAddresses: Object.keys(poolGroups)})
     for (let id in poolGroups) {
       poolGroups[id].pairInfo = pairsInfo[id]
     }
@@ -587,7 +580,7 @@ export class Resource {
     const pairsInfo = await this.UNIV3PAIR.getPairsInfo({
       pairAddresses: [pool.pair],
     })
-    const pricesInfo = await this.getPrices({ [poolAddress]: pool }, pairsInfo)
+    const pricesInfo = await this.getPrices({[poolAddress]: pool}, pairsInfo)
     const contract = new Contract(poolAddress, this.profile.getAbi('PoolOverride').abi, this.getPoolOverridedProvider())
     const states = await contract.callStatic.compute(
       this.derivableAddress.token,
@@ -612,7 +605,7 @@ export class Resource {
     return [this.poolGroups, this.pools]
   }
 
-  getRentRate({ rDcLong, rDcShort, R }: { R: BigNumber; rDcLong: BigNumber; rDcShort: BigNumber }, rentRate: BigNumber) {
+  getRentRate({rDcLong, rDcShort, R}: { R: BigNumber; rDcLong: BigNumber; rDcShort: BigNumber }, rentRate: BigNumber) {
     const diff = bn(rDcLong).sub(rDcShort).abs()
     const rate = R.isZero() ? bn(0) : diff.mul(rentRate).div(R)
     return {
@@ -734,26 +727,26 @@ export class Resource {
       }
     })
 
-    return { tokens, pools }
+    return {tokens, pools}
   }
 
   calcPoolInfo(pool: PoolType) {
-    const { MARK, states, FETCHER } = pool
-    const { R, rA, rB, rC, a, b, spot } = states
+    const {MARK, states, FETCHER} = pool
+    const {R, rA, rB, rC, a, b, spot} = states
     const exp = this.profile.getExp(FETCHER)
     const riskFactor = rC.gt(0) ? div(rA.sub(rB), rC) : '0'
     const deleverageRiskA = R.isZero()
       ? 0
       : rA
-          .mul(2 * this.unit)
-          .div(R)
-          .toNumber() / this.unit
+      .mul(2 * this.unit)
+      .div(R)
+      .toNumber() / this.unit
     const deleverageRiskB = R.isZero()
       ? 0
       : rB
-          .mul(2 * this.unit)
-          .div(R)
-          .toNumber() / this.unit
+      .mul(2 * this.unit)
+      .div(R)
+      .toNumber() / this.unit
     const k = pool.k.toNumber()
     const power = k / exp
     const sides = {
@@ -852,36 +845,10 @@ export class Resource {
 
   parseDdlLogs(ddlLogs: any) {
     const eventInterface = new ethers.utils.Interface(this.profile.getAbi('Events'))
-    const topics = getTopics()
     return ddlLogs.map((log: any) => {
-      // if (
-      //   !topics.Swap.includes(log.topics[0]) &&
-      //   !topics.Transfer.includes(log.topics[0]) &&
-      //   !topics.TransferSingle.includes(log.topics[0]) &&
-      //   !topics.TransferBatch.includes(log.topics[0])
-      // ) {
-      //   return {}
-      // }
-      try {
-        const decodeLog = eventInterface.parseLog(log)
-        let appName = ''
-        try {
-          appName = ethers.utils.parseBytes32String(decodeLog.args.topic1)
-        } catch (e) {}
-
-        let data: any = decodeLog
-        if (appName === 'PoolCreated') {
-          const poolCreatedData = defaultAbiCoder.decode(this.profile.getEventDataAbi()[appName], decodeLog.args.data)
-          data = {
-            ...poolCreatedData,
-            TOKEN_R: ethers.utils.getAddress('0x' + decodeLog.args.topic3.slice(-40)),
-          }
-        }
-
-        return { ...data }
-      } catch (e) {
-        console.error(e)
-        return {}
+      return {
+        ...log,
+        ...eventInterface.parseLog(log)
       }
     })
   }
@@ -919,7 +886,7 @@ export class Resource {
         }),
     )
     res.forEach((priceInfo) => {
-      result[priceInfo.poolAddress] = { spot: priceInfo.spot, twap: priceInfo.twap }
+      result[priceInfo.poolAddress] = {spot: priceInfo.spot, twap: priceInfo.twap}
     })
     return result
   }
@@ -954,7 +921,7 @@ export class Resource {
   getSingleRouteToUSD(token: string, types: string[] = ['uniswap3']) {
     const {
       routes,
-      configs: { stablecoins },
+      configs: {stablecoins},
     } = this.profile
     for (const stablecoin of stablecoins) {
       for (const asSecond of [false, true]) {
@@ -963,11 +930,11 @@ export class Resource {
         if (route?.length != 1) {
           continue
         }
-        const { type, address } = route[0]
+        const {type, address} = route[0]
         if (!types.includes(type)) {
           continue
         }
-        const quoteTokenIndex = token.localeCompare(stablecoin, undefined, { sensitivity: 'accent' }) < 0 ? 1 : 0
+        const quoteTokenIndex = token.localeCompare(stablecoin, undefined, {sensitivity: 'accent'}) < 0 ? 1 : 0
         return {
           quoteTokenIndex,
           stablecoin,
