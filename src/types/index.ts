@@ -5,14 +5,14 @@ export type Storage = {
   getItem?: (itemName: string) => string
 }
 
-export type ParseLogType = {
-  address: string
-  contractAddress: string
-  name: string
-  topic: string
-  args: any
-  topics: string[]
-}
+// export type ParseLogType = {
+//   address: string
+//   contractAddress: string
+//   name: string
+//   topic: string
+//   args: any
+//   topics: string[]
+// }
 
 export type LogType = {
   contractAddress: string

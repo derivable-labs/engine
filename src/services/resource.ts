@@ -1,7 +1,7 @@
 import {BigNumber, Contract, ethers} from 'ethers'
 import {LOCALSTORAGE_KEY, POOL_IDS, ZERO_ADDRESS} from '../utils/constant'
 import {Multicall} from 'ethereum-multicall'
-import {LogType, ParseLogType, PoolGroupsType, PoolsType, PoolType, Storage, TokenType} from '../types'
+import {LogType, PoolGroupsType, PoolsType, PoolType, Storage, TokenType} from '../types'
 import {
   bn,
   div,
@@ -146,7 +146,7 @@ export class Resource {
   async getResourceCached(account: string, playMode?: boolean): Promise<ResourceData> {
     const results: ResourceData = {
       pools: {},
-      tokens: this._whitelistTokens(),
+      tokens: [],
       swapLogs: [],
       transferLogs: [],
       poolGroups: {},
@@ -156,10 +156,10 @@ export class Resource {
     if (!this.storage || !this.storage.getItem) return results
     const accountLogs = this.parseDdlLogs(JSON.parse(this.storage.getItem(this.chainId + '-' + LOCALSTORAGE_KEY.ACCOUNT_LOGS + '-' + account) || '[]'))
 
-    const swapLogs = accountLogs.filter((log: any) => {
+    results.swapLogs = accountLogs.filter((log: any) => {
       return log.address && topics.Swap.includes(log.topics[0])
     })
-    const transferLogs = accountLogs.filter((log: any) => {
+    results.transferLogs = accountLogs.filter((log: any) => {
       return log.address && topics.Transfer.includes(log.topics[0])
     })
 
@@ -172,22 +172,42 @@ export class Resource {
 
     const poolAddresses = this.poolHasOpeningPosition(ddlTokenTransferLogs)
 
-    await this.generateData({
-      poolAddresses,
-      transferLogs,
-      playMode
-    })
+    // if (ddlLogsParsed && ddlLogsParsed.length > 0) {
+    //   const {tokens, pools, poolGroups} = await this.generatePoolData(ddlLogsParsed, transferLogsParsed, playMode)
+    //   results.tokens = [...tokens, ...results.tokens]
+    //   results.pools = pools
+    //   results.poolGroups = poolGroups
+    // }
+    // if (swapLogsParsed && swapLogsParsed.length > 0) {
+    //   results.swapLogs = swapLogsParsed
+    // }
+    // if (transferLogsParsed && transferLogsParsed.length > 0) {
+    //   results.transferLogs = transferLogsParsed
+    // }
 
-    this.swapLogs = [...this.swapLogs, ...swapLogs]
-    this.transferLogs = [...this.transferLogs, ...transferLogs]
+    // this.poolGroups = {...this.poolGroups, ...results.poolGroups}
+    // this.pools = {...this.pools, ...results.pools}
+    // this.tokens = [...this.tokens, ...results.tokens]
+    // this.swapLogs = [...this.swapLogs, ...results.swapLogs]
+    // this.transferLogs = [...this.transferLogs, ...results.transferLogs]
 
-    return {
-      tokens: this.tokens,
-      pools: this.pools,
-      poolGroups: this.poolGroups,
-      swapLogs: this.swapLogs,
-      transferLogs: this.transferLogs,
+    // return results
+
+    if(poolAddresses.length > 0) {
+      const {tokens, pools, poolGroups} =await this.generateData({
+        poolAddresses,
+        transferLogs: results.transferLogs,
+        playMode
+      })
+      results.tokens = tokens
+      results.pools = pools
+      results.poolGroups = poolGroups
     }
+
+    this.swapLogs = [...this.swapLogs, ...results.swapLogs]
+    this.transferLogs = [...this.transferLogs, ...results.transferLogs]
+
+    return results
   }
 
   async getNewResource(account: string, playMode?: boolean): Promise<ResourceData> {
@@ -249,7 +269,7 @@ export class Resource {
         })
         return [this.parseDdlLogs(swapLogs), this.parseDdlLogs(ddlTokenTransferLogs), this.parseDdlLogs(transferLogs)]
       })
-      .then(async ([swapLogs, ddlTokenTransferLogs, transferLogs]: any) => {
+      .then(async ([swapLogs, ddlTokenTransferLogs, transferLogs]: LogType[][]) => {
         const result: ResourceData = {
           pools: {},
           tokens: [],
@@ -303,7 +323,7 @@ export class Resource {
       poolAddresses,
       transferLogs,
       playMode
-    }: { poolAddresses: string[], transferLogs: ParseLogType[], playMode?: boolean }) {
+    }: { poolAddresses: string[], transferLogs: LogType[], playMode?: boolean }) {
     const allTokens: string[] = [...this._tokenInRoutes()]
     // logs.forEach((log) => {
     //   if (log.name === 'PoolCreated') {
@@ -514,7 +534,7 @@ export class Resource {
 
     this.poolGroups = {...this.poolGroups, ...poolGroups}
     this.pools = {...this.pools, ...pools}
-    this.tokens = [...this.tokens, ...tokens]
+    this.tokens = _.uniqBy([...this.tokens, ...tokens], 'address')
 
     return {
       // @ts-ignore

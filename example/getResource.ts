@@ -6,10 +6,11 @@ const testLocal = async () => {
   const configs = getTestConfigs(42161)
   const engine = new Engine(configs)
   await engine.initServices()
-  await engine.RESOURCE.getNewResource("0x0dbca96184eed4c6a1291403c93311ebe6646785")
+  const newResource = await engine.RESOURCE.getNewResource("0x0dbca96184eed4c6a1291403c93311ebe6646785")
+  console.log(newResource)
   const cached = configs.storage.getItem(42161 + '-' + LOCALSTORAGE_KEY.ACCOUNT_LOGS + '-' + "0x0dbca96184eed4c6a1291403c93311ebe6646785")
-  await engine.RESOURCE.getResourceCached("0x0dbca96184eed4c6a1291403c93311ebe6646785")
-  console.log(cached)
+  const cachedResource = await engine.RESOURCE.getResourceCached("0x0dbca96184eed4c6a1291403c93311ebe6646785")
+  console.log(cachedResource)
 
   // await engine.RESOURCE.fetchResourceData(
   //   '0x0dbca96184eed4c6a1291403c93311ebe6646785',
