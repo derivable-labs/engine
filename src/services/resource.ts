@@ -244,7 +244,7 @@ export class Resource {
     return await provider
       .getLogs({
         fromBlock: lastHeadBlockCached,
-        toBlock: MAX_BLOCK,
+        toBlock: MAX_BLOCK, // ganache or hardhat network need this
         topics: filterTopics,
       })
       .then((logs: LogType[]) => {
