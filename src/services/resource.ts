@@ -398,8 +398,6 @@ export class Resource {
     })
     const normalTokens = _.uniq(getNormalAddress(listTokens))
 
-    // const pricesInfo = await this.getPrices(listPools, pairsInfo)
-
     // @ts-ignore
     const context: ContractCallContext[] = this.getMultiCallRequest(normalTokens, poolAddresses || [])
     const [{results}] = await Promise.all([multicall.call(context)])
@@ -418,6 +416,8 @@ export class Resource {
     })
     const tokens: any[] = []
     for (let i = 0; i < tokensArr.length; i++) {
+      // remove token has decimals = 0
+      if(!tokensArr[i][2]) continue
       tokens.push({
         symbol: tokensArr[i][0],
         name: tokensArr[i][1],
