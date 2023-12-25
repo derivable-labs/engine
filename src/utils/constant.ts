@@ -34,6 +34,7 @@ export const EventDataAbis = {
   PoolCreated: [
     'address FETCHER', // config.FETCHER,
     'bytes32 ORACLE', // config.ORACLE,
+    'address TOKEN_R',
     'uint k', // config.K,
     'uint MARK', // config.MARK,
     'uint INTEREST_HL', // config.INTEREST_HL,
