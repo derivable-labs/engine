@@ -584,10 +584,10 @@ export class Resource {
           const quoteTokenIndex = bn(poolData.ORACLE.slice(0, 3)).gt(0) ? 1 : 0
           const id = this.getPoolGroupId({pair, quoteTokenIndex, tokenR: poolData.TOKEN_R})
           if (_poolGroups[id]?.pools) {
-            _poolGroups[id].pools.push({ createAtBlock: log.blockNumber, createAtTimestamp: log.timeStamp, ...poolData })
+            _poolGroups[id].pools.push({ blockNumber: log.blockNumber, timeStamp: log.timeStamp, ...poolData })
           } else {
             _poolGroups[id] = {
-              pools: [{ createAtBlock: log.blockNumber, createAtTimestamp: log.timeStamp, ...poolData }],
+              pools: [{ blockNumber: log.blockNumber, timeStamp: log.timeStamp, ...poolData }],
               pairAddress: pair
             }
           }
