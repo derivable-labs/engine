@@ -133,14 +133,16 @@ export class Resource {
   }
 
   async getWhiteListResource(playMode?: boolean) {
-    return await this.generateData({
+    const results =  await this.generateData({
       poolAddresses: this.profile.whitelistPools,
       transferLogs: [],
       playMode
     })
-    // this.poolGroups = {...this.poolGroups, ...poolGroups}
-    // this.pools = {...this.pools, ...pools}
-    // this.tokens = uniqBy([...this.tokens, ...tokens], 'address')
+    this.tokens = uniqBy([...this.tokens, ...this._whitelistTokens()], 'address')
+    return {
+      ...results,
+      tokens: [results.tokens, this._whitelistTokens()]
+    }
   }
 
   async getResourceCached(account: string, playMode?: boolean): Promise<ResourceData> {
