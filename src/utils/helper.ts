@@ -159,7 +159,7 @@ export const parsePrice = (value: BigNumber, baseToken?: TokenType, quoteToken?:
   if (exp == 2) {
     value = value.mul(value)
   }
-  let price = weiToNumber(value.mul(numberToWei(1, baseToken?.decimal || 18)).shr(128 * exp), quoteToken?.decimal || 18)
+  let price = weiToNumber(value.mul(numberToWei(1, baseToken?.decimals || 18)).shr(128 * exp), quoteToken?.decimals || 18)
   return formatFloat(price, 18)
 }
 
@@ -167,9 +167,9 @@ export const parseSqrtX96 = (price: BigNumber, baseToken: TokenType, quoteToken:
   return weiToNumber(
     price
       .mul(price)
-      .mul(numberToWei(1, baseToken.decimal + 18))
+      .mul(numberToWei(1, baseToken.decimals + 18))
       .shr(192),
-    quoteToken.decimal + 18,
+    quoteToken.decimals + 18,
   )
 }
 

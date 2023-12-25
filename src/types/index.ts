@@ -127,9 +127,10 @@ export type PoolsType = { [key: string]: PoolType }
 export type PoolGroupsType = { [key: string]: PoolGroupType }
 export type TokenType = {
   address: string
-  decimal: number
+  decimals: number
   name: string
   symbol: string
+  totalSupply?:any
   icon?: string
 }
 

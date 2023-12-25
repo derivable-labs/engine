@@ -414,14 +414,14 @@ export class Resource {
     const pairsInfo = await this.UNIV3PAIR.getPairsInfo({
       pairAddresses: _.uniq(uniPools),
     })
-    const tokens: any[] = []
+    const tokens: TokenType[] = []
     for (let i = 0; i < tokensArr.length; i++) {
       // remove token has decimals = 0
       if(!tokensArr[i][2]) continue
       tokens.push({
         symbol: tokensArr[i][0],
         name: tokensArr[i][1],
-        decimal: tokensArr[i][2],
+        decimals: tokensArr[i][2],
         totalSupply: tokensArr[i][3],
         address: normalTokens[i],
       })
@@ -514,21 +514,21 @@ export class Resource {
         {
           symbol: baseToken.symbol + '^' + (1 + k / 2),
           name: baseToken.symbol + '^' + (1 + k / 2),
-          decimal: tokenR.decimal,
+          decimals: tokenR?.decimals || 18,
           totalSupply: 0,
           address: pools[i].poolAddress + '-' + POOL_IDS.A,
         },
         {
           symbol: baseToken.symbol + '^' + (1 - k / 2),
           name: baseToken.symbol + '^' + (1 - k / 2),
-          decimal: tokenR.decimal,
+          decimals: tokenR?.decimals || 18,
           totalSupply: 0,
           address: pools[i].poolAddress + '-' + POOL_IDS.B,
         },
         {
           symbol: `DLP-${baseToken.symbol}-${k / 2}`,
           name: `DLP-${baseToken.symbol}-${k / 2}`,
-          decimal: tokenR.decimal,
+          decimals: tokenR?.decimals || 18,
           totalSupply: 0,
           address: pools[i].poolAddress + '-' + POOL_IDS.C,
         },
@@ -907,7 +907,7 @@ export class Resource {
         logo: tokens[address].logo,
         name: tokens[address].name,
         symbol: tokens[address].symbol,
-        decimal: tokens[address].decimals,
+        decimals: tokens[address].decimals,
       })
     }
     return result

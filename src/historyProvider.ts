@@ -82,13 +82,13 @@ export default {
       .then((response: CandleFromApiType) => {
         const bars: CandleType[] = []
         if (response && response.s === 'ok' && response.t && response.t.length > 0) {
-          const decimal = 18 + (outputToken?.decimal || 18) - (inputToken?.decimal || 18)
+          const decimal = 18 + (outputToken?.decimals || 18) - (inputToken?.decimals || 18)
           for (let i = 0; i < response.t.length; i++) {
             bars.push({
               low: formatResult(weiToNumber(numberToWei(response.l[i]), decimal), barValueType),
               open: formatResult(weiToNumber(numberToWei(response.o[i]), decimal), barValueType),
               time: response.t[i] * 1000,
-              volume: formatResult(weiToNumber(response.v[i].split('.')[0], outputToken?.decimal), barValueType),
+              volume: formatResult(weiToNumber(response.v[i].split('.')[0], outputToken?.decimals), barValueType),
               close: formatResult(weiToNumber(numberToWei(response.c[i]), decimal), barValueType),
               high: formatResult(weiToNumber(numberToWei(response.h[i]), decimal), barValueType),
             })
