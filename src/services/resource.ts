@@ -561,9 +561,9 @@ export class Resource {
           const poolData = defaultAbiCoder.decode(this.profile.getEventDataAbi().PoolCreated, log.data)
           const uniPair = ethers.utils.getAddress('0x' + poolData.ORACLE.slice(-40))
           if (_poolGroups[uniPair]?.pools) {
-            _poolGroups[uniPair].pools.push(poolData)
+            _poolGroups[uniPair].pools.push({createAtBlock: log.blockNumber,...poolData})
           } else {
-            _poolGroups[uniPair] = {pools: [poolData]}
+            _poolGroups[uniPair] = {pools: [{createAtBlock: log.blockNumber,...poolData}]}
           }
         })
         return _poolGroups
