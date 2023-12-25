@@ -1,22 +1,21 @@
-import {ethers} from 'ethers'
+import { ethers } from 'ethers'
 import ReserveTokenPrice from '../abi/ReserveTokenPrice.json'
 import TokenPriceByRoute from '../abi/TokenPriceByRoute.json'
-import {JsonRpcProvider} from '@ethersproject/providers'
-import {bn, div, formatPercent, numberToWei, parseSqrtX96, sub} from '../utils/helper'
-import {TokenType} from '../types'
-import {MINI_SECOND_PER_DAY} from '../utils/constant'
+import { JsonRpcProvider } from '@ethersproject/providers'
+import { bn, div, formatPercent, numberToWei, parseSqrtX96, sub } from '../utils/helper'
+import { TokenType } from '../types'
+import { MINI_SECOND_PER_DAY } from '../utils/constant'
 import historyProvider from '../historyProvider'
-import {IEngineConfig} from '../utils/configs'
-import {Profile} from '../profile'
-import {isAddress} from 'ethers/lib/utils'
+import { IEngineConfig } from '../utils/configs'
+import { Profile } from '../profile'
+import { isAddress } from 'ethers/lib/utils'
 import _ from 'lodash'
-import {Resource} from "./resource";
-
+import { Resource } from './resource'
 
 type IFetchTokenPriceParam = {
   tokenBase: string
   tokenQuote: string
-  routes: { uniPool: string, version: number }[]
+  routes: { uniPool: string; version: number }[]
 }
 
 export class Price {
@@ -42,12 +41,12 @@ export class Price {
   }
 
   async get24hChange({
-                       baseToken,
-                       cToken,
-                       quoteToken,
-                       chainId,
-                       currentPrice,
-                     }: {
+    baseToken,
+    cToken,
+    quoteToken,
+    chainId,
+    currentPrice,
+  }: {
     baseToken: TokenType
     cToken: string
     chainId: string
@@ -87,15 +86,11 @@ export class Price {
     const contract = new ethers.Contract(this.tokenPriceByRoute, TokenPriceByRoute.abi, provider)
     const prices = await contract.functions.fetchPrices(params)
     if (prices && prices[0]) {
-      params.forEach(({tokenQuote, tokenBase}, key) => {
-        const tokenBaseObject = tokens.find((t) => (t.address === tokenBase))
-        const tokenQuoteObject = tokens.find((t) => (t.address === tokenQuote))
+      params.forEach(({ tokenQuote, tokenBase }, key) => {
+        const tokenBaseObject = tokens.find((t) => t.address === tokenBase)
+        const tokenQuoteObject = tokens.find((t) => t.address === tokenQuote)
         if (!tokenBaseObject || !tokenQuoteObject) return
-        results[tokenBase] = parseSqrtX96(
-          prices[0][key],
-          tokenBaseObject,
-          tokenQuoteObject,
-        )
+        results[tokenBase] = parseSqrtX96(prices[0][key], tokenBaseObject, tokenQuoteObject)
       })
     }
     const whiteListToken = this.profile.configs.tokens
@@ -112,27 +107,25 @@ export class Price {
       Object.keys(this.profile.routes)
         .filter((pair) => {
           const [token0, token1] = pair.split('-')
-          return this.profile.configs.stablecoins.includes(token0) ||
-            this.profile.configs.stablecoins.includes(token1)
+          return this.profile.configs.stablecoins.includes(token0) || this.profile.configs.stablecoins.includes(token1)
         })
         .map((pairs) => {
           let routes = this.profile.routes[pairs].map((route) => {
             return {
-              version: route.type === "uniswap3" ? 3 : 2,
-              uniPool: route.address
+              version: route.type === 'uniswap3' ? 3 : 2,
+              uniPool: route.address,
             }
           })
           let [tokenBase, tokenQuote] = pairs.split('-')
           if (this.profile.configs.stablecoins.includes(tokenBase)) {
-            [tokenBase, tokenQuote] = [tokenQuote, tokenBase]
+            ;[tokenBase, tokenQuote] = [tokenQuote, tokenBase]
             routes = routes.reverse()
           }
-          return {tokenBase, tokenQuote, routes: routes}
+          return { tokenBase, tokenQuote, routes: routes }
         }),
-      'tokenBase'
+      'tokenBase',
     )
   }
-
 
   async getTokenPrices(tokens: string[]) {
     try {

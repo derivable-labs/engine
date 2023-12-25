@@ -35,7 +35,7 @@ const abis = {
   UTR,
   UTROverride,
   FetcherV2Mock,
-  FetcherV2Override
+  FetcherV2Override,
 }
 
 const DDL_CONFIGS_URL = {

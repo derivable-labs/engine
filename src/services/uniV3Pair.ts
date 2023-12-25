@@ -1,4 +1,4 @@
-import {BigNumber, ethers} from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import PairV3DetailAbi from '../abi/PairV3Detail.json'
 import UniswapV3FactoryAbi from '../abi/UniswapV3Factory.json'
 import ERC20Abi from '../abi/ERC20.json'
@@ -9,7 +9,7 @@ import { CallReturnContext } from 'ethereum-multicall/dist/esm/models/call-retur
 import { ZERO_ADDRESS } from '../utils/constant'
 import { bn } from '../utils/helper'
 import { Profile } from '../profile'
-import {TokenType} from "../types";
+import { TokenType } from '../types'
 
 const POOL_FEES = [100, 300, 500]
 const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111'
@@ -185,7 +185,7 @@ export class UniV3Pair {
             name: details[i].token1.name,
             symbol: details[i].token1.symbol,
             decimal: details[i].token1.decimals.toNumber(),
-            reserve: details[i].token1.reserve
+            reserve: details[i].token1.reserve,
           },
         }
       }

@@ -1,22 +1,7 @@
 import { BigNumber, ethers } from 'ethers'
 import { LogType, TokenType } from '../types'
 import { NATIVE_ADDRESS, POOL_IDS } from '../utils/constant'
-import {
-  BIG,
-  DIV,
-  IEW,
-  WEI,
-  add,
-  bn,
-  div,
-  getTopics,
-  max,
-  mul,
-  numberToWei,
-  parsePrice,
-  sub,
-  weiToNumber,
-} from '../utils/helper'
+import { BIG, DIV, IEW, WEI, add, bn, div, getTopics, max, mul, numberToWei, parsePrice, sub, weiToNumber } from '../utils/helper'
 import { Profile } from '../profile'
 import { IEngineConfig } from '../utils/configs'
 import { M256, Resource } from './resource'
@@ -54,7 +39,10 @@ export class History {
   }
 
   generatePositionBySwapLog(positions: any, tokens: TokenType[], log: LogType) {
-    const { derivable: { playToken }, tokens: whiteListToken } = this.profile.configs
+    const {
+      derivable: { playToken },
+      tokens: whiteListToken,
+    } = this.profile.configs
 
     const pools = this.RESOURCE.pools
     const poolAddresses = Object.keys(this.RESOURCE.pools)
@@ -99,18 +87,15 @@ export class History {
               // ignore the x96 price here
               playTokenPrice = 1
             }
-            const priceRFormated = pool.TOKEN_R == playToken
-              ? playTokenPrice
-              : this.extractPriceR(tokenR, tokens, priceR, log)
+            const priceRFormated = pool.TOKEN_R == playToken ? playTokenPrice : this.extractPriceR(tokenR, tokens, priceR, log)
             if (!priceRFormated) {
               console.warn('unable to extract priceR')
             } else {
               pos.avgPriceR = IEW(
-                BIG(WEI(pos.avgPriceR)).mul(pos.balanceForPriceR)
-                .add(
-                  BIG(WEI(priceRFormated)).mul(amountOut)
-                )
-                .div(pos.balanceForPriceR.add(amountOut))
+                BIG(WEI(pos.avgPriceR))
+                  .mul(pos.balanceForPriceR)
+                  .add(BIG(WEI(priceRFormated)).mul(amountOut))
+                  .div(pos.balanceForPriceR.add(amountOut)),
               )
               pos.balanceForPriceR = pos.balanceForPriceR.add(amountOut)
               pos.amountR = pos.amountR.add(amountIn)
@@ -129,11 +114,10 @@ export class History {
           pool,
         )
         pos.avgPrice = IEW(
-          BIG(WEI(pos.avgPrice)).mul(pos.balanceForPrice)
-          .add(
-            BIG(WEI(indexPrice)).mul(amountOut)
-          )
-          .div(pos.balanceForPrice.add(amountOut))
+          BIG(WEI(pos.avgPrice))
+            .mul(pos.balanceForPrice)
+            .add(BIG(WEI(indexPrice)).mul(amountOut))
+            .div(pos.balanceForPrice.add(amountOut)),
         )
         pos.balanceForPrice = pos.balanceForPrice.add(amountOut)
       }
@@ -183,10 +167,12 @@ export class History {
         let entryPrice
         const pool = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? pools[poolIn] : pools[poolOut]
         const { TOKEN_R, baseToken, quoteToken } = pool
-        const { derivable: { playToken }, tokens: whiteListToken } = this.profile.configs
+        const {
+          derivable: { playToken },
+          tokens: whiteListToken,
+        } = this.profile.configs
         if (
-          ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ||
-          [POOL_IDS.R, POOL_IDS.native].includes(sideOut.toNumber())) &&
+          ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) || [POOL_IDS.R, POOL_IDS.native].includes(sideOut.toNumber())) &&
           (priceR?.gt(0) || TOKEN_R == playToken)
         ) {
           const amount = [POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber()) ? amountIn : amountOut
@@ -199,9 +185,7 @@ export class History {
               // ignore the x96 price here
               playTokenPrice = 1
             }
-            const priceRFormated = pool.TOKEN_R == playToken
-              ? playTokenPrice
-              : this.extractPriceR(tokenR, tokens, priceR, log)
+            const priceRFormated = pool.TOKEN_R == playToken ? playTokenPrice : this.extractPriceR(tokenR, tokens, priceR, log)
             if (!priceRFormated) {
               console.warn('unable to extract priceR')
             } else {

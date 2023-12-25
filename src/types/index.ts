@@ -65,6 +65,7 @@ export type PoolGroupType = {
   TOKEN: string
   pools: { [key: string]: PoolType }
   ORACLE: string
+  basePrice: string
   k: number[]
   states: {
     twapBase: BigNumber
@@ -167,3 +168,5 @@ export type PendingSwapTransactionType = {
   hash: string
   steps: SwapStepType[]
 }
+
+export type LogType = any
