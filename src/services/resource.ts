@@ -1,5 +1,5 @@
 // @ts-nocheck
-import {BigNumber, ethers} from 'ethers'
+import {BigNumber, Contract, ethers} from 'ethers'
 import {LOCALSTORAGE_KEY, POOL_IDS, ZERO_ADDRESS} from '../utils/constant'
 import {Multicall} from 'ethereum-multicall'
 import {LogType, ParseLogType, PoolGroupsType, PoolsType, PoolType, Storage, TokenType} from '../types'
@@ -95,16 +95,16 @@ export class Resource {
   async fetchResourceData(account: string, playMode?: boolean) {
     let result: any = {}
     if (!this.chainId) return result
-    const [resultCached, newResource] = await Promise.all([
+    await Promise.all([
       this.getResourceCached(account, playMode),
       this.getNewResource(account, playMode),
       this.getWhiteListResource(account, playMode),
     ])
-    this.poolGroups = {...resultCached.poolGroups, ...newResource.poolGroups}
-    this.pools = {...resultCached.pools, ...newResource.pools}
-    this.tokens = [...resultCached.tokens, ...newResource.tokens]
-    this.swapLogs = [...resultCached.swapLogs, ...newResource.swapLogs]
-    this.transferLogs = [...resultCached.transferLogs, ...newResource.transferLogs]
+    // this.poolGroups = {...resultCached.poolGroups, ...newResource.poolGroups}
+    // this.pools = {...resultCached.pools, ...newResource.pools}
+    // this.tokens = [...resultCached.tokens, ...newResource.tokens]
+    // this.swapLogs = [...resultCached.swapLogs, ...newResource.swapLogs]
+    // this.transferLogs = [...resultCached.transferLogs, ...newResource.transferLogs]
   }
 
   getLastBlockCached(account: string) {
@@ -371,13 +371,13 @@ export class Resource {
 
     allTokens.push(...this.stableCoins)
 
-    return this.loadStatesData(allTokens, poolAddresses, allUniPools)
+    return this.loadInitPoolsData(allTokens, poolAddresses, allUniPools)
   }
 
   /**
    * load Token detail, poolstate data and then dispatch to Store
    */
-  async loadStatesData(
+  async loadInitPoolsData(
     listTokens: string[],
     poolAddresses: string[],
   ): Promise<{
@@ -402,7 +402,7 @@ export class Resource {
 
     const {tokens: tokensArr, pools} = this.parseMultiCallResponse(results, poolAddresses)
 
-    const uniPools = Object.values(pools).map((p) => ethers.utils.getAddress('0x' + p.ORACLE.slice(-40)))
+    const uniPools = Object.values(pools).map((p) => p.pair)
     const pairsInfo = await this.UNIV3PAIR.getPairsInfo({
       pairAddresses: _.uniq(uniPools),
     })
@@ -449,15 +449,15 @@ export class Resource {
         poolGroups[id].pools[i] = pools[i]
       } else {
         poolGroups[id] = {pools: {[i]: pools[i]}}
-        poolGroups[id].UTR = pools[i].UTR
+        // poolGroups[id].UTR = pools[i].UTR
         poolGroups[id].pair = pairsInfo[pair]
         poolGroups[id].quoteTokenIndex = quoteTokenIndex
         poolGroups[id].baseToken = pools[i].baseToken
         poolGroups[id].quoteToken = pools[i].quoteToken
-        poolGroups[id].TOKEN = pools[i].TOKEN
-        poolGroups[id].MARK = pools[i].MARK
-        poolGroups[id].INIT_TIME = pools[i].INIT_TIME
-        poolGroups[id].HALF_LIFE = pools[i].HALF_LIFE
+        // poolGroups[id].TOKEN = pools[i].TOKEN
+        // poolGroups[id].MARK = pools[i].MARK
+        // poolGroups[id].INIT_TIME = pools[i].INIT_TIME
+        // poolGroups[id].HALF_LIFE = pools[i].HALF_LIFE
         poolGroups[id].ORACLE = pools[i].ORACLE
         poolGroups[id].TOKEN_R = pools[i].TOKEN_R
         // poolGroups[id].states = {
@@ -533,6 +533,36 @@ export class Resource {
       pools,
       poolGroups,
     }
+  }
+
+  async loadPoolStates(poolAddress: string) {
+    const contract = new Contract(poolAddress, this.profile.getAbi('PoolOverride').abi, this.getPoolOverridedProvider())
+    const states = await contract.callStatic.compute(
+      this.derivableAddress.token,
+      5,
+      bn(0),
+      bn(0)
+    )
+    const pool = this.pools[poolAddress]
+    this.pools[poolAddress].states = states
+    this.poolGroups[pool.pair].basePrice = parsePrice(
+      states.spot,
+      pool.baseToken,
+      pool.quoteToken,
+      pool
+    )
+    this.poolGroups[pool.pair].pools = {
+      ...this.poolGroups[pool.pair].pools,
+      [poolAddress]: pool
+    }
+    const rdc = this.getRdc(Object.values(this.poolGroups[pool.pair].pools))
+    this.poolGroups[pool.pair].states = {
+      ...states,
+      ...rdc,
+    }
+    console.log(this.poolGroups, this.pools)
+
+    return [this.poolGroups, this.pools]
   }
 
   getRentRate({rDcLong, rDcShort, R}: { R: BigNumber; rDcLong: BigNumber; rDcShort: BigNumber }, rentRate: BigNumber) {
@@ -640,16 +670,16 @@ export class Resource {
 
         pools[poolAddress] = {
           ...configData.config,
+          poolAddress,
           k: configData.config.K,
           powers: [configData.config.K.toNumber(), -configData.config.K.toNumber()],
+          quoteTokenIndex: bn(configData.config.ORACLE.slice(0, 3)).gt(0) ? 1 : 0,
+          window: bn('0x' + configData.config.ORACLE.substring(2 + 8, 2 + 8 + 8)),
+          pair: ethers.utils.getAddress('0x' + configData.config.ORACLE.slice(-40)),
           states: {
             ...stateData.stateView,
             ...stateData.stateView.state,
           }
-          // twapBase: formatedData.states.twap.base._x,
-          // twapLP: formatedData.states.twap.LP._x,
-          // spotBase: formatedData.states.spot.base._x,
-          // spotLP: formatedData.states.spot.LP._x,
         }
       } catch (e) {
         console.error('Cannot get states of: ', poolAddress)

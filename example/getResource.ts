@@ -10,6 +10,8 @@ const testLocal = async () => {
   )
   // await engine.RESOURCE.getWhiteListResource()
 
+  await engine.RESOURCE.loadPoolStates("0xBb8b02f3a4C3598e6830FC6740F57af3a03e2c96")
+
   console.log({
     poolGroups: engine.RESOURCE.poolGroups,
     pools: engine.RESOURCE.pools,

@@ -70,6 +70,7 @@ export class Profile {
     this.configs = networkConfig
     this.routes = uniV3Pools
     this.whitelistPools = whitelistPools
+    // this.configs.helperContract.utr = '0x2222C5F0999E74D8D88F7bbfE300147d34c22222'
   }
 
   getAbi(name: string) {
