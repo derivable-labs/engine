@@ -150,7 +150,7 @@ export class History {
       const poolAddresses = Object.keys(this.RESOURCE.pools)
       const _swapLogs = swapLogs.map((log) => {
         const abi = this.getSwapAbi(log.topics[0])
-        const formatedData = this.decodeSwapLog(abi, log.args.args)
+        const formatedData = this.decodeSwapLog(abi, log.args)
 
         const { poolIn, poolOut, sideIn, sideOut, amountIn, amountOut, price, priceR } = formatedData
 
