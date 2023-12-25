@@ -18,7 +18,8 @@ const testLocal = async () => {
   // await engine.RESOURCE.fetchResourceData(
   //   '0x0dbca96184eed4c6a1291403c93311ebe6646785',
   // )
-  // await engine.RESOURCE.getWhiteListResource()
+  const whitelistResource = await engine.RESOURCE.getWhiteListResource(["0xBb8b02f3a4C3598e6830FC6740F57af3a03e2c96"])
+  console.log(whitelistResource)
 
   await engine.RESOURCE.loadPoolStates("0xBb8b02f3a4C3598e6830FC6740F57af3a03e2c96")
   // await engine.RESOURCE.searchIndex("PENDLE")

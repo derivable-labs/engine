@@ -91,13 +91,13 @@ export class Resource {
     this.stableCoins = profile.configs.stablecoins
   }
 
-  async fetchResourceData(account: string, playMode?: boolean) {
+  async fetchResourceData(poolAddresses: string[], account: string, playMode?: boolean) {
     let result: any = {}
     if (!this.chainId) return result
     await Promise.all([
       this.getResourceCached(account, playMode),
       this.getNewResource(account, playMode),
-      this.getWhiteListResource(playMode),
+      this.getWhiteListResource(poolAddresses, playMode),
     ])
     // this.poolGroups = {...resultCached.poolGroups, ...newResource.poolGroups}
     // this.pools = {...resultCached.pools, ...newResource.pools}
@@ -132,9 +132,9 @@ export class Resource {
     this.storage.setItem(key, JSON.stringify(newCacheSwapLogs))
   }
 
-  async getWhiteListResource(playMode?: boolean) {
+  async getWhiteListResource(poolAddresses: string[], playMode?: boolean) {
     const results =  await this.generateData({
-      poolAddresses: this.profile.whitelistPools,
+      poolAddresses: [...poolAddresses, ...this.profile.whitelistPools],
       transferLogs: [],
       playMode
     })
