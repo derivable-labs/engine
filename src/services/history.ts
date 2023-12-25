@@ -48,7 +48,7 @@ export class History {
     const poolAddresses = Object.keys(this.RESOURCE.pools)
 
     const abi = this.getSwapAbi(log.topics[0])
-    const encodeData = ethers.utils.defaultAbiCoder.encode(abi, log.args.args)
+    const encodeData = ethers.utils.defaultAbiCoder.encode(abi, log.args)
     const formatedData = ethers.utils.defaultAbiCoder.decode(abi, encodeData)
 
     const { poolIn, poolOut, sideIn, sideOut, amountOut, amountIn, priceR, price } = formatedData
