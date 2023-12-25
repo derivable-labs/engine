@@ -14,7 +14,7 @@ import {
   parsePrice
 } from '../utils/helper'
 import {JsonRpcProvider} from '@ethersproject/providers'
-import _ from 'lodash'
+import _, {uniq, uniqBy} from 'lodash'
 import {IPairInfo, IPairsInfo, UniV3Pair} from './uniV3Pair'
 import {IDerivableContractAddress, IEngineConfig} from '../utils/configs'
 import {defaultAbiCoder} from 'ethers/lib/utils'
@@ -98,6 +98,7 @@ export class Resource {
     const [resultCached, newResource] = await Promise.all([
       this.getResourceCached(account, playMode),
       this.getNewResource(account, playMode),
+      this.getWhiteListResource(account, playMode),
     ])
     this.poolGroups = {...resultCached.poolGroups, ...newResource.poolGroups}
     this.pools = {...resultCached.pools, ...newResource.pools}
@@ -164,6 +165,13 @@ export class Resource {
     })
     this.storage.setItem(blockKey, headBlock.toString())
     this.storage.setItem(key, JSON.stringify(newCacheSwapLogs))
+  }
+
+  async getWhiteListResource(playMode?: boolean) {
+    const {tokens, pools, poolGroups} = await this.generatePoolData(this.profile.whitelistPools, [], playMode)
+    this.poolGroups = {...this.poolGroups, ...poolGroups}
+    this.pools = {...this.pools, ...pools}
+    this.tokens = uniqBy([...this.tokens, ...tokens], 'address')
   }
 
   async getResourceCached(account: string, playMode?: boolean): Promise<ResourceData> {

@@ -50,6 +50,7 @@ export class Profile {
   routes: {
     [key: string]: { type: string; address: string }[]
   }
+  whitelistPools: string[]
 
   constructor(engineConfig: IEngineConfig) {
     this.chainId = engineConfig.chainId
@@ -57,14 +58,18 @@ export class Profile {
   }
 
   async loadConfig() {
-    const [networkConfig, uniV3Pools] = await Promise.all([
+    const [networkConfig, uniV3Pools, whitelistPools] = await Promise.all([
       fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/network.json').then((r) => r.json()),
       fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/routes.json')
+        .then((r) => r.json())
+        .catch(() => []),
+      fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/pools.json')
         .then((r) => r.json())
         .catch(() => []),
     ])
     this.configs = networkConfig
     this.routes = uniV3Pools
+    this.whitelistPools = whitelistPools
   }
 
   getAbi(name: string) {
