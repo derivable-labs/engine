@@ -59,6 +59,7 @@ export interface IDerivableContractAddress {
   compositeFetcher: string
   multiCall: string
   uniswapV2Fetcher?: string
+  poolDeployer?: string
 }
 
 export const DEFAULT_CHAIN = 42161

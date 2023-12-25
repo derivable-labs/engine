@@ -538,6 +538,57 @@ export class Resource {
     }
   }
 
+  async searchIndex(keyword?: string) {
+    const etherscanConfig =
+      typeof this.scanApi === 'string'
+        ? {
+          url: this.scanApi,
+          maxResults: 1000,
+          rangeThreshold: 0,
+          rateLimitCount: 1,
+          rateLimitDuration: 5000,
+          apiKeys: this.scanApiKey ? [this.scanApiKey] : [],
+        }
+        : this.scanApi
+
+    const provider = new AssistedJsonRpcProvider(this.providerToGetLog, etherscanConfig)
+    const lastHeadBlockCached = this.profile.configs.derivable.startBock
+    const keyWordTopic = ethers.utils.formatBytes32String(keyword)
+
+    const filterTopics = [
+      [null, null, null, null],
+      [null, keyWordTopic, null, null],
+      [null, null, keyWordTopic, null],
+      [null, null, null, keyWordTopic],
+    ]
+
+    const poolGroups = await provider
+      .getLogs({
+        fromBlock: lastHeadBlockCached,
+        toBlock: MAX_BLOCK,
+        topics: filterTopics,
+        address: this.profile.configs.derivable.poolDeployer
+      })
+      .then((logs) => {
+        const _poolGroups = {}
+        logs.forEach((log) => {
+          const poolData = defaultAbiCoder.decode(this.profile.getEventDataAbi().PoolCreated, log.data)
+          const uniPair = ethers.utils.getAddress('0x' + poolData.ORACLE.slice(-40))
+          if (_poolGroups[uniPair]?.pools) {
+            _poolGroups[uniPair].pools.push(poolData)
+          } else {
+            _poolGroups[uniPair] = {pools: [poolData]}
+          }
+        })
+        return _poolGroups
+      })
+    const pairsInfo = await this.UNIV3PAIR.getPairsInfo({pairAddresses: Object.keys(poolGroups)})
+    for (let id in poolGroups) {
+      poolGroups[id].pairInfo = pairsInfo[id]
+    }
+    return poolGroups
+  }
+
   async loadPoolStates(poolAddress: string) {
     const pool = this.pools[poolAddress]
     const pairsInfo = await this.UNIV3PAIR.getPairsInfo({
@@ -809,14 +860,14 @@ export class Resource {
     const eventInterface = new ethers.utils.Interface(this.profile.getAbi('Events'))
     const topics = getTopics()
     return ddlLogs.map((log: any) => {
-      if (
-        !topics.Swap.includes(log.topics[0]) &&
-        !topics.Transfer.includes(log.topics[0]) &&
-        !topics.TransferSingle.includes(log.topics[0]) &&
-        !topics.TransferBatch.includes(log.topics[0])
-      ) {
-        return {}
-      }
+      // if (
+      //   !topics.Swap.includes(log.topics[0]) &&
+      //   !topics.Transfer.includes(log.topics[0]) &&
+      //   !topics.TransferSingle.includes(log.topics[0]) &&
+      //   !topics.TransferBatch.includes(log.topics[0])
+      // ) {
+      //   return {}
+      // }
       try {
         const decodeLog = eventInterface.parseLog(log)
         let appName = ''
