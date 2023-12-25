@@ -743,6 +743,7 @@ export class Resource {
           quoteTokenIndex: bn(configData.config.ORACLE.slice(0, 3)).gt(0) ? 1 : 0,
           window: bn('0x' + configData.config.ORACLE.substring(2 + 8, 2 + 8 + 8)),
           pair: ethers.utils.getAddress('0x' + configData.config.ORACLE.slice(-40)),
+          exp: this.profile.getExp(configData.config.FETCHER),
           states: {
             ...stateData.stateView,
             ...stateData.stateView.state,
