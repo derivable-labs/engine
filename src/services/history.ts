@@ -123,14 +123,14 @@ export class History {
       }
     }
 
-    if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber())) {
+    if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber()) && positions[tokenInAddress]) {
       const pool = pools[poolIn]
       const pos = positions[tokenInAddress]
       if (priceR?.gt(0) || pool.TOKEN_R == playToken) {
-        pos.balanceForPriceR = pos.balanceForPriceR.sub(amountIn)
+        pos.balanceForPriceR = pos?.balanceForPriceR ? 0 : pos?.balanceForPriceR.sub(amountIn)
       }
       if (price) {
-        pos.balanceForPrice = pos.balanceForPrice.sub(amountIn)
+        pos.balanceForPrice = pos?.balanceForPrice ? 0 : pos.balanceForPrice.sub(amountIn)
       }
       if (pos && pos.entry) {
         const exitR = pos.amountR.mul(amountIn).div(pos.balance)
