@@ -133,7 +133,7 @@ export class Resource {
   }
 
   async getWhiteListResource(playMode?: boolean) {
-    await this.generateData({
+    return await this.generateData({
       poolAddresses: this.profile.whitelistPools,
       transferLogs: [],
       playMode
