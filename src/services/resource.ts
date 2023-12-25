@@ -168,10 +168,10 @@ export class Resource {
   }
 
   async getWhiteListResource(playMode?: boolean) {
-    const {tokens, pools, poolGroups} = await this.generatePoolData(this.profile.whitelistPools, [], playMode)
-    this.poolGroups = {...this.poolGroups, ...poolGroups}
-    this.pools = {...this.pools, ...pools}
-    this.tokens = uniqBy([...this.tokens, ...tokens], 'address')
+    await this.generatePoolData(this.profile.whitelistPools, [], playMode)
+    // this.poolGroups = {...this.poolGroups, ...poolGroups}
+    // this.pools = {...this.pools, ...pools}
+    // this.tokens = uniqBy([...this.tokens, ...tokens], 'address')
   }
 
   async getResourceCached(account: string, playMode?: boolean): Promise<ResourceData> {
@@ -206,9 +206,9 @@ export class Resource {
       results.transferLogs = transferLogsParsed
     }
 
-    this.poolGroups = {...this.poolGroups, ...results.poolGroups}
-    this.pools = {...this.pools, ...results.pools}
-    this.tokens = [...this.tokens, ...results.tokens]
+    // this.poolGroups = {...this.poolGroups, ...results.poolGroups}
+    // this.pools = {...this.pools, ...results.pools}
+    // this.tokens = [...this.tokens, ...results.tokens]
     this.swapLogs = [...this.swapLogs, ...results.swapLogs]
     this.transferLogs = [...this.transferLogs, ...results.transferLogs]
 
@@ -301,10 +301,10 @@ export class Resource {
           result.poolGroups = poolGroups
         }
 
-        this.pools = {...result.pools, ...this.pools}
-        this.poolGroups = {...this.poolGroups, ...result.poolGroups}
-        this.pools = {...this.pools, ...result.pools}
-        this.tokens = [...this.tokens, ...result.tokens]
+        // this.pools = {...result.pools, ...this.pools}
+        // this.poolGroups = {...this.poolGroups, ...result.poolGroups}
+        // this.pools = {...this.pools, ...result.pools}
+        // this.tokens = [...this.tokens, ...result.tokens]
         this.swapLogs = [...this.swapLogs, ...result.swapLogs]
         this.transferLogs = [...this.transferLogs, ...result.transferLogs]
 
@@ -324,7 +324,6 @@ export class Resource {
    */
   generatePoolData(poolAddresses: string[], transferLogs: ParseLogType[], playMode?: boolean) {
     const allTokens: string[] = [...this._tokenInRoutes()]
-    const allUniPools: string[] = []
     // logs.forEach((log) => {
     //   if (log.name === 'PoolCreated') {
     //     const data = log.args
@@ -371,7 +370,7 @@ export class Resource {
 
     allTokens.push(...this.stableCoins)
 
-    return this.loadInitPoolsData(allTokens, poolAddresses, allUniPools)
+    return this.loadInitPoolsData(allTokens, poolAddresses)
   }
 
   /**
@@ -379,7 +378,7 @@ export class Resource {
    */
   async loadInitPoolsData(
     listTokens: string[],
-    poolAddresses: string[],
+    poolAddresses?: string[] = [],
   ): Promise<{
     tokens: TokenType[]
     pools: any
@@ -527,6 +526,10 @@ export class Resource {
       )
     }
 
+    this.poolGroups = {...this.poolGroups, ...poolGroups}
+    this.pools = {...this.pools, ...pools}
+    this.tokens = [...this.tokens, ...tokens]
+
     return {
       // @ts-ignore
       tokens: _.uniqBy(tokens, 'address'),
@@ -560,7 +563,6 @@ export class Resource {
       ...states,
       ...rdc,
     }
-    console.log(this.poolGroups, this.pools)
 
     return [this.poolGroups, this.pools]
   }
