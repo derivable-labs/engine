@@ -6,6 +6,9 @@ const testLocal = async () => {
   const configs = getTestConfigs(42161)
   const engine = new Engine(configs)
   await engine.initServices()
+
+  const searchResult = await engine.RESOURCE.searchIndex("PENDLE")
+  console.log(searchResult)
   const newResource = await engine.RESOURCE.getNewResource("0x0dbca96184eed4c6a1291403c93311ebe6646785")
   console.log(newResource)
   const cached = configs.storage.getItem(42161 + '-' + LOCALSTORAGE_KEY.ACCOUNT_LOGS + '-' + "0x0dbca96184eed4c6a1291403c93311ebe6646785")

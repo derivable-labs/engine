@@ -449,7 +449,7 @@ export class Resource {
       pools[i].quoteToken = quoteToken.address
 
       const k = _k.toNumber()
-      const id = [pair].join('-')
+      const id = this.getPoolGroupId({pair, quoteTokenIndex, tokenR: pools[i].TOKEN_R})
       if (poolGroups[id]) {
         poolGroups[id].pools[i] = pools[i]
       } else {
@@ -578,19 +578,26 @@ export class Resource {
       .then((logs: LogType[]) => {
         const _poolGroups = {}
         logs.forEach((log) => {
-          const poolData = defaultAbiCoder.decode(this.profile.getEventDataAbi().PoolCreated, log.data)
-          const uniPair = ethers.utils.getAddress('0x' + poolData.ORACLE.slice(-40))
-          if (_poolGroups[uniPair]?.pools) {
-            _poolGroups[uniPair].pools.push({ createAtBlock: log.blockNumber, createAtTimestamp: log.timeStamp, ...poolData })
+          const poolData =
+            defaultAbiCoder.decode(this.profile.getEventDataAbi().PoolCreated, log.data)
+          const pair = ethers.utils.getAddress('0x' + poolData.ORACLE.slice(-40))
+          const quoteTokenIndex = bn(poolData.ORACLE.slice(0, 3)).gt(0) ? 1 : 0
+          const id = this.getPoolGroupId({pair, quoteTokenIndex, tokenR: poolData.TOKEN_R})
+          if (_poolGroups[id]?.pools) {
+            _poolGroups[id].pools.push({ createAtBlock: log.blockNumber, createAtTimestamp: log.timeStamp, ...poolData })
           } else {
-            _poolGroups[uniPair] = { pools: [{ createAtBlock: log.blockNumber, createAtTimestamp: log.timeStamp, ...poolData }] }
+            _poolGroups[id] = {
+              pools: [{ createAtBlock: log.blockNumber, createAtTimestamp: log.timeStamp, ...poolData }],
+              pairAddress: pair
+            }
           }
         })
         return _poolGroups
       })
-    const pairsInfo = await this.UNIV3PAIR.getPairsInfo({pairAddresses: Object.keys(poolGroups)})
+    const pairAddresses = Object.values(poolGroups).map((pg: {pairAddress: string}) => pg.pairAddress)
+    const pairsInfo = await this.UNIV3PAIR.getPairsInfo({pairAddresses: pairAddresses})
     for (let id in poolGroups) {
-      poolGroups[id].pairInfo = pairsInfo[id]
+      poolGroups[id].pairInfo = pairsInfo[poolGroups[id].pairAddress]
     }
     return poolGroups
   }
@@ -979,5 +986,9 @@ export class Resource {
 
     // unpack id to get Pool address
     return _.uniq(Object.keys(balances).map((id) => unpackId(bn(id)).p))
+  }
+
+  getPoolGroupId({pair, quoteTokenIndex, tokenR}: {pair: string, quoteTokenIndex: 0 | 1, tokenR: string}) {
+    return [pair, quoteTokenIndex, tokenR].join('-')
   }
 }
