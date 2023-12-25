@@ -539,14 +539,18 @@ export class Resource {
   }
 
   async loadPoolStates(poolAddress: string) {
+    const pool = this.pools[poolAddress]
+    const pairsInfo = await this.UNIV3PAIR.getPairsInfo({
+      pairAddresses: [pool.pair],
+    })
+    const pricesInfo = await this.getPrices({[poolAddress]: pool}, pairsInfo[pool.pair])
     const contract = new Contract(poolAddress, this.profile.getAbi('PoolOverride').abi, this.getPoolOverridedProvider())
     const states = await contract.callStatic.compute(
       this.derivableAddress.token,
       5,
-      bn(0),
-      bn(0)
+      pricesInfo[poolAddress]?.twap || bn(0),
+      pricesInfo[poolAddress]?.spot || bn(0),
     )
-    const pool = this.pools[poolAddress]
     this.pools[poolAddress].states = states
     this.poolGroups[pool.pair].basePrice = parsePrice(
       states.spot,
@@ -859,16 +863,16 @@ export class Resource {
     return result
   }
 
-  //@ts-ignore
   async getPrices(pools: { [key: string]: PoolType }, pairs: IPairsInfo): Promise<IPriceInfo> {
     const blockNumber = await this.overrideProvider.getBlockNumber()
 
-    const promises = Object.values(pools).filter((pool) => pool.exp == 1).map((pool) => {
-      return this.getPrice(pool, blockNumber, pairs[pool.pair])
-    })
-
     const result = {}
-    const res = await Promise.all(promises)
+    const res = await Promise.all(Object.values(pools)
+      .filter((pool) => pool.exp == 1)
+      .map((pool) => {
+        return this.getPrice(pool, blockNumber, pairs[pool.pair])
+      })
+    )
     res.forEach((priceInfo) => {
       result[priceInfo.poolAddress] = {spot: priceInfo.spot, twap: priceInfo.twap}
     })
