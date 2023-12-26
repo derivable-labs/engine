@@ -7,6 +7,8 @@ import { IEngineConfig } from '../utils/configs'
 import { M256, Resource } from './resource'
 import Erc20 from '../abi/ERC20.json'
 
+const POS_IDS = [POOL_IDS.A, POOL_IDS.B, POOL_IDS.C]
+
 export class History {
   account?: string
   RESOURCE: Resource
@@ -61,7 +63,7 @@ export class History {
     const tokenInAddress = this.getTokenAddressByPoolAndSide(poolIn, formatedData.sideIn)
     const tokenOutAddress = this.getTokenAddressByPoolAndSide(poolOut, formatedData.sideOut)
 
-    if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideOut.toNumber())) {
+    if (POS_IDS.includes(sideOut.toNumber())) {
       if (!positions[tokenOutAddress]) {
         positions[tokenOutAddress] = {
           avgPriceR: 0,
@@ -74,32 +76,29 @@ export class History {
 
       const pool = pools[poolOut]
 
-      if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber())) {
+      if (POS_IDS.includes(sideIn.toNumber())) {
         const pool = pools[poolIn]
-        const pos = positions[tokenInAddress]
-        if (!pos) {
+        const posIn = positions[tokenInAddress]
+        if (!posIn) {
           console.warn(`missing input position: ${poolIn}-${sideIn.toNumber()}`)
         } else {
-          console.log({
-            amountR,
-            posIn: pos,
-          })
-          if (!amountR?.gt(0) && pos?.balanceForPrice?.gt(0)) {
-            amountR = pos.amountR.mul(amountIn).div(pos.balanceForPrice)
+          if (!amountR?.gt(0) && posIn?.balanceForPrice?.gt(0)) {
+            amountR = posIn.amountR.mul(amountIn).div(posIn.balanceForPrice)
           }
-          pos.amountR = pos.amountR.sub(amountR)
+          posIn.amountR = posIn.amountR.sub(amountR)
           if (priceR?.gt(0) || pool.TOKEN_R == playToken) {
-            pos.balanceForPriceR = pos?.balanceForPriceR ? 0 : pos?.balanceForPriceR.sub(amountIn)
+            posIn.balanceForPriceR = posIn?.balanceForPriceR ? 0 : posIn?.balanceForPriceR.sub(amountIn)
           }
           if (price) {
-            pos.balanceForPrice = pos?.balanceForPrice ? 0 : pos.balanceForPrice.sub(amountIn)
+            posIn.balanceForPrice = posIn?.balanceForPrice ? 0 : posIn.balanceForPrice.sub(amountIn)
           }
         }
       }
   
-      const pos = positions[tokenOutAddress]
+      const posOut = positions[tokenOutAddress]
 
-      if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideOut.toNumber())) {
+      if (POS_IDS.includes(sideOut.toNumber())) {
+        posOut.amountR = posOut.amountR.add(amountR)
         if (priceR?.gt(0) || pool.TOKEN_R == playToken) {
           const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
           if (!tokenR) {
@@ -114,14 +113,13 @@ export class History {
             if (!priceRFormated) {
               console.warn('unable to extract priceR')
             } else {
-              pos.avgPriceR = IEW(
-                BIG(WEI(pos.avgPriceR))
-                  .mul(pos.balanceForPriceR)
+              posOut.avgPriceR = IEW(
+                BIG(WEI(posOut.avgPriceR))
+                  .mul(posOut.balanceForPriceR)
                   .add(BIG(WEI(priceRFormated)).mul(amountOut))
-                  .div(pos.balanceForPriceR.add(amountOut)),
+                  .div(posOut.balanceForPriceR.add(amountOut)),
               )
-              pos.balanceForPriceR = pos.balanceForPriceR.add(amountOut)
-              pos.amountR = pos.amountR.add(amountR)
+              posOut.balanceForPriceR = posOut.balanceForPriceR.add(amountOut)
             }
           }
         }
@@ -136,13 +134,13 @@ export class History {
           tokens.find((t) => t?.address === quoteToken) as TokenType,
           pool,
         )
-        pos.avgPrice = IEW(
-          BIG(WEI(pos.avgPrice))
-            .mul(pos.balanceForPrice)
+        posOut.avgPrice = IEW(
+          BIG(WEI(posOut.avgPrice))
+            .mul(posOut.balanceForPrice)
             .add(BIG(WEI(indexPrice)).mul(amountOut))
-            .div(pos.balanceForPrice.add(amountOut)),
+            .div(posOut.balanceForPrice.add(amountOut)),
         )
-        pos.balanceForPrice = pos.balanceForPrice.add(amountOut)
+        posOut.balanceForPrice = posOut.balanceForPrice.add(amountOut)
       }
     }
 
