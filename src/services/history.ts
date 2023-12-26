@@ -52,6 +52,7 @@ export class History {
     const formatedData = ethers.utils.defaultAbiCoder.decode(abi, encodeData)
 
     const { poolIn, poolOut, sideIn, sideOut, amountOut, amountIn, priceR, price } = formatedData
+    let { amountR } = formatedData
 
     if (!poolAddresses.includes(poolIn) || !poolAddresses.includes(poolOut)) {
       return positions
@@ -59,8 +60,6 @@ export class History {
 
     const tokenInAddress = this.getTokenAddressByPoolAndSide(poolIn, formatedData.sideIn)
     const tokenOutAddress = this.getTokenAddressByPoolAndSide(poolOut, formatedData.sideOut)
-    const tokenIn = tokens.find((t) => t.address === tokenInAddress)
-    const tokenOut = tokens.find((t) => t.address === tokenOutAddress)
 
     if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideOut.toNumber())) {
       if (!positions[tokenOutAddress]) {
@@ -74,9 +73,33 @@ export class History {
       }
 
       const pool = pools[poolOut]
+
+      if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber())) {
+        const pool = pools[poolIn]
+        const pos = positions[tokenInAddress]
+        if (!pos) {
+          console.warn(`missing input position: ${poolIn}-${sideIn.toNumber()}`)
+        } else {
+          console.log({
+            amountR,
+            posIn: pos,
+          })
+          if (!amountR?.gt(0) && pos?.balanceForPrice?.gt(0)) {
+            amountR = pos.amountR.mul(amountIn).div(pos.balanceForPrice)
+          }
+          pos.amountR = pos.amountR.sub(amountR)
+          if (priceR?.gt(0) || pool.TOKEN_R == playToken) {
+            pos.balanceForPriceR = pos?.balanceForPriceR ? 0 : pos?.balanceForPriceR.sub(amountIn)
+          }
+          if (price) {
+            pos.balanceForPrice = pos?.balanceForPrice ? 0 : pos.balanceForPrice.sub(amountIn)
+          }
+        }
+      }
+  
       const pos = positions[tokenOutAddress]
 
-      if ([POOL_IDS.R, POOL_IDS.native].includes(sideIn.toNumber())) {
+      if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideOut.toNumber())) {
         if (priceR?.gt(0) || pool.TOKEN_R == playToken) {
           const tokenR = tokens.find((t) => t.address === pool.TOKEN_R)
           if (!tokenR) {
@@ -98,7 +121,7 @@ export class History {
                   .div(pos.balanceForPriceR.add(amountOut)),
               )
               pos.balanceForPriceR = pos.balanceForPriceR.add(amountOut)
-              pos.amountR = pos.amountR.add(amountIn)
+              pos.amountR = pos.amountR.add(amountR)
             }
           }
         }
@@ -123,20 +146,6 @@ export class History {
       }
     }
 
-    if ([POOL_IDS.A, POOL_IDS.B, POOL_IDS.C].includes(sideIn.toNumber()) && positions[tokenInAddress]) {
-      const pool = pools[poolIn]
-      const pos = positions[tokenInAddress]
-      if (priceR?.gt(0) || pool.TOKEN_R == playToken) {
-        pos.balanceForPriceR = pos?.balanceForPriceR ? 0 : pos?.balanceForPriceR.sub(amountIn)
-      }
-      if (price) {
-        pos.balanceForPrice = pos?.balanceForPrice ? 0 : pos.balanceForPrice.sub(amountIn)
-      }
-      if (pos && pos.entry) {
-        const exitR = pos.amountR.mul(amountIn).div(pos.balance)
-        pos.amountR = pos.amountR.sub(exitR)
-      }
-    }
     return positions
   }
 
