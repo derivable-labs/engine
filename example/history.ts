@@ -2,13 +2,18 @@ import { Engine } from '../src/engine'
 import { ethers } from 'ethers'
 import { getTestConfigs } from './shared/testConfigs'
 
+const chainId = Number(process.env.CHAIN ?? 42161)
+const wallet = process.env.WALLET ?? '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'
+
 const testLocal = async () => {
-  const configs = getTestConfigs(8453)
+  const configs = getTestConfigs(chainId)
+  configs.scanApiKey = process.env['SCAN_API_KEY_' + chainId]
   const engine = new Engine(configs)
   await engine.initServices()
 
   await engine.RESOURCE.fetchResourceData(
-    '0xE3C75f8963E4CA02ea9a281c32b41FdfC248e07f',
+    [],
+    wallet,
   )
 
   console.log({
