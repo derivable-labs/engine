@@ -87,10 +87,20 @@ export class History {
           }
           posIn.amountR = posIn.amountR.sub(amountR)
           if (priceR?.gt(0) || pool.TOKEN_R == playToken) {
-            posIn.balanceForPriceR = posIn?.balanceForPriceR ? 0 : posIn?.balanceForPriceR.sub(amountIn)
+            if (posIn.balanceForPriceR.lt(amountIn)) {
+              console.warn(`missing value of balanceForPriceR: ${posIn.balanceForPriceR.toString()} < ${amountIn.toString()}`)
+              posIn.balanceForPriceR = bn(0)
+            } else {
+              posIn.balanceForPriceR = posIn.balanceForPriceR.sub(amountIn)
+            }
           }
           if (price) {
-            posIn.balanceForPrice = posIn?.balanceForPrice ? 0 : posIn.balanceForPrice.sub(amountIn)
+            if (posIn.balanceForPrice.lt(amountIn)) {
+              console.warn(`missing value of balanceForPrice: ${posIn.balanceForPrice.toString()} < ${amountIn.toString()}`)
+              posIn.balanceForPriceR = bn(0)
+            } else {
+              posIn.balanceForPrice = posIn.balanceForPrice.sub(amountIn)
+            }
           }
         }
       }
