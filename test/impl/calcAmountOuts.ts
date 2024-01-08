@@ -1,32 +1,34 @@
-import { Engine } from '../src/engine'
-import { bn, numberToWei, packId } from '../src/utils/helper'
-import { getTestConfigs } from './shared/configurations/configuration.spec'
-import { NATIVE_ADDRESS, POOL_IDS } from '../src/utils/constant'
-import TokenAbi from '../src/abi/Token.json'
 import { ethers } from 'ethers'
-import { interceptorUtils } from './shared/libs/interceptor.spec'
+import { Engine } from '../../src/engine'
+import { bn, numberToWei, packId } from '../../src/utils/helper'
+import { NATIVE_ADDRESS, POOL_IDS } from '../../src/utils/constant'
+import { TestConfiguration } from '../shared/configurations/configurations'
+import { interceptorUtils } from '../shared/libs/interceptor'
+import TokenAbi from '../../src/abi/Token.json'
 
 interceptorUtils()
 
-export const calcAmountOuts = async () => {
-  const configs = getTestConfigs(42161)
+const conf = new TestConfiguration()
+
+export const calcAmountOuts = async (chainId: number, poolAddresses: Array<string>, amount: number) => {
+  const configs = conf.get(chainId)
   const engine = new Engine(configs)
   await engine.initServices()
-  await engine.RESOURCE.fetchResourceData(['0xBb8b02f3a4C3598e6830FC6740F57af3a03e2c96'], configs.account)
+  await engine.RESOURCE.fetchResourceData(poolAddresses, configs.account)
 
-  const currentPool = engine.RESOURCE.pools['0xBb8b02f3a4C3598e6830FC6740F57af3a03e2c96']
+  const currentPool = engine.RESOURCE.pools[poolAddresses[0]]
   engine.setCurrentPool({
     ...currentPool,
   })
 
   const poolOut = currentPool.poolAddress
   const provider = new ethers.providers.JsonRpcProvider(engine.profile.configs.rpc)
-  // @ts-ignore
+
   const tokenContract = new ethers.Contract(engine.profile.configs.derivable.token, TokenAbi, provider)
   const currentBalanceOut = await tokenContract.balanceOf(configs.account, packId(POOL_IDS.C.toString(), poolOut))
   const steps = [
     {
-      amountIn: bn(numberToWei(0.01, 6)),
+      amountIn: bn(numberToWei(amount, 6)),
       tokenIn: NATIVE_ADDRESS,
       tokenOut: poolOut + '-' + POOL_IDS.C,
       amountOutMin: 0,

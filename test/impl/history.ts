@@ -1,19 +1,18 @@
-import { Engine } from '../src/engine'
-import { getTestConfigs } from './shared/configurations/configuration.spec'
-import { interceptorUtils } from './shared/libs/interceptor.spec'
+import { Engine } from '../../src/engine'
+import { TestConfiguration } from '../shared/configurations/configurations'
+import { interceptorUtils } from '../shared/libs/interceptor'
 
 interceptorUtils()
 
-const chainId = Number(process.env.CHAIN ?? 42161)
-const wallet = process.env.WALLET ?? '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'
+const conf = new TestConfiguration()
 
-export const history = async () => {
-  const configs = getTestConfigs(chainId)
-  configs.scanApiKey = process.env['SCAN_API_KEY_' + chainId]
+export const history = async (chainId: number, poolAddresses: Array<string>, poolAddress: string) => {
+  const configs = conf.get(chainId)
+
   const engine = new Engine(configs)
   await engine.initServices()
 
-  await engine.RESOURCE.fetchResourceData([], wallet)
+  await engine.RESOURCE.fetchResourceData(poolAddresses, configs.account)
 
   console.log({
     pools: engine.RESOURCE.pools,
@@ -21,7 +20,7 @@ export const history = async () => {
     swapLogs: engine.RESOURCE.swapLogs,
   })
 
-  const currentPool = engine.RESOURCE.poolGroups['0x9E37cb775a047Ae99FC5A24dDED834127c4180cD']
+  const currentPool = engine.RESOURCE.poolGroups[poolAddress]
   engine.setCurrentPool({
     ...currentPool,
   })

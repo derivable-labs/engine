@@ -1,12 +1,14 @@
-import { Engine } from '../src/engine'
-import { getTestConfigs } from './shared/configurations/configuration.spec'
-import { bn } from '../src/utils/helper'
-import { interceptorUtils } from './shared/libs/interceptor.spec'
+import { Engine } from '../../src/engine'
+import { bn } from '../../src/utils/helper'
+import { TestConfiguration } from '../shared/configurations/configurations'
+import { interceptorUtils } from '../shared/libs/interceptor'
 
 interceptorUtils()
 
-export const getPairDetailV3 = async () => {
-  const configs = getTestConfigs(42161)
+const conf = new TestConfiguration()
+
+export const getPairDetailV3 = async (chainId: number, pairAddress: string) => {
+  const configs = conf.get(chainId)
   const engine = new Engine(configs)
   await engine.initServices()
 

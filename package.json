@@ -17,7 +17,7 @@
     "example:power": "npx ts-node --files ./example/power.ts",
     "example:getPairAddress": "npx ts-node --files ./example/getPairAddress.ts",
     "pretty": "prettier --write \"./src/**/*.ts\"",
-    "test": "ts-mocha -p tsconfig.json test/*.spec.ts"
+    "test": "ts-mocha -p tsconfig.json test/*.test.ts"
   },
   "author": "Derivable Labs",
   "license": "MIT",

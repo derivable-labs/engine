@@ -1,14 +1,12 @@
-import { Engine } from '../src/engine'
-import { getTestConfigs } from './shared/configurations/configuration.spec'
-import { interceptorUtils } from './shared/libs/interceptor.spec'
+import { Engine } from '../../src/engine'
+import { TestConfiguration } from '../shared/configurations/configurations'
+import { interceptorUtils } from '../shared/libs/interceptor'
 
 interceptorUtils()
 
-const chainId = 42161
-const wallet = '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'
-
-export const getResource = async () => {
-  const configs = getTestConfigs(chainId)
+const conf = new TestConfiguration()
+export const getResource = async (chainId: number, wallet: string) => {
+  const configs = conf.get(chainId)
   const engine = new Engine(configs)
   await engine.initServices()
 
