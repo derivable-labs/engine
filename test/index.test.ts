@@ -9,10 +9,9 @@ import { getResource } from './logic/getResource'
 import { getTokenPrice } from './logic/getTokenPrice'
 import { history } from './logic/history'
 import { swap } from './logic/swap'
+import { intercept } from './shared/libs/interceptor'
 
-import { interceptorUtils } from './shared/libs/interceptor'
-
-interceptorUtils()
+intercept()
 
 describe('Derivable Unit Test', () => {
   it('Calculate Amount Outs', () => {

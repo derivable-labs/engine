@@ -4,7 +4,7 @@ import objHash from 'object-hash'
 import * as path from 'path'
 import * as fs from 'fs'
 
-export const interceptorUtils = () => {
+export const intercept = () => {
   try {
     const interceptor = new BatchInterceptor({
       name: 'batch-interceptor',
