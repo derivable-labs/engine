@@ -10,6 +10,10 @@ import { getTokenPrice } from './impl/getTokenPrice'
 import { history } from './impl/history'
 import { swap } from './impl/swap'
 
+import { interceptorUtils } from './shared/libs/interceptor'
+
+interceptorUtils()
+
 describe('Derivable Unit Test', () => {
   it('Calculate Amount Outs', async () => {
     await calcAmountOuts(42161, ['0xBb8b02f3a4C3598e6830FC6740F57af3a03e2c96'], 0.01)

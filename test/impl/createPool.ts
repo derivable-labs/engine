@@ -1,9 +1,6 @@
 import { Engine } from '../../src/engine'
 import { bn, numberToWei } from '../../src/utils/helper'
 import { TestConfiguration } from '../shared/configurations/configurations'
-import { interceptorUtils } from '../shared/libs/interceptor'
-
-interceptorUtils()
 
 const conf = new TestConfiguration()
 

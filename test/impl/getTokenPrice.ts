@@ -1,8 +1,5 @@
 import { Engine } from '../../src/engine'
 import { TestConfiguration } from '../shared/configurations/configurations'
-import { interceptorUtils } from '../shared/libs/interceptor'
-
-interceptorUtils()
 
 const conf = new TestConfiguration()
 

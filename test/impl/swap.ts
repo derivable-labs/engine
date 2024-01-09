@@ -1,12 +1,9 @@
 import { ethers } from 'ethers'
 import { Engine } from '../../src/engine'
 import { TestConfiguration } from '../shared/configurations/configurations'
-import { interceptorUtils } from '../shared/libs/interceptor'
 import TokenAbi from '../../src/abi/Token.json'
 import { bn, numberToWei, packId } from '../../src/utils/helper'
 import { NATIVE_ADDRESS, POOL_IDS } from '../../src/utils/constant'
-
-interceptorUtils()
 
 const conf = new TestConfiguration()
 
