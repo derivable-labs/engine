@@ -22,7 +22,8 @@ export const interceptorUtils = () => {
         const resourcePath = path.join(__dirname, `../resources/${requestId}.json`)
         const resourceData = fs.readFileSync(resourcePath, 'utf8')
         if (resourceData) {
-          const response = new Response(resourceData)
+          const resourceDataJson = JSON.parse(resourceData)
+          const response = new Response(JSON.stringify(resourceDataJson.body))
           request.respondWith(response)
         }
       } catch (error) {
