@@ -19,7 +19,7 @@ export const interceptorUtils = () => {
           return
         }
         const requestId = await calcRequestID(request)
-        const resourcePath = path.join(__dirname, `../resources/${requestId}.json`)
+        const resourcePath = path.join(__dirname, `../data/${requestId}.json`)
         const resourceData = fs.readFileSync(resourcePath, 'utf8')
         if (resourceData) {
           const resourceDataJson = JSON.parse(resourceData)
@@ -37,7 +37,7 @@ export const interceptorUtils = () => {
           return
         }
         const requestId = await calcRequestID(request)
-        const resourcePath = path.join(__dirname, `../resources/${requestId}.json`)
+        const resourcePath = path.join(__dirname, `../data/${requestId}.json`)
         const resourceData = {
           type: response.type,
           status: response.status,
