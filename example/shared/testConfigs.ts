@@ -3,7 +3,7 @@ require('dotenv').config()
 
 const account = process.env.ACCOUNT_ADDRESS as string
 const provider = new ethers.providers.JsonRpcProvider('https://bsc.rpc.blxrbdn.com')
-const walletPrivateKey = new Wallet(process.env.PRIVATE_KEY as string)
+const walletPrivateKey = new Wallet(process.env.PRIVATE_KEY as string ?? '0x0000000000000000000000000000000000000000000000000000000000000001')
 const wallet = walletPrivateKey.connect(provider)
 
 const TestConfigs = {
