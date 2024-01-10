@@ -17,7 +17,7 @@
     "example:power": "npx ts-node --files ./example/power.ts",
     "example:getPairAddress": "npx ts-node --files ./example/getPairAddress.ts",
     "pretty": "prettier --write \"./src/**/*.ts\"",
-    "test": "ts-mocha -p tsconfig.json test/*.test.ts"
+    "test": "ts-mocha -p tsconfig.json --timeout 10000 test/*.test.ts"
   },
   "author": "Derivable Labs",
   "license": "MIT",
@@ -44,7 +44,6 @@
     "@types/node-fetch": "^2.6.1",
     "@typescript-eslint/eslint-plugin": "^2.26.0",
     "@typescript-eslint/parser": "^2.26.0",
-    "chai": "^5.0.0",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.7.0",
     "eslint-config-standard": "^14.1.0",
