@@ -1,4 +1,3 @@
-import { provider } from './../../../src/utils/helper'
 import dotenv from 'dotenv'
 import { Wallet, ethers } from 'ethers'
 

@@ -9,33 +9,41 @@ export const getTokenPrice = async (
   baseTokenAddress: string,
   quoteTokenAddress: string,
   cTokenAddress: string,
-) => {
-  const configs = conf.get(chainId)
-  const engine = new Engine(configs)
-  await engine.initServices()
-  await engine.RESOURCE.fetchResourceData(poolAddresses, configs.account)
+): Promise<any | undefined> => {
+  try {
+    const configs = conf.get(chainId)
+    const engine = new Engine(configs)
+    await engine.initServices()
+    await engine.RESOURCE.fetchResourceData(poolAddresses, configs.account)
 
-  const changedIn24h = await engine.PRICE.get24hChange({
-    baseToken: {
-      address: baseTokenAddress,
-      decimals: 18,
-      name: '',
-      symbol: '',
-    },
-    quoteToken: {
-      address: quoteTokenAddress,
-      decimals: 6,
-      name: '',
-      symbol: '',
-    },
-    cToken: cTokenAddress,
-    currentPrice: '1900',
-    chainId: '42161',
-  })
+    const changedIn24h = await engine.PRICE.get24hChange({
+      baseToken: {
+        address: baseTokenAddress,
+        decimals: 18,
+        name: '',
+        symbol: '',
+      },
+      quoteToken: {
+        address: quoteTokenAddress,
+        decimals: 6,
+        name: '',
+        symbol: '',
+      },
+      cToken: cTokenAddress,
+      currentPrice: '1900',
+      chainId: '42161',
+    })
 
-  const prices = await engine.PRICE.getTokenPriceByRoutes()
+    const prices = await engine.PRICE.getTokenPriceByRoutes()
 
-  const res = await engine.PRICE.getTokenPrices(['0x4200000000000000000000000000000000000006'])
+    const res = await engine.PRICE.getTokenPrices(['0x4200000000000000000000000000000000000006'])
 
-  console.log(res)
+    return {
+      changedIn24h,
+      prices,
+      tokenPrice: res,
+    }
+  } catch (error) {
+    return undefined
+  }
 }
