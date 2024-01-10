@@ -34,8 +34,7 @@
     "ethers": "^5.5.4",
     "lodash": "^4.17.21",
     "move-decimal-point": "^0.0.4",
-    "node-fetch": "^2.6.7",
-    "ts-mocha": "^10.0.0"
+    "node-fetch": "^2.6.7"
   },
   "devDependencies": {
     "@mswjs/interceptors": "^0.25.13",
@@ -59,6 +58,7 @@
     "mocha": "^10.2.0",
     "object-hash": "^3.0.0",
     "prettier": "2.8.8",
+    "ts-mocha": "^10.0.0",
     "typescript": "4"
   }
 }
