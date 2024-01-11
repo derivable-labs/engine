@@ -352,7 +352,7 @@ export class Swap {
   generateSwapParams(method: string, params: any) {
     const stateCalHelper = this.getStateCalHelperContract()
     const functionInterface = Object.values(stateCalHelper.interface.functions).find((f: any) => f.name === method)?.inputs[0].components
-    const formatedParams = {}
+    const formatedParams: {[key: string]: any} = {}
     for (let name in params) {
       if (functionInterface?.find((c) => c.name === name)) {
         formatedParams[name] = params[name]
@@ -390,7 +390,7 @@ export class Swap {
       throw 'Cannot swap throw multi pool (need to same Token R)'
     }
 
-    const result = { pools: {}, TOKEN_R: '' }
+    const result: {pools: {[key: string]: PoolType}, TOKEN_R: string} = { pools: {}, TOKEN_R: '' }
     if (poolIn) {
       result.pools[poolIn.poolAddress] = poolIn
       result.TOKEN_R = poolIn.TOKEN_R

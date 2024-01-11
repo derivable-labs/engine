@@ -427,7 +427,7 @@ export class Resource {
       })
     }
 
-    const poolGroups = {}
+    const poolGroups: any = {}
 
     for (const i in pools) {
       // if (!poolsState[i]) {
@@ -581,7 +581,7 @@ export class Resource {
         address: this.profile.configs.derivable.poolDeployer,
       })
       .then((logs: LogType[]) => {
-        const _poolGroups = {}
+        const _poolGroups: any = {}
         logs.forEach((log) => {
           const decodedData =
             defaultAbiCoder.decode(this.profile.getEventDataAbi().PoolCreated, log.data)
@@ -653,7 +653,7 @@ export class Resource {
   }
 
   getPoolOverridedProvider() {
-    const stateOverride = {}
+    const stateOverride: any = {}
     // poolAddresses.forEach((address: string) => {
     stateOverride[this.derivableAddress.logic as string] = {
       code: this.profile.getAbi('PoolOverride').deployedBytecode,
@@ -734,7 +734,7 @@ export class Resource {
   }
 
   parseMultiCallResponse(multiCallData: any, poolAddresses: string[]) {
-    const pools = {}
+    const pools: any = {}
     const tokens = multiCallData.tokens.callsReturnContext[0].returnValues
     const poolOverrideAbi = this.profile.getAbi('PoolOverride').abi
     poolAddresses.forEach((poolAddress) => {
@@ -860,8 +860,8 @@ export class Resource {
     let rC = bn(0)
     let rDcLong = bn(0)
     let rDcShort = bn(0)
-    let supplyDetails = {}
-    let rDetails = {}
+    let supplyDetails: any  = {}
+    let rDetails: any = {}
     for (let pool of pools) {
       rC = pool.states.rC
       rDcLong = pool.states.rA
@@ -916,7 +916,7 @@ export class Resource {
   async getPrices(pools: { [key: string]: PoolType }, pairs: IPairsInfo): Promise<IPriceInfo> {
     const blockNumber = await this.overrideProvider.getBlockNumber()
 
-    const result = {}
+    const result: any = {}
     const res = await Promise.all(
       Object.values(pools)
         .filter((pool) => pool.exp == 1)

@@ -39,8 +39,9 @@ const TestConfigs = {
 }
 
 export const getTestConfigs = (chainId: number) => {
-  let storageData = {}
+  let storageData: any = {}
   return {
+    //@ts-ignore
     ...TestConfigs[chainId],
     storage: {
       getItem: (key: string) => {

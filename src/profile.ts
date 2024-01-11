@@ -74,6 +74,7 @@ export class Profile {
   }
 
   getAbi(name: string) {
+    //@ts-ignore
     return abis[name] ? abis[name] : abis[this.chainId][name] || []
   }
 

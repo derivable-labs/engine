@@ -62,7 +62,7 @@ export const formatMultiCallBignumber = (data: any) => {
 
 export const getErc1155Token = (addresses: string[]) => {
   const erc1155Addresses = addresses.filter(isErc1155Address)
-  const result = {}
+  const result: {[key: string]: BigNumber[]} = {}
   for (let i = 0; i < erc1155Addresses.length; i++) {
     const address = erc1155Addresses[i].split('-')[0]
     const id = erc1155Addresses[i].split('-')[1]
@@ -145,7 +145,7 @@ export const detectDecimalFromPrice = (price: number | string) => {
   }
 }
 
-export const packId = (kind: string, address: string) => {
+export const packId = (kind: string | BigNumber, address: string) => {
   const k = bn(kind)
   return k.shl(160).add(address)
 }

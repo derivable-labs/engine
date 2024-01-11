@@ -48,7 +48,7 @@ export class UniV2Pair {
       const pairDetailContract = new ethers.Contract(this.pairsInfoAddress as string, PairDetailAbi.abi, this.provider)
 
       const { details } = await pairDetailContract.functions.query(pairAddresses, flag)
-      const result = {}
+      const result: {[key: string]: any} = {}
       for (let i = 0; i < pairAddresses.length; i++) {
         result[pairAddresses[i]] = details[i]
       }
