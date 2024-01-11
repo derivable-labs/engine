@@ -9,9 +9,9 @@ import { getResource } from './logic/getResource'
 import { getTokenPrice } from './logic/getTokenPrice'
 import { history } from './logic/history'
 import { swap } from './logic/swap'
+import _ from "lodash";
 
 import { Interceptor } from './shared/libs/interceptor'
-import _ from "lodash";
 const interceptor = new Interceptor()
 
 describe('Derivable Tools', () => {

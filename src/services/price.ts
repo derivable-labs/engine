@@ -46,15 +46,18 @@ export class Price {
     quoteToken,
     chainId,
     currentPrice,
+    toTimeMs,
   }: {
     baseToken: TokenType
     cToken: string
     chainId: string
     quoteToken: TokenType
     currentPrice: string
+    toTimeMs?: number
   }) {
     try {
-      const toTime = Math.floor((new Date().getTime() - MINI_SECOND_PER_DAY) / 1000)
+      toTimeMs = toTimeMs ?? new Date().getTime()
+      const toTime = Math.floor((toTimeMs - MINI_SECOND_PER_DAY) / 1000)
       const result = await historyProvider.getBars({
         to: toTime,
         limit: 1,
