@@ -4,6 +4,9 @@ import objHash from 'object-hash'
 import * as path from 'path'
 import * as fs from 'fs'
 
+import dotenv from 'dotenv'
+dotenv.config()
+
 export function Interceptor() {
   this.interceptor = new BatchInterceptor({
     name: 'batch-interceptor',
@@ -31,22 +34,25 @@ export function Interceptor() {
     try {
       const requestId = await calcRequestID(request)
       const resourcePath = this.getResourcePath(requestId)
-      if (!fs.existsSync(resourcePath)) {
-        return
-      }
-      const resourceData = fs.readFileSync(resourcePath, 'utf8')
-      if (resourceData) {
-        try {
-          const resourceDataJson = JSON.parse(resourceData)
-          const response = new Response(JSON.stringify(resourceDataJson.body))
-          request.respondWith(response)
-        } catch (err) {
-          console.error('failed to mock response', err, request)
+      if (fs.existsSync(resourcePath)) {
+        const resourceData = fs.readFileSync(resourcePath, 'utf8')
+        if (resourceData) {
+          try {
+            const resourceDataJson = JSON.parse(resourceData)
+            const response = new Response(JSON.stringify(resourceDataJson.body))
+            request.respondWith(response)
+            return
+          } catch (err) {
+            console.error('failed to mock response', err, request)
+          }
         }
       }
     } catch (err) {
       console.error('failed to handle request', err, request)
-      return
+    }
+    if (!process.env.RECORD) {
+      console.error('data must be recorded first with `yarn record [-t TestName]`')
+      process.exit(1)
     }
   })
 
