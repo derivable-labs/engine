@@ -52,7 +52,7 @@ export function Interceptor() {
 
   this.interceptor.on('response', async ({ response, isMockedResponse, request }) => {
     try {
-      if (isMockedResponse) {
+      if (isMockedResponse || response.status != 200) {
         return
       }
 
