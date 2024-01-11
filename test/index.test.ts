@@ -11,6 +11,7 @@ import { history } from './logic/history'
 import { swap } from './logic/swap'
 
 import { Interceptor } from './shared/libs/interceptor'
+import _ from "lodash";
 const interceptor = new Interceptor()
 
 describe('Derivable Tools', () => {
@@ -68,11 +69,17 @@ describe('Derivable Tools', () => {
     expect(pairDetailV3).toBeDefined()
   })
 
-  test('Get Resource', async () => {
+  test('Resource', async () => {
     const chainId = 42161
-    const resource = await getResource(chainId)
+    const poolAddresses: string[] = ['0x867A3c9256911AEF110f4e626936Fa3BBc750cBE']
+    const poolAddress = '0x9E37cb775a047Ae99FC5A24dDED834127c4180cD'
+    const account = '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'
+    const resource = await getResource(chainId, poolAddresses, account)
 
-    expect(resource).toBeDefined()
+    expect(resource.newResource.pools['0x867A3c9256911AEF110f4e626936Fa3BBc750cBE']).toBeDefined()
+    expect(resource.whiteListResource.pools['0xA332693827f78ECe3Ea044DC3F8EAa9763f60c6a']).toBeDefined()
+    expect(resource.cacheResource.pools['0x867A3c9256911AEF110f4e626936Fa3BBc750cBE']).toBeDefined()
+    expect(_.isEqual(resource.cacheResource, resource.newResource))
   })
 
   test('Get Token Price', async () => {
