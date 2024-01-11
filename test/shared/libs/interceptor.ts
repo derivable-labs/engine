@@ -17,7 +17,7 @@ export function Interceptor() {
 
   this.getResourcePath = (requestId: string, createFolder: boolean = false): string => {
     const filename = `${requestId}.json`
-    const root = path.join(__dirname, `../data`)
+    const root = path.join(__dirname, `../../data`)
     const folder = path.join(root, this.context)
     if (createFolder && !fs.existsSync(folder)) {
       fs.mkdirSync(folder, { recursive: true })
