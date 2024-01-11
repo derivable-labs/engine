@@ -10,4 +10,5 @@ module.exports = {
       diagnostics: false,
     },
   },
+  testTimeout: 60000,
 }

@@ -1,3 +1,4 @@
+import { bn } from '../src/utils/helper'
 import { calcAmountOuts } from './logic/calcAmountOuts'
 import { createPool } from './logic/createPool'
 import { getBalanceAndAllowance } from './logic/getBalanceAndAllowance'
@@ -8,11 +9,15 @@ import { getResource } from './logic/getResource'
 import { getTokenPrice } from './logic/getTokenPrice'
 import { history } from './logic/history'
 import { swap } from './logic/swap'
-import { intercept } from './shared/libs/interceptor'
 
-intercept()
+import { Interceptor } from './shared/libs/interceptor'
+const interceptor = new Interceptor()
 
-describe('Derivable Unit Test', () => {
+describe('Derivable Tools', () => {
+  beforeEach(() => {
+    interceptor.setContext(expect.getState().currentTestName)
+  })
+
   test('Calc Amount Outs', async () => {
     const chainId = 42161
     const poolAddresses = ['0xBb8b02f3a4C3598e6830FC6740F57af3a03e2c96']
@@ -83,13 +88,17 @@ describe('Derivable Unit Test', () => {
   })
 
   test('History', async () => {
-    const chainId = 8453
+    const chainId = 42161
     const poolAddresses = []
     const poolAddress = '0x9E37cb775a047Ae99FC5A24dDED834127c4180cD'
+    const account = '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'
 
-    const result = await history(chainId, poolAddresses, poolAddress)
-
-    expect(result).toBeDefined()
+    const { swapTxs, positions } = await history(chainId, poolAddresses, poolAddress, account)
+    const keys = Object.keys(positions)
+    expect(keys.length).toEqual(3)
+    expect(positions[keys[0]].avgPriceR).toEqual('2195.511006')
+    expect(positions[keys[1]].avgPrice).toEqual('0.000380553119609019')
+    expect(positions[keys[2]].amountR).toEqual(bn('0x01100ffba9e0c7'))
   })
 
   test('Swap', async () => {
