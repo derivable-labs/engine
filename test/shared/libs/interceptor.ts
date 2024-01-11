@@ -19,7 +19,7 @@ export function Interceptor() {
     const filename = `${requestId}.json`
     const root = path.join(__dirname, `../data`)
     const folder = path.join(root, this.context)
-    if (!fs.existsSync(folder)) {
+    if (createFolder && !fs.existsSync(folder)) {
       fs.mkdirSync(folder, { recursive: true })
     }
     return path.join(folder, filename)
