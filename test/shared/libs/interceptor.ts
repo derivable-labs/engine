@@ -92,5 +92,9 @@ const calcRequestID = async (request: Request): Promise<string> => {
       body,
     }).substr(0, 8)
   }
-  return objHash(request.url).substr(0, 8)
+  let url = request.url
+  if (url.includes('&apikey=')) {
+    url = url.replace(/apikey=[^&]*/g, 'apikey=')
+  }
+  return objHash(url).substr(0, 8)
 }
