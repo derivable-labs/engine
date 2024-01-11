@@ -15,8 +15,6 @@ export class TestConfiguration {
       scanApiKey: process.env['SCAN_API_KEY_1337'] ?? '',
       scanApi: process.env['SCAN_API_URL_1337'] ?? '',
       rpcUrl: process.env['RPC_URL_1337'] ?? 'http://localhost:8545',
-      account,
-      signer: this.walletConnect(process.env['RPC_URL_1337'] ?? 'http://localhost:8545', privateKey),
       env: 'development',
     }
 
@@ -25,8 +23,6 @@ export class TestConfiguration {
       scanApiKey: process.env['SCAN_API_KEY_56'] ?? '',
       scanApi: process.env['SCAN_API_URL_56'] ?? '',
       rpcUrl: process.env['RPC_URL_56'] ?? 'https://bsc.rpc.blxrbdn.com',
-      account,
-      signer: this.walletConnect(process.env['RPC_URL_56'] ?? 'https://bsc.rpc.blxrbdn.com', privateKey),
       env: 'development',
     }
 
@@ -35,8 +31,6 @@ export class TestConfiguration {
       scanApiKey: process.env['SCAN_API_KEY_42161'] ?? '',
       scanApi: process.env['SCAN_API_URL_42161'] ?? 'https://api.arbiscan.io/api',
       rpcUrl: process.env['RPC_URL_42161'] ?? 'https://arb1.arbitrum.io/rpc',
-      account,
-      signer: this.walletConnect(process.env['RPC_URL_42161'] ?? 'https://arb1.arbitrum.io/rpc', privateKey),
       env: 'development',
     }
 
@@ -45,8 +39,6 @@ export class TestConfiguration {
       scanApiKey: process.env['SCAN_API_KEY_8453'] ?? '',
       scanApi: process.env['SCAN_API_URL_8453'] ?? 'https://api.basescan.org/api',
       rpcUrl: process.env['RPC_URL_8453'] ?? 'https://mainnet.base.org',
-      account,
-      signer: this.walletConnect(process.env['RPC_URL_8453'] ?? 'https://mainnet.base.org', privateKey),
       env: 'development',
     }
   }
