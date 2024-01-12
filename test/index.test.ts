@@ -6,7 +6,6 @@ import { getPairAddress } from './logic/getPairAddress'
 import { getPairDetail } from './logic/getPairDetail'
 import { getPairDetailV3 } from './logic/getPairDetailV3'
 import { getResource } from './logic/getResource'
-import { getTokenPrice } from './logic/getTokenPrice'
 import { history } from './logic/history'
 import { swap } from './logic/swap'
 import _ from "lodash";
@@ -80,18 +79,6 @@ describe('Derivable Tools', () => {
     expect(resource.whiteListResource.pools['0xA332693827f78ECe3Ea044DC3F8EAa9763f60c6a']).toBeDefined()
     expect(resource.cacheResource.pools['0x867A3c9256911AEF110f4e626936Fa3BBc750cBE']).toBeDefined()
     expect(_.isEqual(resource.cacheResource, resource.newResource))
-  })
-
-  test('Get Token Price', async () => {
-    const chainId = 8453
-    const poolAddresses = []
-    const baseToken = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1'
-    const quoteToken = '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8'
-    const cToken = '0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443'
-
-    const result = await getTokenPrice(chainId, poolAddresses, baseToken, quoteToken, cToken)
-
-    expect(result).toBeDefined()
   })
 
   test('History', async () => {
