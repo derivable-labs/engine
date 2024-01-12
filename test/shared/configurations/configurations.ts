@@ -3,9 +3,6 @@ import { Wallet, ethers } from 'ethers'
 
 dotenv.config()
 
-const account = process.env.ACCOUNT_ADDRESS ?? '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf'
-const privateKey = process.env.PRIVATE_KEY ?? '0x0000000000000000000000000000000000000000000000000000000000000001'
-
 export class TestConfiguration {
   private readonly conf: { [key: string]: any } = {}
 

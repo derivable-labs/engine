@@ -9,9 +9,21 @@ import { getResource } from './logic/getResource'
 import { history } from './logic/history'
 import { swap } from './logic/swap'
 import _ from "lodash";
+import { TestConfiguration } from './shared/configurations/configurations'
 
 import { Interceptor } from './shared/libs/interceptor'
 const interceptor = new Interceptor()
+
+const account = '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'
+
+const confs = new TestConfiguration()
+
+function genConfig(chainId, account) {
+  return {
+    ...confs.get(chainId),
+    account,
+  }
+}
 
 describe('Derivable Tools', () => {
   beforeEach(() => {
@@ -19,12 +31,15 @@ describe('Derivable Tools', () => {
   })
 
   test('Calc Amount Outs', async () => {
-    const chainId = 42161
-    const poolAddresses = ['0xBb8b02f3a4C3598e6830FC6740F57af3a03e2c96']
-    const amountIn = 0.01
-    const amountOut = await calcAmountOuts(chainId, poolAddresses, amountIn)
-    expect(amountOut).toBeDefined()
-    expect(amountOut).toBeGreaterThan(0)
+    const [ res, gasUsed ] = await calcAmountOuts(
+      genConfig(42161, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'),
+      ['0xBb8b02f3a4C3598e6830FC6740F57af3a03e2c96'],
+      0.1,
+    )
+    expect(gasUsed.toNumber()).toBeGreaterThan(0)
+    expect(gasUsed.toNumber()).toBeLessThan(2000000)
+    const amountOut = res[res.length-1].amountOut
+    expect(amountOut.toNumber()).toBeGreaterThan(44105)
   })
 
   test('Create Pool', async () => {
@@ -72,7 +87,6 @@ describe('Derivable Tools', () => {
     const chainId = 42161
     const poolAddresses: string[] = ['0x867A3c9256911AEF110f4e626936Fa3BBc750cBE']
     const poolAddress = '0x9E37cb775a047Ae99FC5A24dDED834127c4180cD'
-    const account = '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'
     const resource = await getResource(chainId, poolAddresses, account)
 
     expect(resource.newResource.pools['0x867A3c9256911AEF110f4e626936Fa3BBc750cBE']).toBeDefined()

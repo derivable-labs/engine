@@ -1,8 +1,8 @@
-import { BigNumber, Contract, ethers } from 'ethers'
+import { BigNumber, Contract, Signer, VoidSigner, ethers } from 'ethers'
 import { PoolType, SwapStepType, PendingSwapTransactionType } from '../types'
 import { bn, isErc1155Address, packId } from '../utils/helper'
 import { NATIVE_ADDRESS, POOL_IDS, ZERO_ADDRESS } from '../utils/constant'
-import { JsonRpcProvider, TransactionReceipt } from '@ethersproject/providers'
+import { JsonRpcProvider, Provider, TransactionReceipt } from '@ethersproject/providers'
 import { Profile } from '../profile'
 import { isAddress } from 'ethers/lib/utils'
 import { IDerivableContractAddress, IEngineConfig } from '../utils/configs'
@@ -18,10 +18,10 @@ export class Swap {
   account?: string
   chainId: number
   scanApi?: string
-  provider: ethers.providers.Provider
+  provider: Provider
   providerGetProof: JsonRpcProvider
   overrideProvider: JsonRpcProvider
-  signer?: ethers.providers.JsonRpcSigner
+  signer?: Signer
   RESOURCE: Resource
   config: IEngineConfig
   profile: Profile
@@ -30,13 +30,13 @@ export class Swap {
 
   constructor(config: IEngineConfig & { RESOURCE: Resource }, profile: Profile) {
     this.config = config
-    this.account = config.account
+    this.account = config.account ?? config.signer?._address ?? ZERO_ADDRESS
     this.chainId = config.chainId
     this.scanApi = profile.configs.scanApi
     this.provider = new ethers.providers.JsonRpcProvider(profile.configs.rpc)
     this.overrideProvider = new JsonRpcProvider(profile.configs.rpc)
     this.providerGetProof = new JsonRpcProvider(profile.configs.rpcGetProof || profile.configs.rpc)
-    this.signer = config.signer
+    this.signer = config.signer ?? new VoidSigner(this.account, this.provider)
     this.RESOURCE = config.RESOURCE
     this.profile = profile
     this.derivableAdr = profile.configs.derivable
