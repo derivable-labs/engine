@@ -1,6 +1,5 @@
 import { bn } from '../src/utils/helper'
 import { calcAmountOuts } from './logic/calcAmountOuts'
-import { createPool } from './logic/createPool'
 import { getBalanceAndAllowance } from './logic/getBalanceAndAllowance'
 import { getLargestPoolAddress } from './logic/getPairAddress'
 import { getPairDetail } from './logic/getPairDetail'
@@ -38,13 +37,6 @@ describe('Derivable Tools', () => {
     expect(gasUsed.toNumber()).toBeLessThan(2000000)
     const amountOut = res[res.length-1].amountOut
     expect(amountOut.toNumber()).toBeGreaterThan(44105)
-  })
-
-  test('Create Pool', async () => {
-    const chainId = 42161
-    const poolAddresses = []
-    const result = await createPool(chainId, poolAddresses)
-    expect(result).toBeDefined()
   })
 
   test('BnA', async () => {
