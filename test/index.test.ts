@@ -64,21 +64,22 @@ describe('Derivable Tools', () => {
     expect(pairAddress?.length).toBeGreaterThan(0)
   })
 
-  test('Get Pair Detail', async () => {
-    const chainId = 42161
-    const pairAddress = '0x8165c70b01b7807351EF0c5ffD3EF010cAbC16fB'
-    const pairAddresses = ['0x8165c70b01b7807351EF0c5ffD3EF010cAbC16fB', '0x905dfCD5649217c42684f23958568e533C711Aa3']
-    const pairDetail = await getPairDetail(chainId, pairAddress, pairAddresses)
-
+  test('PairDetailV2', async () => {
+    const pairDetail = await getPairDetail(
+      genConfig(42161, ''),
+      '0x8165c70b01b7807351EF0c5ffD3EF010cAbC16fB',
+      ['0x8165c70b01b7807351EF0c5ffD3EF010cAbC16fB', '0x905dfCD5649217c42684f23958568e533C711Aa3'],
+    )
     expect(pairDetail).toBeDefined()
   })
 
-  test('Get Pair Detail V3', async () => {
-    const chainId = 42161
-    const pairAddress = '0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443'
-    const pairDetailV3 = await getPairDetailV3(chainId, pairAddress)
-
-    expect(pairDetailV3).toBeDefined()
+  test('PairDetailV3', async () => {
+    const { pairInfo } = await getPairDetailV3(
+      genConfig(42161, ''),
+      '0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443'
+    )
+    expect(pairInfo.token0.name).toEqual('Wrapped Ether')
+    expect(pairInfo.token1.name).toEqual('USD Coin (Arb1)')
   })
 
   test('Resource', async () => {
