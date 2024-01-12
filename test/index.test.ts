@@ -28,7 +28,7 @@ describe('Derivable Tools', () => {
     interceptor.setContext(expect.getState().currentTestName)
   })
 
-  test('Calc Amount Outs', async () => {
+  test('CalcAmountOuts', async () => {
     const [ res, gasUsed ] = await calcAmountOuts(
       genConfig(42161, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'),
       ['0xBb8b02f3a4C3598e6830FC6740F57af3a03e2c96'],
