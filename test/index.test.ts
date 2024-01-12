@@ -14,8 +14,6 @@ import { TestConfiguration } from './shared/configurations/configurations'
 import { Interceptor } from './shared/libs/interceptor'
 const interceptor = new Interceptor()
 
-const account = '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'
-
 const confs = new TestConfiguration()
 
 function genConfig(chainId, account) {
@@ -84,10 +82,10 @@ describe('Derivable Tools', () => {
   })
 
   test('Resource', async () => {
-    const chainId = 42161
-    const poolAddresses: string[] = ['0x867A3c9256911AEF110f4e626936Fa3BBc750cBE']
-    const poolAddress = '0x9E37cb775a047Ae99FC5A24dDED834127c4180cD'
-    const resource = await getResource(chainId, poolAddresses, account)
+    const resource = await getResource(
+      genConfig(42161, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'),
+      ['0x867A3c9256911AEF110f4e626936Fa3BBc750cBE'],
+    )
 
     expect(resource.newResource.pools['0x867A3c9256911AEF110f4e626936Fa3BBc750cBE']).toBeDefined()
     expect(resource.whiteListResource.pools['0xA332693827f78ECe3Ea044DC3F8EAa9763f60c6a']).toBeDefined()
@@ -96,12 +94,11 @@ describe('Derivable Tools', () => {
   })
 
   test('History', async () => {
-    const chainId = 42161
-    const poolAddresses = []
-    const poolAddress = '0x9E37cb775a047Ae99FC5A24dDED834127c4180cD'
-    const account = '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'
-
-    const { swapTxs, positions } = await history(chainId, poolAddresses, poolAddress, account)
+    const { swapTxs, positions } = await history(
+      genConfig(42161, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'),
+      [],
+      '0x9E37cb775a047Ae99FC5A24dDED834127c4180cD'
+    )
     const keys = Object.keys(positions)
     expect(keys.length).toEqual(3)
     expect(positions[keys[0]].avgPriceR).toEqual('2195.511006')

@@ -1,20 +1,15 @@
 import { Engine } from '../../src/engine'
-import { TestConfiguration } from '../shared/configurations/configurations'
-
-const conf = new TestConfiguration()
+import { IEngineConfig } from '../../src/utils/configs'
 
 export const history = async (
-  chainId: number,
+  configs: IEngineConfig,
   poolAddresses: Array<string>,
   poolAddress: string,
-  account: string,
 ): Promise<any> => {
-  const configs = conf.get(chainId)
-
   const engine = new Engine(configs)
   await engine.initServices()
 
-  await engine.RESOURCE.fetchResourceData(poolAddresses, account)
+  await engine.RESOURCE.fetchResourceData(poolAddresses, configs.account!)
 
   const currentPool = engine.RESOURCE.poolGroups[poolAddress]
   engine.setCurrentPool({
