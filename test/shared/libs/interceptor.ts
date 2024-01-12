@@ -52,6 +52,7 @@ export function Interceptor() {
     }
     if (!process.env.RECORD) {
       console.error('data must be recorded first with `yarn record [-t TestName]`')
+      console.log(request)
       process.exit(1)
     }
   })
