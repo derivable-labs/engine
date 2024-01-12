@@ -410,6 +410,7 @@ export class Swap {
     fetcherData,
     onSubmitted,
     submitFetcherV2 = false,
+    callStatic = false,
   }: {
     steps: SwapStepType[]
     fetcherData?: any
@@ -417,6 +418,7 @@ export class Swap {
     submitFetcherV2?: boolean
     gasLimit?: BigNumber
     gasPrice?: BigNumber
+    callStatic?: boolean
   }): Promise<TransactionReceipt> {
     try {
       const { params, value } = await this.convertStepToActions({
@@ -431,12 +433,16 @@ export class Swap {
       //   gasLimit,
       //   gasPrice: gasPrice || undefined
       // })
-      const contract = this.getRouterContract(this.signer)
-      const res = await contract.exec(...params, {
+      const utr = this.getRouterContract(this.signer)
+      params.push({
         value,
         gasLimit: gasLimit || undefined,
         gasPrice: gasPrice || undefined,
       })
+      if (callStatic) {
+        return await utr.callStatic.exec(...params)
+      }
+      const res = await utr.exec(...params)
       if (onSubmitted) {
         onSubmitted({ hash: res.hash, steps })
       }

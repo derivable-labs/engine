@@ -107,13 +107,11 @@ describe('Derivable Tools', () => {
   })
 
   test('Swap', async () => {
-    const chainId = 56
-    const poolAddresses = []
-    const poolAddress = '0x3Db6cB9E2F52673C978AdF99477C73eC0d5b5712'
-    const amount = 1
-
-    const result = await swap(chainId, poolAddresses, poolAddress, amount)
-
-    expect(result).toBeDefined()
+    await swap(
+      genConfig(42161, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'),
+      ['0xBb8b02f3a4C3598e6830FC6740F57af3a03e2c96'],
+      '0xBb8b02f3a4C3598e6830FC6740F57af3a03e2c96',
+      0.1,
+    )
   })
 })
