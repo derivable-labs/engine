@@ -2,7 +2,7 @@ import { bn } from '../src/utils/helper'
 import { calcAmountOuts } from './logic/calcAmountOuts'
 import { createPool } from './logic/createPool'
 import { getBalanceAndAllowance } from './logic/getBalanceAndAllowance'
-import { getPairAddress } from './logic/getPairAddress'
+import { getLargestPoolAddress } from './logic/getPairAddress'
 import { getPairDetail } from './logic/getPairDetail'
 import { getPairDetailV3 } from './logic/getPairDetailV3'
 import { getResource } from './logic/getResource'
@@ -54,14 +54,12 @@ describe('Derivable Tools', () => {
     expect(result).toBeDefined()
   })
 
-  test('Get Pair Address', async () => {
+  test('LargestPool', async () => {
     const chainId = 42161
     const baseToken = '0x82af49447d8a07e3bd95bd0d56f35241523fbab1'
     const quoteTokens = ['0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9', '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8']
-    const pairAddress = await getPairAddress(chainId, baseToken, quoteTokens)
-
-    expect(pairAddress).toBeDefined()
-    expect(pairAddress?.length).toBeGreaterThan(0)
+    const pairAddress = await getLargestPoolAddress(chainId, baseToken, quoteTokens)
+    expect(pairAddress).toEqual('0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443')
   })
 
   test('PairDetailV2', async () => {
