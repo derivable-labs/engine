@@ -47,11 +47,15 @@ describe('Derivable Tools', () => {
     expect(result).toBeDefined()
   })
 
-  test('Get Balance And Allowance', async () => {
-    const chainId = 8453
-    const poolAddresses = []
-    const result = await getBalanceAndAllowance(chainId, poolAddresses)
-    expect(result).toBeDefined()
+  test('BnA', async () => {
+    const { balances, allowances, maturity } = await getBalanceAndAllowance(
+      genConfig(8453, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'),
+      [],
+    )
+    console.log(balances, allowances, maturity)
+    expect(balances['0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA']).toEqual(bn('0x01312d00'))
+    expect(allowances['0xF9afc64E5Dde15E941e2C01dd848b2EC67FD08b8-16']).toEqual(bn('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'))
+    expect(maturity['0x44C46037AD3621f95a488d898c1e9CFDa0F58e95-32']).toEqual(bn('0x6504358b'))
   })
 
   test('LargestPool', async () => {
