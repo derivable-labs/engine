@@ -31,6 +31,9 @@ export function Interceptor() {
   this.interceptor.apply()
 
   this.interceptor.on('request', async ({ request }) => {
+    if (!this.context) {
+      return
+    }
     try {
       const requestId = await calcRequestID(request)
       const resourcePath = this.getResourcePath(requestId)
@@ -58,6 +61,9 @@ export function Interceptor() {
   })
 
   this.interceptor.on('response', async ({ response, isMockedResponse, request }) => {
+    if (!this.context) {
+      return
+    }
     try {
       if (isMockedResponse || response.status != 200) {
         return
