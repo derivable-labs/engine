@@ -9,10 +9,10 @@ export const provider = new ethers.providers.JsonRpcProvider('https://bsc-datase
 
 export const bn = BigNumber.from
 
-export const weiToNumber = (wei: any, decimal: number = 18, decimalToDisplay?: number) => {
+export const weiToNumber = (wei: any, decimals: number = 18, decimalToDisplay?: number) => {
   if (!wei || !Number(wei)) return '0'
   wei = wei.toString()
-  const num = mdp(wei, -decimal)
+  const num = mdp(wei, -decimals)
   if (decimalToDisplay != null) {
     if (decimalToDisplay > 0) {
       return num.slice(0, num.indexOf('.') + decimalToDisplay + 1)
@@ -22,13 +22,13 @@ export const weiToNumber = (wei: any, decimal: number = 18, decimalToDisplay?: n
   return num
 }
 
-export const numberToWei = (number: any, decimal: number = 18) => {
+export const numberToWei = (number: any, decimals: number = 18) => {
   if (!number) return '0'
   number = number.toString()
   if (Number.isFinite(number)) {
     number = number.toLocaleString('en-US', { useGrouping: false })
   }
-  return mdp(number, decimal).split(number.indexOf('.') === -1 ? ',' : '.')[0]
+  return mdp(number, decimals).split(number.indexOf('.') === -1 ? ',' : '.')[0]
 }
 
 export const decodePowers = (powersBytes: string) => {
@@ -87,18 +87,18 @@ export const getNormalAddress = (addresses: string[]) => {
   return addresses.filter((adr: string) => /^0x[0-9,a-f,A-Z]{40}$/g.test(adr))
 }
 
-export const formatFloat = (number: number | string, decimal = 4) => {
+export const formatFloat = (number: number | string, decimals = 4) => {
   number = number.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   const arr = number.split('.')
   if (arr.length > 1) {
-    arr[1] = arr[1].slice(0, decimal)
+    arr[1] = arr[1].slice(0, decimals)
   }
   return arr.join('.')
 }
 
-export const formatPercent = (floatNumber: any, decimal: number = 2) => {
+export const formatPercent = (floatNumber: any, decimals: number = 2) => {
   floatNumber = floatNumber.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
-  return formatFloat(weiToNumber(numberToWei(floatNumber), 16), decimal)
+  return formatFloat(weiToNumber(numberToWei(floatNumber), 16), decimals)
 }
 
 export const mul = (a: any, b: any, useFullwide = true) => {
