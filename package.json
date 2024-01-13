@@ -16,7 +16,9 @@
     "example:history": "npx ts-node --files ./example/history.ts",
     "example:power": "npx ts-node --files ./example/power.ts",
     "example:getPairAddress": "npx ts-node --files ./example/getPairAddress.ts",
-    "pretty": "prettier --write \"./src/**/*.ts\""
+    "pretty": "prettier --write \"./src/**/*.ts\"",
+    "record": "RECORD=1 jest --detectOpenHandles",
+    "test": "jest --detectOpenHandles"
   },
   "author": "Derivable Labs",
   "license": "MIT",
@@ -36,6 +38,8 @@
     "node-fetch": "^2.6.7"
   },
   "devDependencies": {
+    "@mswjs/interceptors": "^0.25.13",
+    "@types/jest": "^29.5.11",
     "@types/lodash": "^4.14.179",
     "@types/node-fetch": "^2.6.1",
     "@typescript-eslint/eslint-plugin": "^2.26.0",
@@ -50,7 +54,10 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-react": "^7.17.0",
     "eslint-plugin-standard": "^4.0.1",
+    "jest": "^29.7.0",
+    "object-hash": "^3.0.0",
     "prettier": "2.8.8",
+    "ts-jest": "^29.1.1",
     "typescript": "4"
   }
 }

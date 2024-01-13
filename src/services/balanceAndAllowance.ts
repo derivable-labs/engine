@@ -1,5 +1,5 @@
 import { bn, getErc1155Token, getNormalAddress, packId } from '../utils/helper'
-import { ethers } from 'ethers'
+import {BigNumber, ethers} from 'ethers'
 import { Multicall } from 'ethereum-multicall'
 import { LARGE_VALUE } from '../utils/constant'
 import BnAAbi from '../abi/BnA.json'
@@ -55,7 +55,7 @@ export class BnA {
     return { balances: {}, allowances: {}, maturity: {} }
   }
 
-  getBnAMulticallRequest({ erc20Tokens, erc1155Tokens }: { erc20Tokens: string[]; erc1155Tokens: { [key: string]: string[] } }) {
+  getBnAMulticallRequest({ erc20Tokens, erc1155Tokens }: { erc20Tokens: string[]; erc1155Tokens: { [key: string]: string[] | BigNumber[] } }) {
     const packs = []
     const accounts = []
     for (const poolAddress in erc1155Tokens) {

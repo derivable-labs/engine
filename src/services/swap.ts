@@ -1,8 +1,8 @@
-import { BigNumber, Contract, ethers } from 'ethers'
+import { BigNumber, Contract, Signer, VoidSigner, ethers } from 'ethers'
 import { PoolType, SwapStepType, PendingSwapTransactionType } from '../types'
 import { bn, isErc1155Address, packId } from '../utils/helper'
 import { NATIVE_ADDRESS, POOL_IDS, ZERO_ADDRESS } from '../utils/constant'
-import { JsonRpcProvider, TransactionReceipt } from '@ethersproject/providers'
+import { JsonRpcProvider, Provider, TransactionReceipt } from '@ethersproject/providers'
 import { Profile } from '../profile'
 import { isAddress } from 'ethers/lib/utils'
 import { IDerivableContractAddress, IEngineConfig } from '../utils/configs'
@@ -18,10 +18,10 @@ export class Swap {
   account?: string
   chainId: number
   scanApi?: string
-  provider: ethers.providers.Provider
+  provider: Provider
   providerGetProof: JsonRpcProvider
   overrideProvider: JsonRpcProvider
-  signer?: ethers.providers.JsonRpcSigner
+  signer?: Signer
   RESOURCE: Resource
   config: IEngineConfig
   profile: Profile
@@ -30,13 +30,13 @@ export class Swap {
 
   constructor(config: IEngineConfig & { RESOURCE: Resource }, profile: Profile) {
     this.config = config
-    this.account = config.account
+    this.account = config.account ?? config.signer?._address ?? ZERO_ADDRESS
     this.chainId = config.chainId
     this.scanApi = profile.configs.scanApi
     this.provider = new ethers.providers.JsonRpcProvider(profile.configs.rpc)
     this.overrideProvider = new JsonRpcProvider(profile.configs.rpc)
     this.providerGetProof = new JsonRpcProvider(profile.configs.rpcGetProof || profile.configs.rpc)
-    this.signer = config.signer
+    this.signer = config.signer ?? new VoidSigner(this.account, this.provider)
     this.RESOURCE = config.RESOURCE
     this.profile = profile
     this.derivableAdr = profile.configs.derivable
@@ -352,7 +352,7 @@ export class Swap {
   generateSwapParams(method: string, params: any) {
     const stateCalHelper = this.getStateCalHelperContract()
     const functionInterface = Object.values(stateCalHelper.interface.functions).find((f: any) => f.name === method)?.inputs[0].components
-    const formatedParams = {}
+    const formatedParams: {[key: string]: any} = {}
     for (let name in params) {
       if (functionInterface?.find((c) => c.name === name)) {
         formatedParams[name] = params[name]
@@ -390,7 +390,7 @@ export class Swap {
       throw 'Cannot swap throw multi pool (need to same Token R)'
     }
 
-    const result = { pools: {}, TOKEN_R: '' }
+    const result: {pools: {[key: string]: PoolType}, TOKEN_R: string} = { pools: {}, TOKEN_R: '' }
     if (poolIn) {
       result.pools[poolIn.poolAddress] = poolIn
       result.TOKEN_R = poolIn.TOKEN_R
@@ -410,6 +410,7 @@ export class Swap {
     fetcherData,
     onSubmitted,
     submitFetcherV2 = false,
+    callStatic = false,
   }: {
     steps: SwapStepType[]
     fetcherData?: any
@@ -417,6 +418,7 @@ export class Swap {
     submitFetcherV2?: boolean
     gasLimit?: BigNumber
     gasPrice?: BigNumber
+    callStatic?: boolean
   }): Promise<TransactionReceipt> {
     try {
       const { params, value } = await this.convertStepToActions({
@@ -431,12 +433,16 @@ export class Swap {
       //   gasLimit,
       //   gasPrice: gasPrice || undefined
       // })
-      const contract = this.getRouterContract(this.signer)
-      const res = await contract.exec(...params, {
+      const utr = this.getRouterContract(this.signer)
+      params.push({
         value,
         gasLimit: gasLimit || undefined,
         gasPrice: gasPrice || undefined,
       })
+      if (callStatic) {
+        return await utr.callStatic.exec(...params)
+      }
+      const res = await utr.exec(...params)
       if (onSubmitted) {
         onSubmitted({ hash: res.hash, steps })
       }

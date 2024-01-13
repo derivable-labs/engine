@@ -108,7 +108,7 @@ export class UniV3Pair {
   }
 
   _parsePoolAddressReturnContext(returnContexts: CallReturnContext[]) {
-    const results = {}
+    const results: {[key: string]: any} = {}
     returnContexts.forEach((returnContext) => {
       if (returnContext.returnValues[0] !== ZERO_ADDRESS) {
         results[returnContext.reference] = returnContext.returnValues[0]
@@ -170,7 +170,7 @@ export class UniV3Pair {
       const pairDetailContract = new ethers.Contract(this.pairsV3Info, PairV3DetailAbi.abi, provider)
 
       const { details } = await pairDetailContract.functions.query(pairAddresses, flag)
-      const result = {}
+      const result: {[key: string]: IPairInfo} = {}
       for (let i = 0; i < pairAddresses.length; i++) {
         result[pairAddresses[i]] = {
           token0: {

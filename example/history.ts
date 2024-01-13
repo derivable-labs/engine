@@ -1,9 +1,9 @@
 import { Engine } from '../src/engine'
-import { ethers } from 'ethers'
 import { getTestConfigs } from './shared/testConfigs'
 
 const chainId = Number(process.env.CHAIN ?? 42161)
 const wallet = process.env.WALLET ?? '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'
+
 
 const testLocal = async () => {
   const configs = getTestConfigs(chainId)

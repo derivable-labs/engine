@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import {BigNumber, ethers} from 'ethers'
 import ReserveTokenPrice from '../abi/ReserveTokenPrice.json'
 import TokenPriceByRoute from '../abi/TokenPriceByRoute.json'
 import { JsonRpcProvider } from '@ethersproject/providers'
@@ -46,15 +46,18 @@ export class Price {
     quoteToken,
     chainId,
     currentPrice,
+    toTimeMs,
   }: {
     baseToken: TokenType
     cToken: string
     chainId: string
     quoteToken: TokenType
     currentPrice: string
+    toTimeMs?: number
   }) {
     try {
-      const toTime = Math.floor((new Date().getTime() - MINI_SECOND_PER_DAY) / 1000)
+      toTimeMs = toTimeMs ?? new Date().getTime()
+      const toTime = Math.floor((toTimeMs - MINI_SECOND_PER_DAY) / 1000)
       const result = await historyProvider.getBars({
         to: toTime,
         limit: 1,
@@ -73,7 +76,7 @@ export class Price {
   }
 
   async getTokenPriceByRoutes() {
-    const results = {}
+    const results:{[key: string]: number | string} = {}
     const tokens = this.RESOURCE.tokens
     const params = this._genFetchTokenParams()
     const provider = new JsonRpcProvider(this.rpcUrl)
@@ -152,7 +155,7 @@ export class Price {
         this.profile.configs.stablecoins[0],
       )
 
-      const result = {}
+      const result: {[key: string]: BigNumber} = {}
       for (let i in _tokensToFetch) {
         result[_tokensToFetch[i]] = res.sqrtPriceX96[i]
       }
