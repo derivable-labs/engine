@@ -5,18 +5,18 @@ export const FixedPoint = {
   Q128: bn('0x0100000000000000000000000000000000'), // 2**128
 }
 
-const packId = (kind: BigNumber, address: string) => {
+const packId = (kind: BigNumber, address: string): BigNumber => {
   const k = bn(kind)
   return k.shl(160).add(address)
 }
 
-export const unpackId = (id: BigNumber) => {
+export const unpackId = (id: BigNumber): { k: string; p: string } => {
   const k = ethers.utils.hexlify(id.shr(160))
   const p = ethers.utils.getAddress(ethers.utils.hexlify(id.mod(bn(1).shl(160))))
   return { k, p }
 }
 
-function encodeSqrtX96(reserve1: number, reserve0: number) {
+const encodeSqrtX96 = (reserve1: number, reserve0: number): BigNumber => {
   return bn((Math.sqrt(reserve1 / reserve0) * 10 ** 12).toFixed(0))
     .mul(bn(2).pow(96))
     .div(10 ** 12)
@@ -24,13 +24,13 @@ function encodeSqrtX96(reserve1: number, reserve0: number) {
 
 const FLOAT_UNIT = 100000
 
-export const floatToFixed128 = (n: number) => {
+export const floatToFixed128 = (n: number): BigNumber => {
   return bn(n * FLOAT_UNIT)
     .shl(128)
     .div(FLOAT_UNIT)
 }
 
-export const fixed128ToFloat = (fixed128: BigNumber) => {
+export const fixed128ToFloat = (fixed128: BigNumber): number => {
   return bn(fixed128).mul(FLOAT_UNIT).shr(128).toNumber() / FLOAT_UNIT
 }
 //
