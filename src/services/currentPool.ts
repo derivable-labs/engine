@@ -38,6 +38,7 @@ export class CurrentPool {
   initCurrentPoolData(poolData: PoolData) {
     for (let i in poolData) {
       // @ts-ignore
+      // TODO: Logic checking & review
       this[i] = poolData[i]
     }
   }

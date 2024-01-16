@@ -1,9 +1,30 @@
-import { BigNumber, ethers } from 'ethers'
+import { BigNumber, Contract, ethers } from 'ethers'
 import { bn } from '../utils/helper'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { PoolConfig } from '../types'
 import { IDerivableContractAddress, IEngineConfig } from '../utils/configs'
 import { Profile } from '../profile'
+
+export type ConfigGenerateType = {
+  utr: string
+  token: string | undefined
+  logic: string | undefined
+  oracle: string
+  reserveToken: string
+  recipient: string
+  mark: BigNumber
+  k: number
+  a: BigNumber
+  b: BigNumber
+  initTime: number
+  halfLife: number
+}
+
+export type CreatePoolParameterType = {
+  params: any
+  value: any
+  gasLimit: any
+}
 
 export class CreatePool {
   account?: string
@@ -25,7 +46,7 @@ export class CreatePool {
     this.profile = profile
   }
 
-  async callStaticCreatePool({ params, value, gasLimit }: any) {
+  async callStaticCreatePool({ params, value, gasLimit }: CreatePoolParameterType) {
     const helper = this.getStateCalHelperContract(this.signer)
     return await helper.callStatic.createPool(params, this.contractAddresses.poolFactory, {
       value: value || bn(0),
@@ -33,9 +54,9 @@ export class CreatePool {
     })
   }
 
-  async createPool(params: PoolConfig, gasLimit?: BigNumber) {
+  async createPool(params: PoolConfig, gasLimit?: BigNumber): Promise<boolean> {
     try {
-      const newPoolConfigs = this.generateConfig(
+      const newPoolConfigs: ConfigGenerateType = this.generateConfig(
         params.k,
         params.a,
         params.b,
@@ -50,16 +71,17 @@ export class CreatePool {
         value: params.amountInit,
         gasLimit,
       })
-      const helper = this.getStateCalHelperContract(this.signer)
+      const helper: Contract = this.getStateCalHelperContract(this.signer)
       const res = await helper.createPool(newPoolConfigs, this.contractAddresses.poolFactory, {
         value: params.amountInit,
         gasLimit: gasLimit || undefined,
       })
       const tx = await res.wait(1)
+      // TODO: tx status checking before return
       console.log('tx', tx)
       return true
-    } catch (e) {
-      throw e
+    } catch (error) {
+      throw error
     }
   }
 
@@ -72,24 +94,32 @@ export class CreatePool {
     oracle: string,
     initTime: number,
     halfLife: number,
-  ) {
-    return {
-      utr: this.profile.configs.helperContract.utr,
-      token: this.contractAddresses.token,
-      logic: this.contractAddresses.logic,
-      oracle,
-      reserveToken: this.profile.configs.wrappedTokenAddress,
-      recipient,
-      mark,
-      k,
-      a,
-      b,
-      initTime,
-      halfLife,
+  ): ConfigGenerateType {
+    try {
+      return {
+        utr: this.profile.configs.helperContract.utr,
+        token: this.contractAddresses.token,
+        logic: this.contractAddresses.logic,
+        oracle,
+        reserveToken: this.profile.configs.wrappedTokenAddress,
+        recipient,
+        mark,
+        k,
+        a,
+        b,
+        initTime,
+        halfLife,
+      }
+    } catch (error) {
+      throw error
     }
   }
 
-  getStateCalHelperContract(provider?: any) {
-    return new ethers.Contract(this.contractAddresses.stateCalHelper as string, this.profile.getAbi('Helper'), provider || this.provider)
+  getStateCalHelperContract(provider?: any): Contract {
+    try {
+      return new ethers.Contract(this.contractAddresses.stateCalHelper as string, this.profile.getAbi('Helper'), provider || this.provider)
+    } catch (error) {
+      throw error
+    }
   }
 }
