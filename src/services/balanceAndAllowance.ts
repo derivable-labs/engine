@@ -1,5 +1,5 @@
 import { bn, getErc1155Token, getNormalAddress, packId } from '../utils/helper'
-import { BigNumber, ethers } from 'ethers'
+import { BigNumber } from 'ethers'
 import { Multicall } from 'ethereum-multicall'
 import { LARGE_VALUE } from '../utils/constant'
 import BnAAbi from '../abi/BnA.json'
@@ -9,7 +9,6 @@ import { IEngineConfig } from '../utils/configs'
 import { unpackId } from '../utils/number'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { Profile } from '../profile'
-import { StateOverride } from '@ethersproject/providers/lib/base-provider'
 
 export type BnAReturnType = {
   balances: BalancesType
@@ -38,7 +37,7 @@ export type BnAMultiCallRequestType = {
 export class BnA {
   chainId: number
   account?: string
-  provider: ethers.providers.Provider | JsonRpcProvider
+  provider: JsonRpcProvider
   rpcUrl: string
   bnAAddress: string
   profile: Profile
@@ -54,14 +53,11 @@ export class BnA {
   async getBalanceAndAllowance(tokens: Array<string>): Promise<BnAReturnType> {
     try {
       if (this.account) {
-        if (this.provider instanceof JsonRpcProvider) {
-          // TODO: Checking type StateOverride
-          this.provider.setStateOverride({
-            [this.bnAAddress as string]: {
-              ['code']: BnAAbi.deployedBytecode as unknown as StateOverride,
-            },
-          })
-        }
+        this.provider.setStateOverride({
+          [this.bnAAddress]: {
+            code: BnAAbi.deployedBytecode,
+          },
+        })
         const multicall = new Multicall({
           multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
           ethersProvider: this.provider,
