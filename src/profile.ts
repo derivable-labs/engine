@@ -43,7 +43,7 @@ const DDL_CONFIGS_URL = {
   production: `https://raw.githubusercontent.com/derivable-labs/configs/main/`,
 }
 
-// todo: Change name from profile to ...
+// TODO: Change name from profile to ...
 export class Profile {
   chainId: number
   env: 'development' | 'production'

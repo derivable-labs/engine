@@ -3,11 +3,11 @@ import { PoolType, TokenType } from '../types'
 import EventsAbi from '../abi/Events.json'
 import { SECONDS_PER_DAY } from './constant'
 
-// todo: Change name a some function
-// todo: Convert require to import
+// TODO: Change name a some function
+// TODO: Convert require to import
 const mdp = require('move-decimal-point')
 
-// todo: Move RPC Url to config or env
+// TODO: Move RPC Url to config or env
 export const provider = new ethers.providers.JsonRpcProvider('https://bsc-dataseed.binance.org/')
 
 export const bn = BigNumber.from

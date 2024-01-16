@@ -55,7 +55,7 @@ export class BnA {
     try {
       if (this.account) {
         if (this.provider instanceof JsonRpcProvider) {
-          // todo: Checking type StateOverride
+          // TODO: Checking type StateOverride
           this.provider.setStateOverride({
             [this.bnAAddress as string]: {
               ['code']: BnAAbi.deployedBytecode as unknown as StateOverride,
