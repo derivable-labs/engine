@@ -3,6 +3,7 @@ import PairDetailAbi from '../abi/PairDetail.json'
 import { IEngineConfig } from '../utils/configs'
 import { Profile } from '../profile'
 import { JsonRpcProvider } from '@ethersproject/providers'
+import { GetPairInfoParameterType, GetPairsInfoParameterType } from './uniV3Pair'
 
 const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111'
 // type ConfigType = {
@@ -15,14 +16,15 @@ export class UniV2Pair {
   chainId: number
   scanApi?: string
   pairsInfoAddress: string
-  provider: ethers.providers.Provider
+  provider: JsonRpcProvider
+
   constructor(config: IEngineConfig, profile: Profile) {
-    this.pairsInfoAddress = '0x' + PairDetailAbi.deployedBytecode.slice(-40)
+    this.pairsInfoAddress = `0x${PairDetailAbi.deployedBytecode.slice(-40)}`
     this.chainId = config.chainId
     this.scanApi = profile.configs.scanApi
 
     const provider = new JsonRpcProvider(profile.configs.rpc)
-    // @ts-ignore
+
     provider.setStateOverride({
       [this.pairsInfoAddress]: {
         code: PairDetailAbi.deployedBytecode,
@@ -32,7 +34,7 @@ export class UniV2Pair {
     this.provider = new JsonRpcProvider(profile.configs.rpc)
   }
 
-  async getPairInfo({ pairAddress, flag = FLAG }: { pairAddress: string; flag?: string }) {
+  async getPairInfo({ pairAddress, flag = FLAG }: GetPairInfoParameterType): Promise<{ [key: string]: any }> {
     try {
       const pairDetailContract = new ethers.Contract(this.pairsInfoAddress as string, PairDetailAbi.abi, this.provider)
 
@@ -43,12 +45,12 @@ export class UniV2Pair {
     }
   }
 
-  async getPairsInfo({ pairAddresses, flag = FLAG }: { flag?: string; pairAddresses: string[] }) {
+  async getPairsInfo({ pairAddresses, flag = FLAG }: GetPairsInfoParameterType): Promise<{ [key: string]: any }> {
     try {
       const pairDetailContract = new ethers.Contract(this.pairsInfoAddress as string, PairDetailAbi.abi, this.provider)
 
       const { details } = await pairDetailContract.functions.query(pairAddresses, flag)
-      const result: {[key: string]: any} = {}
+      const result: { [key: string]: any } = {}
       for (let i = 0; i < pairAddresses.length; i++) {
         result[pairAddresses[i]] = details[i]
       }

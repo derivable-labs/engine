@@ -14,6 +14,49 @@ const PAYMENT = 0
 const TRANSFER = 1
 const CALL_VALUE = 2
 
+export type PriceTxReturnType = {
+  inputs: Array<any>
+  code: string
+  data: string | undefined
+}
+
+export type MultiSwapParameterType = {
+  steps: SwapStepType[]
+  gasLimit?: BigNumber
+  gasPrice?: BigNumber
+  fetcherData?: any
+  onSubmitted?: (pendingTx: PendingSwapTransactionType) => void
+  submitFetcherV2?: boolean
+  callStatic?: boolean
+}
+
+export type PoolGroupReturnType = {
+  pools: { [key: string]: PoolType }
+  TOKEN_R: string
+}
+
+export type SwapCallDataParameterType = {
+  step: SwapStepType
+  poolGroup: PoolGroupReturnType
+  poolIn: string
+  poolOut: string
+  idIn: BigNumber
+  idOut: BigNumber
+}
+export type SwapCallDataInputType = {
+  mode: number
+  eip: number
+  token: string
+  id: number | BigNumber
+  amountIn: BigNumber | undefined
+  recipient: string
+}
+
+export type SwapCallDataReturnType = {
+  inputs: Array<SwapCallDataInputType>
+  populateTxData: Array<{ [key: string]: any }>
+}
+
 export class Swap {
   account?: string
   chainId: number
@@ -86,12 +129,16 @@ export class Swap {
     }
   }
 
-  async callStaticMultiSwap({ params, value, gasLimit }: any) {
-    const contract = this.getRouterContract(this.signer)
-    return await contract.callStatic.exec(...params, {
-      value: value || bn(0),
-      gasLimit: gasLimit || undefined,
-    })
+  async callStaticMultiSwap({ params, value, gasLimit }: any): Promise<any> {
+    try {
+      const contract = this.getRouterContract(this.signer)
+      return await contract.callStatic.exec(...params, {
+        value: value || bn(0),
+        gasLimit: gasLimit || undefined,
+      })
+    } catch (error) {
+      throw error
+    }
   }
 
   async convertStepToActions({
@@ -109,9 +156,9 @@ export class Swap {
     value: BigNumber
   }> {
     // @ts-ignore
-    const stateCalHelper = this.getStateCalHelperContract()
+    // const stateCalHelper = this.getStateCalHelperContract()
 
-    let outputs: {
+    const outputs: {
       eip: number
       token: string
       id: string | BigNumber
@@ -151,7 +198,7 @@ export class Swap {
       const poolIn = this.getAddressByErc1155Address(step.tokenIn, poolGroup.TOKEN_R)
       const poolOut = this.getAddressByErc1155Address(step.tokenOut, poolGroup.TOKEN_R)
 
-      let idIn = this.getIdByAddress(step.tokenIn, poolGroup.TOKEN_R)
+      const idIn = this.getIdByAddress(step.tokenIn, poolGroup.TOKEN_R)
       const idOut = this.getIdByAddress(step.tokenOut, poolGroup.TOKEN_R)
       if (step.tokenIn === NATIVE_ADDRESS) {
         nativeAmountToWrap = nativeAmountToWrap.add(step.amountIn)
@@ -191,8 +238,8 @@ export class Swap {
     const datas: any[] = await Promise.all(promises)
 
     const actions: any[] = []
-    //@ts-ignore
-    metaDatas.forEach((metaData, key) => {
+
+    metaDatas.forEach((metaData: any, key: any) => {
       actions.push({ ...metaData, data: datas[key].data })
     })
 
@@ -207,141 +254,121 @@ export class Swap {
     return { params: [outputs, actions], value: nativeAmountToWrap }
   }
 
-  getSweepCallData({
-    step,
-    poolGroup,
-    poolIn,
-    poolOut,
-    idIn,
-    idOut,
-  }: {
-    step: any
-    poolGroup: any
-    poolIn: string
-    poolOut: string
-    idIn: BigNumber
-    idOut: BigNumber
-  }) {
-    const stateCalHelper = this.getStateCalHelperContract()
+  getSweepCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut }: SwapCallDataParameterType): SwapCallDataReturnType {
+    try {
+      const stateCalHelper = this.getStateCalHelperContract()
 
-    const swapCallData = this.getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut })
+      const swapCallData = this.getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut })
 
-    let inputs = [
-      {
-        mode: TRANSFER,
-        eip: 1155,
-        token: this.derivableAdr.token,
-        id: packId(idOut + '', poolOut),
-        amountIn: step.currentBalanceOut,
-        recipient: stateCalHelper.address,
-      },
-      ...swapCallData.inputs,
-    ]
-
-    const populateTxData = [
-      ...swapCallData.populateTxData,
-      stateCalHelper.populateTransaction.sweep(packId(idOut + '', poolOut), this.account),
-    ]
-
-    return {
-      inputs,
-      populateTxData,
-    }
-  }
-
-  getSwapCallData({
-    step,
-    poolGroup,
-    poolIn,
-    poolOut,
-    idIn,
-    idOut,
-  }: {
-    step: SwapStepType
-    poolGroup: any
-    poolIn: string
-    poolOut: string
-    idIn: BigNumber
-    idOut: BigNumber
-  }) {
-    let inputs = [
-      {
-        mode: PAYMENT,
-        eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
-        token: isErc1155Address(step.tokenIn) ? this.derivableAdr.token : step.tokenIn,
-        id: isErc1155Address(step.tokenIn) ? packId(idIn.toString(), poolIn) : 0,
-        amountIn: step.amountIn,
-        recipient:
-          isAddress(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R
-            ? this.getUniPool(step.tokenIn, poolGroup.TOKEN_R)
-            : isErc1155Address(step.tokenIn)
-            ? poolIn
-            : poolOut,
-      },
-    ]
-    if (step.tokenIn === NATIVE_ADDRESS) {
-      inputs = [
+      const inputs = [
         {
-          mode: CALL_VALUE,
-          token: ZERO_ADDRESS,
-          eip: 0,
-          id: 0,
-          amountIn: step.amountIn,
-          recipient: ZERO_ADDRESS,
+          mode: TRANSFER,
+          eip: 1155,
+          token: this.derivableAdr.token,
+          id: packId(idOut + '', poolOut),
+          amountIn: step.currentBalanceOut,
+          recipient: stateCalHelper.address,
         },
+        ...swapCallData.inputs,
       ]
-    }
 
-    const populateTxData = []
+      const populateTxData = [
+        ...swapCallData.populateTxData,
+        stateCalHelper.populateTransaction.sweep(packId(idOut + '', poolOut), this.account),
+      ]
 
-    if (isAddress(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R) {
-      populateTxData.push(
-        this.generateSwapParams('swapAndOpen', {
-          side: idOut,
-          deriPool: poolOut,
-          uniPool: this.getUniPool(step.tokenIn, poolGroup.TOKEN_R),
-          token: step.tokenIn,
-          amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
-          payer: this.account,
-          recipient: this.account,
-          INDEX_R: this.getIndexR(poolGroup.TOKEN_R),
-        }),
-      )
-    } else if (isAddress(step.tokenOut) && this.wrapToken(step.tokenOut) !== poolGroup.TOKEN_R) {
-      populateTxData.push(
-        this.generateSwapParams('closeAndSwap', {
-          side: idIn,
-          deriPool: poolIn,
-          uniPool: this.getUniPool(step.tokenOut, poolGroup.TOKEN_R),
-          token: step.tokenOut,
-          amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
-          payer: this.account,
-          recipient: this.account,
-          INDEX_R: this.getIndexR(poolGroup.TOKEN_R),
-        }),
-      )
-    } else {
-      populateTxData.push(
-        this.generateSwapParams('swap', {
-          sideIn: idIn,
-          poolIn: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
-          sideOut: idOut,
-          poolOut: isErc1155Address(step.tokenOut) ? poolOut : poolIn,
-          amountIn: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
-          maturity: 0,
-          payer: this.account,
-          recipient: this.account,
-          INDEX_R: this.getIndexR(poolGroup.TOKEN_R),
-        }),
-      )
-    }
-    return {
-      inputs,
-      populateTxData,
+      return {
+        inputs,
+        populateTxData,
+      }
+    } catch (error) {
+      throw error
     }
   }
 
-  wrapToken(address: string) {
+  getSwapCallData({ step, poolGroup, poolIn, poolOut, idIn, idOut }: SwapCallDataParameterType): SwapCallDataReturnType {
+    try {
+      const inputs =
+        step.tokenIn === NATIVE_ADDRESS
+          ? [
+              {
+                mode: CALL_VALUE,
+                token: ZERO_ADDRESS,
+                eip: 0,
+                id: 0,
+                amountIn: step.amountIn,
+                recipient: ZERO_ADDRESS,
+              },
+            ]
+          : [
+              {
+                mode: PAYMENT,
+                eip: isErc1155Address(step.tokenIn) ? 1155 : 20,
+                token: isErc1155Address(step.tokenIn) ? this.derivableAdr.token : step.tokenIn,
+                id: isErc1155Address(step.tokenIn) ? packId(idIn.toString(), poolIn) : 0,
+                amountIn: step.amountIn,
+                recipient:
+                  isAddress(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R
+                    ? this.getUniPool(step.tokenIn, poolGroup.TOKEN_R)
+                    : isErc1155Address(step.tokenIn)
+                    ? poolIn
+                    : poolOut,
+              },
+            ]
+
+      const populateTxData = []
+
+      if (isAddress(step.tokenIn) && this.wrapToken(step.tokenIn) !== poolGroup.TOKEN_R) {
+        populateTxData.push(
+          this.generateSwapParams('swapAndOpen', {
+            side: idOut,
+            deriPool: poolOut,
+            uniPool: this.getUniPool(step.tokenIn, poolGroup.TOKEN_R),
+            token: step.tokenIn,
+            amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
+            payer: this.account,
+            recipient: this.account,
+            INDEX_R: this.getIndexR(poolGroup.TOKEN_R),
+          }),
+        )
+      } else if (isAddress(step.tokenOut) && this.wrapToken(step.tokenOut) !== poolGroup.TOKEN_R) {
+        populateTxData.push(
+          this.generateSwapParams('closeAndSwap', {
+            side: idIn,
+            deriPool: poolIn,
+            uniPool: this.getUniPool(step.tokenOut, poolGroup.TOKEN_R),
+            token: step.tokenOut,
+            amount: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
+            payer: this.account,
+            recipient: this.account,
+            INDEX_R: this.getIndexR(poolGroup.TOKEN_R),
+          }),
+        )
+      } else {
+        populateTxData.push(
+          this.generateSwapParams('swap', {
+            sideIn: idIn,
+            poolIn: isErc1155Address(step.tokenIn) ? poolIn : poolOut,
+            sideOut: idOut,
+            poolOut: isErc1155Address(step.tokenOut) ? poolOut : poolIn,
+            amountIn: step.payloadAmountIn ? step.payloadAmountIn : step.amountIn,
+            maturity: 0,
+            payer: this.account,
+            recipient: this.account,
+            INDEX_R: this.getIndexR(poolGroup.TOKEN_R),
+          }),
+        )
+      }
+      return {
+        inputs,
+        populateTxData,
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  wrapToken(address: string): string {
     if (address === NATIVE_ADDRESS) {
       return this.profile.configs.wrappedTokenAddress
     }
@@ -349,20 +376,24 @@ export class Swap {
     return address
   }
 
-  generateSwapParams(method: string, params: any) {
-    const stateCalHelper = this.getStateCalHelperContract()
-    const functionInterface = Object.values(stateCalHelper.interface.functions).find((f: any) => f.name === method)?.inputs[0].components
-    const formatedParams: {[key: string]: any} = {}
-    for (let name in params) {
-      if (functionInterface?.find((c) => c.name === name)) {
-        formatedParams[name] = params[name]
+  generateSwapParams(method: string, params: any): { [key: string]: any } {
+    try {
+      const stateCalHelper = this.getStateCalHelperContract()
+      const functionInterface = Object.values(stateCalHelper.interface.functions).find((f: any) => f.name === method)?.inputs[0].components
+      const formattedParams: { [key: string]: any } = {}
+      for (const name in params) {
+        if (functionInterface?.find((c) => c.name === name)) {
+          formattedParams[name] = params[name]
+        }
       }
-    }
 
-    return stateCalHelper.populateTransaction[method](formatedParams)
+      return stateCalHelper.populateTransaction[method](formattedParams)
+    } catch (error) {
+      throw error
+    }
   }
 
-  getIdByAddress(address: string, TOKEN_R: string) {
+  getIdByAddress(address: string, TOKEN_R: string): BigNumber {
     try {
       if (isErc1155Address(address)) {
         return bn(address.split('-')[1])
@@ -377,30 +408,34 @@ export class Swap {
     }
   }
 
-  getPoolPoolGroup(addressIn: string, addressOut: string) {
-    const poolIn = isErc1155Address(addressIn) ? this.RESOURCE.pools[addressIn.split('-')[0]] : null
+  getPoolPoolGroup(addressIn: string, addressOut: string): PoolGroupReturnType {
+    try {
+      const poolIn = isErc1155Address(addressIn) ? this.RESOURCE.pools[addressIn.split('-')[0]] : null
 
-    const poolOut = isErc1155Address(addressOut) ? this.RESOURCE.pools[addressOut.split('-')[0]] : null
+      const poolOut = isErc1155Address(addressOut) ? this.RESOURCE.pools[addressOut.split('-')[0]] : null
 
-    if (!poolIn && !poolOut) {
-      throw 'Cannot detect pool to swap'
+      if (!poolIn && !poolOut) {
+        throw 'Cannot detect pool to swap'
+      }
+
+      if (poolIn && poolOut && poolIn.TOKEN_R !== poolOut.TOKEN_R) {
+        throw 'Cannot swap throw multi pool (need to same Token R)'
+      }
+
+      const result: { pools: { [key: string]: PoolType }; TOKEN_R: string } = { pools: {}, TOKEN_R: '' }
+      if (poolIn) {
+        result.pools[poolIn.poolAddress] = poolIn
+        result.TOKEN_R = poolIn.TOKEN_R
+      }
+      if (poolOut) {
+        result.pools[poolOut.poolAddress] = poolOut
+        result.TOKEN_R = poolOut.TOKEN_R
+      }
+
+      return result
+    } catch (error) {
+      throw error
     }
-
-    if (poolIn && poolOut && poolIn.TOKEN_R !== poolOut.TOKEN_R) {
-      throw 'Cannot swap throw multi pool (need to same Token R)'
-    }
-
-    const result: {pools: {[key: string]: PoolType}, TOKEN_R: string} = { pools: {}, TOKEN_R: '' }
-    if (poolIn) {
-      result.pools[poolIn.poolAddress] = poolIn
-      result.TOKEN_R = poolIn.TOKEN_R
-    }
-    if (poolOut) {
-      result.pools[poolOut.poolAddress] = poolOut
-      result.TOKEN_R = poolOut.TOKEN_R
-    }
-
-    return result
   }
 
   async multiSwap({
@@ -411,15 +446,7 @@ export class Swap {
     onSubmitted,
     submitFetcherV2 = false,
     callStatic = false,
-  }: {
-    steps: SwapStepType[]
-    fetcherData?: any
-    onSubmitted?: (pendingTx: PendingSwapTransactionType) => void
-    submitFetcherV2?: boolean
-    gasLimit?: BigNumber
-    gasPrice?: BigNumber
-    callStatic?: boolean
-  }): Promise<TransactionReceipt> {
+  }: MultiSwapParameterType): Promise<TransactionReceipt> {
     try {
       const { params, value } = await this.convertStepToActions({
         steps: [...steps],
@@ -454,45 +481,57 @@ export class Swap {
     }
   }
 
-  getAddressByErc1155Address(address: string, TOKEN_R: string) {
-    if (isErc1155Address(address)) {
-      return address.split('-')[0]
-    }
-    if (address === NATIVE_ADDRESS && TOKEN_R === this.profile.configs.wrappedTokenAddress) {
-      return this.profile.configs.wrappedTokenAddress
-    }
+  getAddressByErc1155Address(address: string, TOKEN_R: string): string {
+    try {
+      if (isErc1155Address(address)) {
+        return address.split('-')[0]
+      }
+      if (address === NATIVE_ADDRESS && TOKEN_R === this.profile.configs.wrappedTokenAddress) {
+        return this.profile.configs.wrappedTokenAddress
+      }
 
-    return address
+      return address
+    } catch (error) {
+      throw error
+    }
   }
 
-  getRouterContract(provider: any) {
+  getRouterContract(provider: any): Contract {
     return new ethers.Contract(this.profile.configs.helperContract.utr as string, this.profile.getAbi('UTR'), provider)
   }
 
-  getStateCalHelperContract(provider?: any) {
+  getStateCalHelperContract(provider?: any): Contract {
     return new ethers.Contract(this.derivableAdr.stateCalHelper as string, this.profile.getAbi('Helper'), provider || this.provider)
   }
 
-  getIndexR(tokenR: string) {
-    const { quoteTokenIndex, address } = this.RESOURCE.getSingleRouteToUSD(tokenR) ?? {}
-    if (!address) {
-      return bn(0)
+  getIndexR(tokenR: string): BigNumber {
+    try {
+      const { quoteTokenIndex, address } = this.RESOURCE.getSingleRouteToUSD(tokenR) ?? {}
+      if (!address) {
+        return bn(0)
+      }
+      return bn(ethers.utils.hexZeroPad(bn(quoteTokenIndex).shl(255).add(address).toHexString(), 32))
+    } catch (error) {
+      throw error
     }
-    return bn(ethers.utils.hexZeroPad(bn(quoteTokenIndex).shl(255).add(address).toHexString(), 32))
   }
 
-  getUniPool(tokenIn: string, tokenR: string) {
-    const routeKey = Object.keys(this.profile.routes).find((r) => {
-      return r === tokenR + '-' + tokenIn || r === tokenIn + '-' + tokenR
-    })
-    if (!this.profile.routes[routeKey || ''] || !this.profile.routes[routeKey || ''][0].address) {
-      console.error(`Can't find router, please select other token`)
-      throw `Can't find router, please select other token`
+  getUniPool(tokenIn: string, tokenR: string): string {
+    try {
+      const routeKey = Object.keys(this.profile.routes).find((r) => {
+        return r === `${tokenR}-${tokenIn}` || r === `${tokenIn}-${tokenR}`
+      })
+      if (!this.profile.routes[routeKey || ''] || !this.profile.routes[routeKey || ''][0].address) {
+        console.error(`Can't find router, please select other token`)
+        throw `Can't find router, please select other token`
+      }
+      return this.profile.routes[routeKey || ''][0].address
+    } catch (error) {
+      throw error
     }
-    return this.profile.routes[routeKey || ''][0].address
   }
 
-  async needToSubmitFetcher(pool: PoolType) {
+  async needToSubmitFetcher(pool: PoolType): Promise<boolean> {
     try {
       const fetcherContract = new Contract(pool.FETCHER, this.profile.getAbi('FetcherV2'), this.signer)
       await fetcherContract.callStatic.fetch(pool.ORACLE)
@@ -504,68 +543,80 @@ export class Swap {
     return false
   }
 
-  async fetchPriceTx(pool: PoolType, blockNumber?: number) {
-    if (blockNumber == null) {
-      blockNumber = await this.provider.getBlockNumber()
-    }
-    const getProof = OracleSdkAdapter.getProofFactory(this.providerGetProof)
-    const getBlockByNumber = OracleSdkAdapter.getBlockByNumberFactory(this.overrideProvider)
-    // get the proof from the SDK
-    const proof = await OracleSdk.getProof(
-      getProof,
-      getBlockByNumber,
-      pool.pair,
-      pool.quoteTokenIndex,
-      blockNumber - (pool.window.toNumber() >> 1),
-    )
-    // Connect to the network
-    const contractWithSigner = new Contract(pool.FETCHER, this.profile.getAbi('FetcherV2'), this.signer)
-    const data = await contractWithSigner.populateTransaction.submit(pool.ORACLE, proof)
-    return {
-      inputs: [],
-      code: pool.FETCHER,
-      data: data.data,
-    }
-  }
-
-  async fetchPriceMockTx(pool: PoolType, blockNumber?: number) {
-    if (blockNumber == null) {
-      blockNumber = await this.provider.getBlockNumber()
-    }
-    const targetBlock = blockNumber - (pool.window.toNumber() >> 1)
-    const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider)
-    const accumulator = await OracleSdk.getAccumulatorPrice(getStorageAt, pool.pair, pool.quoteTokenIndex, targetBlock)
-
-    // Connect to the network
-    const contractWithSigner = new Contract(pool.FETCHER, this.profile.getAbi('FetcherV2Mock').abi, this.signer)
-    const data = await contractWithSigner.populateTransaction.submitPrice(
-      pool.ORACLE,
-      bn(accumulator.price),
-      targetBlock,
-      accumulator.timestamp,
-    )
-    return {
-      inputs: [],
-      code: pool.FETCHER,
-      data: data.data,
+  async fetchPriceTx(pool: PoolType, blockNumber?: number): Promise<PriceTxReturnType> {
+    try {
+      if (blockNumber == null) {
+        blockNumber = await this.provider.getBlockNumber()
+      }
+      const getProof = OracleSdkAdapter.getProofFactory(this.providerGetProof)
+      const getBlockByNumber = OracleSdkAdapter.getBlockByNumberFactory(this.overrideProvider)
+      // get the proof from the SDK
+      const proof = await OracleSdk.getProof(
+        getProof,
+        getBlockByNumber,
+        pool.pair,
+        pool.quoteTokenIndex,
+        blockNumber - (pool.window.toNumber() >> 1),
+      )
+      // Connect to the network
+      const contractWithSigner = new Contract(pool.FETCHER, this.profile.getAbi('FetcherV2'), this.signer)
+      const data = await contractWithSigner.populateTransaction.submit(pool.ORACLE, proof)
+      return {
+        inputs: [],
+        code: pool.FETCHER,
+        data: data.data,
+      }
+    } catch (error) {
+      throw error
     }
   }
 
-  getOverrideProvider() {
-    const router = this.profile.configs.helperContract.utr as string
-    const fetcherV2 = this.profile.configs.derivable.uniswapV2Fetcher as string
-    this.overrideProvider.setStateOverride({
-      [router]: {
-        code: this.profile.getAbi('UTROverride').deployedBytecode,
-      },
-      ...(fetcherV2
-        ? {
-            [fetcherV2]: {
-              code: this.profile.getAbi('FetcherV2Mock').deployedBytecode,
-            },
-          }
-        : {}),
-    })
-    return this.overrideProvider
+  async fetchPriceMockTx(pool: PoolType, blockNumber?: number): Promise<PriceTxReturnType> {
+    try {
+      if (blockNumber == null) {
+        blockNumber = await this.provider.getBlockNumber()
+      }
+      const targetBlock = blockNumber - (pool.window.toNumber() >> 1)
+      const getStorageAt = OracleSdkAdapter.getStorageAtFactory(this.overrideProvider)
+      const accumulator = await OracleSdk.getAccumulatorPrice(getStorageAt, pool.pair, pool.quoteTokenIndex, targetBlock)
+
+      // Connect to the network
+      const contractWithSigner = new Contract(pool.FETCHER, this.profile.getAbi('FetcherV2Mock').abi, this.signer)
+      const data = await contractWithSigner.populateTransaction.submitPrice(
+        pool.ORACLE,
+        bn(accumulator.price),
+        targetBlock,
+        accumulator.timestamp,
+      )
+      return {
+        inputs: [],
+        code: pool.FETCHER,
+        data: data.data,
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  getOverrideProvider(): JsonRpcProvider {
+    try {
+      const router = this.profile.configs.helperContract.utr as string
+      const fetcherV2 = this.profile.configs.derivable.uniswapV2Fetcher as string
+      this.overrideProvider.setStateOverride({
+        [router]: {
+          code: this.profile.getAbi('UTROverride').deployedBytecode,
+        },
+        ...(fetcherV2
+          ? {
+              [fetcherV2]: {
+                code: this.profile.getAbi('FetcherV2Mock').deployedBytecode,
+              },
+            }
+          : {}),
+      })
+      return this.overrideProvider
+    } catch (error) {
+      throw error
+    }
   }
 }

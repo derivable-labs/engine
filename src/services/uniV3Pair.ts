@@ -29,17 +29,32 @@ export type IPairsInfo = {
   [pair: string]: IPairInfo
 }
 
+export type GetPairInfoParameterType = {
+  flag?: string
+  pairAddress: string
+}
+
+export type GetPairsInfoParameterType = {
+  flag?: string
+  pairAddresses: string[]
+}
+
+export type GetPairAddressParameterType = {
+  baseToken: string
+  quoteTokens: string[]
+}
+
 export class UniV3Pair {
   chainId: number
   scanApi?: string
-  provider: ethers.providers.Provider
+  provider: JsonRpcProvider
   rpcUrl: string
   pairsV3Info: string
   addresses: Partial<IDerivableContractAddress>
   profile: Profile
 
   constructor(config: IEngineConfig, profile: Profile) {
-    const pairsV3Info = '0x' + PairV3DetailAbi.deployedBytecode.slice(-40)
+    const pairsV3Info = `0x${PairV3DetailAbi.deployedBytecode.slice(-40)}`
     this.chainId = config.chainId
     this.scanApi = profile.configs.scanApi
     this.provider = new JsonRpcProvider(profile.configs.rpc)
@@ -48,9 +63,13 @@ export class UniV3Pair {
     this.profile = profile
   }
 
-  async getLargestPoolAddress({ baseToken, quoteTokens }: { baseToken: string; quoteTokens: string[] }): Promise<string> {
-    const pools = await this.getPairAddress({ baseToken, quoteTokens })
-    return await this._getLargestPoolByPools(baseToken, pools)
+  async getLargestPoolAddress({ baseToken, quoteTokens }: GetPairAddressParameterType): Promise<string> {
+    try {
+      const pools = await this.getPairAddress({ baseToken, quoteTokens })
+      return await this._getLargestPoolByPools(baseToken, pools)
+    } catch (error) {
+      throw error
+    }
   }
 
   /**
@@ -62,86 +81,108 @@ export class UniV3Pair {
    * }
    */
   async _getLargestPoolByPools(baseToken: string, pools: { [key: string]: string }): Promise<string> {
-    const multicall = this._getMulticall()
-    const res = await multicall.call(this._generatePoolBalanceContext(baseToken, pools))
-    return this._parsePoolBalanceReturnContext(res.results.poolBalances.callsReturnContext)
-  }
-
-  _parsePoolBalanceReturnContext(returnContexts: CallReturnContext[]) {
-    let poolResults = ZERO_ADDRESS
-    let max = bn(0)
-    returnContexts.forEach((returnContext) => {
-      if (bn(returnContext.returnValues[0].hex).gt(max)) {
-        poolResults = returnContext.reference
-        max = bn(returnContext.returnValues[0].hex)
-      }
-    })
-    return poolResults
-  }
-
-  _generatePoolBalanceContext(baseToken: string, pools: { [key: string]: string }) {
-    const calls: any = []
-    for (let i in pools) {
-      calls.push({
-        reference: pools[i],
-        methodName: 'balanceOf',
-        methodParameters: [pools[i]],
-      })
+    try {
+      const multicall = this._getMulticall()
+      const res = await multicall.call(this._generatePoolBalanceContext(baseToken, pools))
+      return this._parsePoolBalanceReturnContext(res.results.poolBalances.callsReturnContext)
+    } catch (error) {
+      throw error
     }
-    return [
-      {
-        reference: 'poolBalances',
-        contractAddress: baseToken,
-        abi: ERC20Abi,
-        calls,
-      },
-    ]
   }
 
-  async getPairAddress({ baseToken, quoteTokens }: { baseToken: string; quoteTokens: string[] }): Promise<{ [key: string]: string }> {
-    const multicall = this._getMulticall()
-
-    //@ts-ignore
-    const context: ContractCallContext[] = this._generatePoolAddressContext(baseToken, quoteTokens)
-    const res = await multicall.call(context)
-    return this._parsePoolAddressReturnContext(res.results.poolAddresses['callsReturnContext'])
+  _parsePoolBalanceReturnContext(returnContexts: CallReturnContext[]): string {
+    try {
+      let poolResults = ZERO_ADDRESS
+      let max = bn(0)
+      returnContexts.forEach((returnContext) => {
+        if (bn(returnContext.returnValues[0].hex).gt(max)) {
+          poolResults = returnContext.reference
+          max = bn(returnContext.returnValues[0].hex)
+        }
+      })
+      return poolResults
+    } catch (error) {
+      throw error
+    }
   }
 
-  _parsePoolAddressReturnContext(returnContexts: CallReturnContext[]) {
-    const results: {[key: string]: any} = {}
-    returnContexts.forEach((returnContext) => {
-      if (returnContext.returnValues[0] !== ZERO_ADDRESS) {
-        results[returnContext.reference] = returnContext.returnValues[0]
-      }
-    })
-    return results
-  }
-
-  _generatePoolAddressContext(baseToken: string, quoteTokens: string[]) {
-    const calls: any = []
-    POOL_FEES.forEach((fee) => {
-      quoteTokens.forEach((quoteToken) => {
+  _generatePoolBalanceContext(baseToken: string, pools: { [key: string]: string }): Array<ContractCallContext> {
+    try {
+      const calls: any = []
+      for (const i in pools) {
         calls.push({
-          reference: `${baseToken}-${quoteToken}-${fee}`,
-          methodName: 'getPool',
-          methodParameters: [baseToken, quoteToken, fee],
+          reference: pools[i],
+          methodName: 'balanceOf',
+          methodParameters: [pools[i]],
+        })
+      }
+      return [
+        {
+          reference: 'poolBalances',
+          contractAddress: baseToken,
+          abi: ERC20Abi,
+          calls,
+        },
+      ]
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async getPairAddress({ baseToken, quoteTokens }: GetPairAddressParameterType): Promise<{ [key: string]: string }> {
+    try {
+      const multicall = this._getMulticall()
+
+      const context: ContractCallContext[] = this._generatePoolAddressContext(baseToken, quoteTokens)
+      const res = await multicall.call(context)
+      return this._parsePoolAddressReturnContext(res.results.poolAddresses['callsReturnContext'])
+    } catch (error) {
+      throw error
+    }
+  }
+
+  _parsePoolAddressReturnContext(returnContexts: CallReturnContext[]): { [key: string]: string } {
+    try {
+      const results: { [key: string]: any } = {}
+      returnContexts.forEach((returnContext) => {
+        if (returnContext.returnValues[0] !== ZERO_ADDRESS) {
+          results[returnContext.reference] = returnContext.returnValues[0]
+        }
+      })
+      return results
+    } catch (error) {
+      throw error
+    }
+  }
+
+  _generatePoolAddressContext(baseToken: string, quoteTokens: string[]): Array<ContractCallContext> {
+    try {
+      const calls: any = []
+      POOL_FEES.forEach((fee) => {
+        quoteTokens.forEach((quoteToken) => {
+          calls.push({
+            reference: `${baseToken}-${quoteToken}-${fee}`,
+            methodName: 'getPool',
+            methodParameters: [baseToken, quoteToken, fee],
+          })
         })
       })
-    })
-    return [
-      {
-        reference: 'poolAddresses',
-        contractAddress: this.profile.configs.uniswap.v3Factory,
-        abi: UniswapV3FactoryAbi,
-        calls,
-      },
-    ]
+      return [
+        {
+          reference: 'poolAddresses',
+          contractAddress: this.profile.configs.uniswap.v3Factory,
+          abi: UniswapV3FactoryAbi,
+          calls,
+        },
+      ]
+    } catch (error) {
+      throw error
+    }
   }
 
-  async getPairInfo({ pairAddress, flag = FLAG }: { pairAddress: string; flag?: string }) {
+  async getPairInfo({ pairAddress, flag = FLAG }: GetPairInfoParameterType): Promise<IPairInfo> {
     try {
       const provider = new JsonRpcProvider(this.rpcUrl)
-      // @ts-ignore
       provider.setStateOverride({
         [this.pairsV3Info]: {
           code: PairV3DetailAbi.deployedBytecode,
@@ -157,10 +198,9 @@ export class UniV3Pair {
     }
   }
 
-  async getPairsInfo({ pairAddresses, flag = FLAG }: { flag?: string; pairAddresses: string[] }): Promise<IPairsInfo> {
+  async getPairsInfo({ pairAddresses, flag = FLAG }: GetPairsInfoParameterType): Promise<IPairsInfo> {
     try {
       const provider = new JsonRpcProvider(this.rpcUrl)
-      // @ts-ignore
       provider.setStateOverride({
         [this.pairsV3Info]: {
           code: PairV3DetailAbi.deployedBytecode,
@@ -170,7 +210,7 @@ export class UniV3Pair {
       const pairDetailContract = new ethers.Contract(this.pairsV3Info, PairV3DetailAbi.abi, provider)
 
       const { details } = await pairDetailContract.functions.query(pairAddresses, flag)
-      const result: {[key: string]: IPairInfo} = {}
+      const result: { [key: string]: IPairInfo } = {}
       for (let i = 0; i < pairAddresses.length; i++) {
         result[pairAddresses[i]] = {
           token0: {
@@ -195,11 +235,15 @@ export class UniV3Pair {
     }
   }
 
-  _getMulticall() {
-    return new Multicall({
-      multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
-      ethersProvider: this.provider,
-      tryAggregate: true,
-    })
+  _getMulticall(): Multicall {
+    try {
+      return new Multicall({
+        multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
+        ethersProvider: this.provider,
+        tryAggregate: true,
+      })
+    } catch (error) {
+      throw error
+    }
   }
 }
