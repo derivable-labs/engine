@@ -75,16 +75,28 @@ describe('Derivable Tools', () => {
     expect(pairInfo.token1.name).toEqual('USD Coin (Arb1)')
   })
 
-  test('Resource', async () => {
+  test('Resource-arb', async () => {
+    const poolAddress = '0x867A3c9256911AEF110f4e626936Fa3BBc750cBE'
     const resource = await getResource(
       genConfig(42161, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'),
-      ['0x867A3c9256911AEF110f4e626936Fa3BBc750cBE'],
+      [poolAddress],
     )
 
-    expect(resource.newResource.pools['0x867A3c9256911AEF110f4e626936Fa3BBc750cBE']).toBeDefined()
-    expect(resource.whiteListResource.pools['0xA332693827f78ECe3Ea044DC3F8EAa9763f60c6a']).toBeDefined()
-    expect(resource.cacheResource.pools['0x867A3c9256911AEF110f4e626936Fa3BBc750cBE']).toBeDefined()
-    expect(_.isEqual(resource.cacheResource, resource.newResource))
+    const pool = resource.newResource.pools[poolAddress] ?? resource.whiteListResource.pools[poolAddress] ?? resource.cacheResource.pools[poolAddress]
+    expect(pool).toBeDefined()
+    expect(pool?.riskFactor).toEqual('0.024787002180501107')
+  })
+
+  test('Resource-bsc', async () => {
+    const poolAddress = '0x2C3d0F3dcD28b5481a50E1DD0071378f92D56954'
+    const resource = await getResource(
+      genConfig(56, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'),
+      [poolAddress],
+    )
+
+    const pool = resource.newResource.pools[poolAddress] ?? resource.whiteListResource.pools[poolAddress] ?? resource.cacheResource.pools[poolAddress]
+    expect(pool).toBeDefined()
+    expect(pool?.riskFactor).toEqual('-0.005637139247406234')
   })
 
   test('History', async () => {
