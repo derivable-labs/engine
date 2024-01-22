@@ -15,7 +15,7 @@ import { Resource } from './resource'
 type IFetchTokenPriceParam = {
   tokenBase: string
   tokenQuote: string
-  routes: { uniPool: string; version: number }[]
+  routes: Array<{ uniPool: string; version: number }>
 }
 
 export type GetTokenPriceReturnType = {
@@ -111,7 +111,7 @@ export class Price {
     }
   }
 
-  _genFetchTokenParams(): IFetchTokenPriceParam[] {
+  _genFetchTokenParams(): Array<IFetchTokenPriceParam> {
     try {
       return _.uniqBy(
         Object.keys(this.profile.routes)
@@ -140,7 +140,7 @@ export class Price {
     }
   }
 
-  async getTokenPrices(tokens: string[]): Promise<GetTokenPriceReturnType> {
+  async getTokenPrices(tokens: Array<string>): Promise<GetTokenPriceReturnType> {
     try {
       const provider = new JsonRpcProvider(this.rpcUrl)
       provider.setStateOverride({

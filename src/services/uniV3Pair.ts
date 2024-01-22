@@ -36,12 +36,12 @@ export type GetPairInfoParameterType = {
 
 export type GetPairsInfoParameterType = {
   flag?: string
-  pairAddresses: string[]
+  pairAddresses: Array<string>
 }
 
 export type GetPairAddressParameterType = {
   baseToken: string
-  quoteTokens: string[]
+  quoteTokens: Array<string>
 }
 
 export class UniV3Pair {
@@ -90,7 +90,7 @@ export class UniV3Pair {
     }
   }
 
-  _parsePoolBalanceReturnContext(returnContexts: CallReturnContext[]): string {
+  _parsePoolBalanceReturnContext(returnContexts: Array<CallReturnContext>): string {
     try {
       let poolResults = ZERO_ADDRESS
       let max = bn(0)
@@ -133,7 +133,7 @@ export class UniV3Pair {
     try {
       const multicall = this._getMulticall()
 
-      const context: ContractCallContext[] = this._generatePoolAddressContext(baseToken, quoteTokens)
+      const context: Array<ContractCallContext> = this._generatePoolAddressContext(baseToken, quoteTokens)
       const res = await multicall.call(context)
       return this._parsePoolAddressReturnContext(res.results.poolAddresses['callsReturnContext'])
     } catch (error) {
@@ -141,7 +141,7 @@ export class UniV3Pair {
     }
   }
 
-  _parsePoolAddressReturnContext(returnContexts: CallReturnContext[]): { [key: string]: string } {
+  _parsePoolAddressReturnContext(returnContexts: Array<CallReturnContext>): { [key: string]: string } {
     try {
       const results: { [key: string]: any } = {}
       returnContexts.forEach((returnContext) => {
@@ -155,7 +155,7 @@ export class UniV3Pair {
     }
   }
 
-  _generatePoolAddressContext(baseToken: string, quoteTokens: string[]): Array<ContractCallContext> {
+  _generatePoolAddressContext(baseToken: string, quoteTokens: Array<string>): Array<ContractCallContext> {
     try {
       const calls: any = []
       POOL_FEES.forEach((fee) => {

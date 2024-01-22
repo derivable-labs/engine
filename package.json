@@ -17,8 +17,8 @@
     "example:power": "npx ts-node --files ./example/power.ts",
     "example:getPairAddress": "npx ts-node --files ./example/getPairAddress.ts",
     "pretty": "prettier --write \"./src/**/*.ts\"",
-    "record": "RECORD=1 jest --detectOpenHandles",
-    "test": "jest --detectOpenHandles"
+    "record": "RECORD=1 jest",
+    "test": "jest"
   },
   "author": "Derivable Labs",
   "license": "MIT",

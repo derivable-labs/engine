@@ -21,7 +21,7 @@ export type PriceTxReturnType = {
 }
 
 export type MultiSwapParameterType = {
-  steps: SwapStepType[]
+  steps: Array<SwapStepType>
   gasLimit?: BigNumber
   gasPrice?: BigNumber
   fetcherData?: any
@@ -69,7 +69,7 @@ export class Swap {
   config: IEngineConfig
   profile: Profile
   derivableAdr: IDerivableContractAddress
-  pendingTxs: PendingSwapTransactionType[]
+  pendingTxs: Array<PendingSwapTransactionType>
 
   constructor(config: IEngineConfig & { RESOURCE: Resource }, profile: Profile) {
     this.config = config
@@ -90,14 +90,14 @@ export class Swap {
     fetcherV2 = false,
     fetcherData,
   }: {
-    steps: SwapStepType[]
+    steps: Array<SwapStepType>
     fetcherV2?: boolean
     fetcherData?: any
   }): Promise<any> {
     if (!this.signer) return [[bn(0)], bn(0)]
     try {
       const { helperContract, gasLimitDefault, gasForProof } = this.profile.configs
-      const stepsToSwap: SwapStepType[] = [...steps].map((step) => {
+      const stepsToSwap: Array<SwapStepType> = [...steps].map((step) => {
         return { ...step, amountOutMin: 0 }
       })
       const { params, value } = await this.convertStepToActions({
@@ -147,7 +147,7 @@ export class Swap {
     isCalculate = false,
     fetcherData,
   }: {
-    steps: SwapStepType[]
+    steps: Array<SwapStepType>
     submitFetcherV2: boolean
     isCalculate?: boolean
     fetcherData?: any
@@ -235,9 +235,9 @@ export class Swap {
         }
       }
     })
-    const datas: any[] = await Promise.all(promises)
+    const datas: Array<any> = await Promise.all(promises)
 
-    const actions: any[] = []
+    const actions: Array<any> = []
 
     metaDatas.forEach((metaData: any, key: any) => {
       actions.push({ ...metaData, data: datas[key].data })

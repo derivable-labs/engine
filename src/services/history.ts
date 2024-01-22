@@ -11,14 +11,14 @@ import { Result } from 'ethers/lib/utils'
 const POS_IDS = [POOL_IDS.A, POOL_IDS.B, POOL_IDS.C]
 
 export type FormatSwapHistoryParameterType = {
-  transferLogs: LogType[]
-  swapLogs: LogType[]
-  tokens: TokenType[]
+  transferLogs: Array<LogType>
+  swapLogs: Array<LogType>
+  tokens: Array<TokenType>
 }
 
 export type PositionGenerateParameterType = {
-  tokens: TokenType[]
-  logs: LogType[]
+  tokens: Array<TokenType>
+  logs: Array<LogType>
 }
 export class History {
   account?: string
@@ -53,7 +53,7 @@ export class History {
   }
 
   // TODO: refactor position type
-  generatePositionBySwapLog(positions: any, tokens: TokenType[], log: LogType): any {
+  generatePositionBySwapLog(positions: any, tokens: Array<TokenType>, log: LogType): any {
     try {
       const {
         derivable: { playToken },
@@ -271,7 +271,7 @@ export class History {
     }
   }
 
-  extractPriceR(tokenR: TokenType, tokens: TokenType[], priceR: any, log: LogType): string | undefined {
+  extractPriceR(tokenR: TokenType, tokens: Array<TokenType>, priceR: any, log: LogType): string | undefined {
     try {
       const { address, stablecoin } = this.RESOURCE.getSingleRouteToUSD(tokenR.address) ?? {}
       if (!address) {
@@ -327,7 +327,7 @@ export class History {
     }
   }
 
-  decodeTransferLog(data: string, topics: string[]): Result {
+  decodeTransferLog(data: string, topics: Array<string>): Result {
     try {
       const abiInterface = new ethers.utils.Interface(Erc20)
       return abiInterface.decodeEventLog('Transfer', data, topics)
