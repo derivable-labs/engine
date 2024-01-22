@@ -27,16 +27,26 @@ describe('Derivable Tools', () => {
     interceptor.setContext(expect.getState().currentTestName)
   })
 
-  test('CalcAmountOuts', async () => {
+  test('AmountOut-arb', async () => {
     const [ res, gasUsed ] = await calcAmountOuts(
       genConfig(42161, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'),
       ['0xBb8b02f3a4C3598e6830FC6740F57af3a03e2c96'],
       0.1,
     )
-    expect(gasUsed.toNumber()).toBeGreaterThan(0)
-    expect(gasUsed.toNumber()).toBeLessThan(2000000)
     const amountOut = res[res.length-1].amountOut
-    expect(amountOut.toNumber()).toBeGreaterThan(44105)
+    expect(gasUsed.toNumber()).toBeCloseTo(3900000, -7)
+    expect(amountOut.toNumber()).toBeCloseTo(41750, -3)
+  })
+
+  test('AmountOut-bsc', async () => {
+    const [ res, gasUsed ] = await calcAmountOuts(
+      genConfig(56, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'),
+      ['0x2C3d0F3dcD28b5481a50E1DD0071378f92D56954'],
+      0.1,
+    )
+    const amountOut = res[res.length-1].amountOut
+    expect(gasUsed.toNumber()).toEqual(298063)
+    expect(amountOut.toNumber()).toEqual(99973)
   })
 
   test('BnA', async () => {
