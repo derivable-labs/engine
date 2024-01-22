@@ -549,7 +549,7 @@ export class Resource {
     }
   }
 
-  async searchIndex(keyword?: string) {
+  async searchIndex(keyword: string) {
     const etherscanConfig =
       typeof this.scanApi === 'string'
         ? {
@@ -563,21 +563,27 @@ export class Resource {
         : this.scanApi
 
     const provider = new AssistedJsonRpcProvider(this.providerToGetLog, etherscanConfig)
-    const lastHeadBlockCached = this.profile.configs.derivable.startBlock
-    const keyWordTopic = ethers.utils.formatBytes32String(keyword || '')
+    const fromBlock = this.profile.configs.derivable.startBlock
 
-    const filterTopics = [
-      [null, null, null, null],
-      [null, keyWordTopic, null, null],
-      [null, null, keyWordTopic, null],
-      [null, null, null, keyWordTopic],
-    ]
+    let topics
+    if (keyword.length == 42 && keyword.startsWith('0x')) {
+      const topic = ethers.utils.hexZeroPad(keyword, 32)
+      topics = [topic]
+    } else {
+      const topic = ethers.utils.formatBytes32String(keyword?.toUpperCase() ?? '')
+      topics = [
+        [null, null, null, null],
+        [null, topic, null, null],
+        [null, null, topic, null],
+        [null, null, null, topic],
+      ]
+    }
 
     const poolGroups = await provider
       .getLogs({
-        fromBlock: lastHeadBlockCached,
+        fromBlock,
         toBlock: MAX_BLOCK,
-        topics: filterTopics,
+        topics,
         address: this.profile.configs.derivable.poolDeployer,
       })
       .then((logs: LogType[]) => {
