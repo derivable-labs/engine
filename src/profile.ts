@@ -60,7 +60,9 @@ export class Profile {
 
   async loadConfig() {
     const [networkConfig, uniV3Pools, whitelistPools] = await Promise.all([
-      fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/network.json').then((r) => r.json()),
+      fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/network.json')
+        .then((r) => r.json())
+        .catch(() => []),
       fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/routes.json')
         .then((r) => r.json())
         .catch(() => []),
