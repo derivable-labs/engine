@@ -11,6 +11,8 @@ import { JsonRpcProvider } from '@ethersproject/providers'
 import { Profile } from '../profile'
 
 export type BnAReturnType = {
+  chainId: number
+  account: string
   balances: BalancesType
   allowances: AllowancesType
   maturity: MaturitiesType
@@ -35,7 +37,6 @@ export type BnAMultiCallRequestType = {
 }
 
 export class BnA {
-  chainId: number
   account?: string
   provider: JsonRpcProvider
   rpcUrl: string
@@ -43,37 +44,36 @@ export class BnA {
   profile: Profile
 
   constructor(config: IEngineConfig, profile: Profile) {
-    this.chainId = config.chainId
-    this.account = config.account
+    this.account = config.account ?? config.signer?._address
     this.provider = new JsonRpcProvider(profile.configs.rpc)
     this.bnAAddress = `0x${BnAAbi.deployedBytecode.slice(-40)}`
     this.profile = profile
   }
 
   async getBalanceAndAllowance(tokens: Array<string>): Promise<BnAReturnType> {
+    if (!this.account) {
+      throw new Error('missing account')
+    }
     try {
-      if (this.account) {
-        this.provider.setStateOverride({
-          [this.bnAAddress]: {
-            code: BnAAbi.deployedBytecode,
-          },
-        })
-        const multicall = new Multicall({
-          multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
-          ethersProvider: this.provider,
-          tryAggregate: true,
-        })
-        const erc20Tokens = getNormalAddress(tokens)
-        const erc1155Tokens = getErc1155Token(tokens)
-        const multiCallRequest = this.getBnAMulticallRequest({
-          erc20Tokens,
-          erc1155Tokens,
-        })
-        const { results } = await multicall.call(multiCallRequest)
+      this.provider.setStateOverride({
+        [this.bnAAddress]: {
+          code: BnAAbi.deployedBytecode,
+        },
+      })
+      const multicall = new Multicall({
+        multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
+        ethersProvider: this.provider,
+        tryAggregate: true,
+      })
+      const erc20Tokens = getNormalAddress(tokens)
+      const erc1155Tokens = getErc1155Token(tokens)
+      const multiCallRequest = this.getBnAMulticallRequest({
+        erc20Tokens,
+        erc1155Tokens,
+      })
+      const { results } = await multicall.call(multiCallRequest)
 
-        return this.parseBnAMultiRes(erc20Tokens, erc1155Tokens, results)
-      }
-      return { balances: {}, allowances: {}, maturity: {} }
+      return this.parseBnAMultiRes(erc20Tokens, erc1155Tokens, results)
     } catch (error) {
       throw error
     }
@@ -142,6 +142,9 @@ export class BnA {
     erc1155Tokens: { [key: string]: Array<string> | Array<BigNumber> },
     data: any,
   ): BnAReturnType {
+    if (!this.account) {
+      throw new Error('missing account')
+    }
     try {
       const maturity: MaturitiesType = {}
       const balances: BalancesType = {}
@@ -175,6 +178,8 @@ export class BnA {
       }
 
       return {
+        chainId: this.profile.chainId,
+        account: this.account,
         balances,
         allowances,
         maturity,
