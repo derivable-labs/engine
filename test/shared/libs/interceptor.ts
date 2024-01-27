@@ -49,25 +49,37 @@ export function Interceptor() {
             console.error('failed to mock response', err, request)
           }
         }
+      } else {
+        if (process.env.TRACE) {
+          console.log('NEW REQUEST', resourcePath)
+        }
       }
     } catch (err) {
       console.error('failed to handle request', err, request)
     }
     if (!process.env.RECORD) {
       console.error('data must be recorded first with `yarn record [-t TestName]`')
-      const requestId = await calcRequestID(request)
-      const resourcePath = this.getResourcePath(requestId)
-      console.error(resourcePath)
       process.exit(1)
     }
   })
 
   this.interceptor.on('response', async ({ response, isMockedResponse, request }) => {
+    const requestId = await calcRequestID(request)
+    const resourcePath = this.getResourcePath(requestId, true)
     if (!this.context) {
+      if (process.env.TRACE) {
+        console.log('NO CONTEXT', resourcePath, request, response)
+      }
       return
     }
     try {
-      if (isMockedResponse || response.status != 200) {
+      if (isMockedResponse) {
+        return
+      }
+      if (response.status != 200) {
+        if (process.env.TRACE) {
+          console.log('!200', response)
+        }
         return
       }
 
@@ -88,9 +100,10 @@ export function Interceptor() {
         }
       }
 
-      const requestId = await calcRequestID(request)
-      const resourcePath = this.getResourcePath(requestId, true)
       fs.writeFileSync(resourcePath, JSON.stringify(resourceData))
+      if (process.env.TRACE) {
+        console.log('NEW RESPONSE', resourcePath, resourceData)
+      }
     } catch (err) {
       console.log(err, request, response)
       return
@@ -99,17 +112,21 @@ export function Interceptor() {
 }
 
 const calcRequestID = async (request: Request): Promise<string> => {
-  if (request.method === 'POST') {
+  let { url, method } = request
+  if (method === 'POST') {
     const body = await request.clone().json()
     delete body.id
-    return objHash({
-      url: request.url,
-      body,
-    }).substr(0, 8)
+    const obj = { url, body }
+    if (process.env.TRACE) {
+      console.log(obj)
+    }
+    return objHash(obj).substr(0, 8)
   }
-  let url = request.url
   if (url.includes('&apikey=')) {
     url = url.replace(/apikey=[^&]*/g, 'apikey=')
+  }
+  if (process.env.TRACE) {
+    console.log(url)
   }
   return objHash(url).substr(0, 8)
 }

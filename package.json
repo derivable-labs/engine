@@ -18,6 +18,7 @@
     "example:getPairAddress": "npx ts-node --files ./example/getPairAddress.ts",
     "pretty": "prettier --write \"./src/**/*.ts\"",
     "record": "RECORD=1 jest",
+    "trace": "TRACE=1 RECORD=1 jest",
     "test": "jest"
   },
   "author": "Derivable Labs",

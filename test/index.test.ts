@@ -74,7 +74,6 @@ describe('Derivable Tools', () => {
       genConfig(42161, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'),
       [],
     )
-    console.log(balances, allowances, maturity)
     expect(balances['0x7df120445BfDd80A3c9fbFd3acC3b22123b58D1e']).toEqual(bn('0x08ffedfb595975900000'))
     expect(allowances['0x867A3c9256911AEF110f4e626936Fa3BBc750cBE-48']).toEqual(bn('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'))
     expect(maturity['0x867A3c9256911AEF110f4e626936Fa3BBc750cBE-16']).toEqual(bn('0x658aa708'))
