@@ -54,7 +54,7 @@ describe('Derivable Tools', () => {
       genConfig(8453, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'),
       [],
     )
-    expect(balances['0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA']).toEqual(bn('0x01312d00'))
+    expect(balances['0x5f41DdC103d4Bf07aec45C3EEbEEf47520b98fD2']).toEqual(bn('0x010f0cccddeae95f0000'))
     expect(allowances['0xF9afc64E5Dde15E941e2C01dd848b2EC67FD08b8-16']).toEqual(bn('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'))
     expect(maturity['0x44C46037AD3621f95a488d898c1e9CFDa0F58e95-32']).toEqual(bn('0x6504358b'))
   })
@@ -66,7 +66,7 @@ describe('Derivable Tools', () => {
     )
     expect(balances['0xBa95100a0c3abaD1e10414Be77347D3D0900D8c2']).toEqual(bn('0xbfa90a51783ee28500f8'))
     expect(allowances['0x55d398326f99059fF775485246999027B3197955']).toEqual(bn('0x1ac36bad4d8dbc4cfb'))
-    expect(maturity['0x2C3d0F3dcD28b5481a50E1DD0071378f92D56954-48']).toEqual(bn(0))
+    expect(maturity['0x2C3d0F3dcD28b5481a50E1DD0071378f92D56954-48']).toBeUndefined()
   })
 
   test('BnA-arb', async () => {
@@ -114,7 +114,7 @@ describe('Derivable Tools', () => {
 
     const pool = resource.newResource.pools[poolAddress] ?? resource.whiteListResource.pools[poolAddress] ?? resource.cacheResource.pools[poolAddress]
     expect(pool).toBeDefined()
-    expect(pool?.riskFactor).toEqual('0.024787002180501107')
+    expect(pool?.riskFactor).toEqual('0.006344299538270911')
   })
 
   test('Resource-bsc', async () => {

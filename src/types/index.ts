@@ -90,6 +90,7 @@ export type PoolType = {
   ORACLE: string
   TOKEN_R: string
   FETCHER: string
+  MATURITY: BigNumber
   pool: string
   logic: string
   k: BigNumber

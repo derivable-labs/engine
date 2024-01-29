@@ -13,6 +13,19 @@ import * as OracleSdk from '../utils/OracleSdk'
 import * as OracleSdkAdapter from '../utils/OracleSdkAdapter'
 import { unpackId } from '../utils/number'
 
+const TOPICS = getTopics()
+
+const TOPICS_20 = [
+  ...TOPICS.Transfer,
+  ...TOPICS.Approval,
+]
+
+const TOPICS_1155 = [
+  ...TOPICS.TransferSingle,
+  ...TOPICS.TransferBatch,
+  ...TOPICS.ApprovalForAll,
+]
+
 export type GetPoolGroupIdParameterType = {
   pair: string
   quoteTokenIndex: 0 | 1
@@ -100,6 +113,7 @@ type ResourceData = {
   tokens: Array<TokenType>
   swapLogs: Array<LogType>
   transferLogs: Array<LogType>
+  bnaLogs: Array<LogType>
   poolGroups: any
 }
 
@@ -116,6 +130,7 @@ export class Resource {
   tokens: Array<TokenType> = []
   swapLogs: Array<LogType> = []
   transferLogs: Array<LogType> = []
+  bnaLogs: Array<LogType> = []
   unit: number = 1000000
   chainId: number
   scanApi?: any
@@ -163,11 +178,9 @@ export class Resource {
 
   getLastBlockCached(account?: string): number | string {
     try {
-      if (!this.storage || !this.storage.getItem || !account) return this.profile.configs.derivable.startBlock
-      return (
-        this.storage.getItem(`${this.chainId}-${LOCALSTORAGE_KEY.ACCOUNT_BLOCK_LOGS}-${account}`) ||
-        this.profile.configs.derivable.startBlock
-      )
+      if (!this.storage || !this.storage.getItem || !account) return 0
+      const lastBlockCached = this.storage.getItem(`${this.chainId}-${LOCALSTORAGE_KEY.ACCOUNT_BLOCK_LOGS}-${account}`)
+      return lastBlockCached ?? 0
     } catch (error) {
       throw error
     }
@@ -185,6 +198,15 @@ export class Resource {
     // TODO: sort the newCacheSwapLogs here?
     this.storage.setItem(blockKey, headBlock.toString())
     this.storage.setItem(key, JSON.stringify(newCacheSwapLogs))
+  }
+
+  getCachedLogs(account: string): Array<LogType> {
+    if (!this.storage || !this.storage.getItem || !this.storage.setItem || !account) {
+      return []
+    }
+    const key = `${this.chainId}-${LOCALSTORAGE_KEY.ACCOUNT_LOGS}-${account}`
+    const data = this.storage.getItem(key) ?? '[]'
+    return JSON.parse(data) as Array<LogType>
   }
 
   async getWhiteListResource(poolAddresses: Array<string>, playMode?: boolean): Promise<LoadInitPoolDataReturnType> {
@@ -211,28 +233,46 @@ export class Resource {
         tokens: [],
         swapLogs: [],
         transferLogs: [],
+        bnaLogs: [],
         poolGroups: {},
       }
-      const topics = getTopics()
 
       if (!this.storage || !this.storage.getItem) return results
+      const logs = this.getCachedLogs(account)
       const accountLogs = this.parseDdlLogs(
-        JSON.parse(this.storage.getItem(`${this.chainId}-${LOCALSTORAGE_KEY.ACCOUNT_LOGS}-${account}`) || '[]').filter(
-          (data: { topics: Array<string> }) => concat(...Object.values(topics)).includes(data.topics[0]),
+        logs.filter(
+          (data: { topics: Array<string> }) => concat(...Object.values(TOPICS)).includes(data.topics[0]),
         ),
       )
 
       results.swapLogs = accountLogs.filter((log: any) => {
-        return log.address && topics.Swap.includes(log.topics[0])
+        return log.address && TOPICS.Swap.includes(log.topics[0])
       })
       results.transferLogs = accountLogs.filter((log: any) => {
-        return log.address && topics.Transfer.includes(log.topics[0])
+        return log.address && TOPICS.Transfer.includes(log.topics[0])
       })
+
+      results.bnaLogs = this.parseDdlLogs(
+        logs.filter((log: LogType) => {
+          const eventSig = log.topics[0]
+          if (TOPICS_20.includes(eventSig)) {
+            return true
+          }
+          if (log.address != this.profile.configs.derivable.token) {
+            return false
+          }
+          if (log.blockNumber < this.profile.configs.derivable.startBlock) {
+            return false
+          }
+          return TOPICS_1155.includes(eventSig)
+        })
+      )
 
       const ddlTokenTransferLogs = accountLogs.filter((log: any) => {
         return (
           log.address === this.profile.configs.derivable.token &&
-          (topics.TransferSingle.includes(log.topics[0]) || topics.TransferBatch.includes(log.topics[0]))
+          log.blockNumber >= this.profile.configs.derivable.startBlock &&
+          (TOPICS.TransferSingle.includes(log.topics[0]) || TOPICS.TransferBatch.includes(log.topics[0]))
         )
       })
 
@@ -270,8 +310,9 @@ export class Resource {
         results.poolGroups = poolGroups
       }
 
-      this.swapLogs = [...this.swapLogs, ...results.swapLogs]
-      this.transferLogs = [...this.transferLogs, ...results.transferLogs]
+      this.swapLogs = this.swapLogs.concat(results.swapLogs)
+      this.transferLogs = this.transferLogs.concat(results.transferLogs)
+      this.bnaLogs = this.bnaLogs.concat(results.bnaLogs)
 
       return results
     } catch (error) {
@@ -297,7 +338,6 @@ export class Resource {
       const provider = new AssistedJsonRpcProvider(this.providerToGetLog, etherscanConfig)
       const lastHeadBlockCached = this.getLastBlockCached(account)
       const accTopic = account ? `0x${'0'.repeat(24)}${account.slice(2)}` : null
-      const topics = getTopics()
 
       const filterTopics = [
         [null, null, null, null],
@@ -319,17 +359,32 @@ export class Resource {
           }
           const headBlock = logs[logs.length - 1]?.blockNumber
           const swapLogs = logs.filter((log: any) => {
-            return log.address && topics.Swap.includes(log.topics[0])
+            return log.address && TOPICS.Swap.includes(log.topics[0])
           })
           const transferLogs = logs.filter((log: any) => {
-            return log.address && topics.Transfer.includes(log.topics[0])
+            return log.address && TOPICS.Transfer.includes(log.topics[0])
           })
 
           const ddlTokenTransferLogs = logs.filter((log: any) => {
             return (
               log.address === this.profile.configs.derivable.token &&
-              (topics.TransferSingle.includes(log.topics[0]) || topics.TransferBatch.includes(log.topics[0]))
+              log.blockNumber >= this.profile.configs.derivable.startBlock &&
+              (TOPICS.TransferSingle.includes(log.topics[0]) || TOPICS.TransferBatch.includes(log.topics[0]))
             )
+          })
+
+          const bnaLogs = logs.filter((log: LogType) => {
+            const eventSig = log.topics[0]
+            if (TOPICS_20.includes(eventSig)) {
+              return true
+            }
+            if (log.address != this.profile.configs.derivable.token) {
+              return false
+            }
+            if (log.blockNumber < this.profile.configs.derivable.startBlock) {
+              return false
+            }
+            return TOPICS_1155.includes(eventSig)
           })
 
           this.cacheDdlLog({
@@ -338,14 +393,20 @@ export class Resource {
             headBlock,
             account,
           })
-          return [this.parseDdlLogs(swapLogs), this.parseDdlLogs(ddlTokenTransferLogs), this.parseDdlLogs(transferLogs)]
+          return [
+            this.parseDdlLogs(swapLogs),
+            this.parseDdlLogs(ddlTokenTransferLogs),
+            this.parseDdlLogs(transferLogs),
+            this.parseDdlLogs(bnaLogs),
+          ]
         })
-        .then(async ([swapLogs, ddlTokenTransferLogs, transferLogs]: Array<Array<LogType>>) => {
+        .then(async ([swapLogs, ddlTokenTransferLogs, transferLogs, bnaLogs]: Array<Array<LogType>>) => {
           const result: ResourceData = {
             pools: {},
             tokens: [],
             swapLogs: [],
             transferLogs: [],
+            bnaLogs: [],
             poolGroups: {},
           }
 
@@ -354,6 +415,9 @@ export class Resource {
           }
           if (transferLogs && transferLogs.length > 0) {
             result.transferLogs = transferLogs
+          }
+          if (bnaLogs?.length) {
+            result.bnaLogs = bnaLogs
           }
           const poolAddresses = this.poolHasOpeningPosition(ddlTokenTransferLogs)
 
@@ -372,8 +436,9 @@ export class Resource {
           // this.poolGroups = {...this.poolGroups, ...result.poolGroups}
           // this.pools = {...this.pools, ...result.pools}
           // this.tokens = [...this.tokens, ...result.tokens]
-          this.swapLogs = [...this.swapLogs, ...result.swapLogs]
-          this.transferLogs = [...this.transferLogs, ...result.transferLogs]
+          this.swapLogs = this.swapLogs.concat(result.swapLogs)
+          this.transferLogs = this.transferLogs.concat(result.transferLogs)
+          this.bnaLogs = this.bnaLogs.concat(result.bnaLogs)
 
           return result
         })
