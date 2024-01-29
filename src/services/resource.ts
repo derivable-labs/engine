@@ -182,6 +182,7 @@ export class Resource {
     const newCacheSwapLogs = [...logs, ...cachedogs].filter((log, index, self) => {
       return index === self.findIndex((t) => t.logIndex === log.logIndex && t.transactionHash === log.transactionHash)
     })
+    // TODO: sort the newCacheSwapLogs here?
     this.storage.setItem(blockKey, headBlock.toString())
     this.storage.setItem(key, JSON.stringify(newCacheSwapLogs))
   }
