@@ -41,7 +41,7 @@ export class History {
       }
 
       let positions = {}
-      logs = logs.sort((a, b) => a.blockNumber - b.blockNumber)
+      logs = logs.sort((a, b) => a.blockNumber - b.blockNumber || a.logIndex - b.logIndex)
       logs.forEach((log: LogType) => {
         positions = this.generatePositionBySwapLog(positions, tokens, log)
       })
