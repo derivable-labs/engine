@@ -11,6 +11,8 @@ import _ from "lodash";
 import { TestConfiguration } from './shared/configurations/configurations'
 
 import { Interceptor } from './shared/libs/interceptor'
+import { aggregator } from './logic/aggregator'
+import { SwapSide } from '@paraswap/sdk'
 const interceptor = new Interceptor()
 
 const confs = new TestConfiguration()
@@ -149,5 +151,17 @@ describe('Derivable Tools', () => {
       '0xBb8b02f3a4C3598e6830FC6740F57af3a03e2c96',
       0.1,
     )
+  })
+
+  test('Aggregator', async () => {
+    const getRateData = {
+      srcToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+      srcDecimals: 18,
+      amount: '1000000000',
+      destToken: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
+      destDecimals: 18,
+      side: SwapSide.SELL,
+    }
+    await aggregator(genConfig(42161, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'), getRateData)
   })
 })
