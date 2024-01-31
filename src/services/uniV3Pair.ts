@@ -191,8 +191,24 @@ export class UniV3Pair {
 
       const pairDetailContract = new ethers.Contract(this.pairsV3Info, PairV3DetailAbi.abi, provider)
 
-      const res = await pairDetailContract.functions.query([pairAddress], flag)
-      return res.details[0]
+      const { details } = await pairDetailContract.functions.query([pairAddress], flag)
+      const i = 0
+      return {
+        token0: {
+          address: details[i].token0.adr,
+          name: details[i].token0.name,
+          symbol: details[i].token0.symbol,
+          decimals: details[i].token0.decimals.toNumber(),
+          reserve: details[i].token0.reserve,
+        },
+        token1: {
+          address: details[i].token1.adr,
+          name: details[i].token1.name,
+          symbol: details[i].token1.symbol,
+          decimals: details[i].token1.decimals.toNumber(),
+          reserve: details[i].token1.reserve,
+        },
+      }
     } catch (e) {
       throw e
     }
