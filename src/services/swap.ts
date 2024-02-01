@@ -72,15 +72,15 @@ export class Swap {
   pendingTxs: Array<PendingSwapTransactionType>
 
   constructor(config: IEngineConfig & { RESOURCE: Resource }, profile: Profile) {
+    this.RESOURCE = config.RESOURCE
     this.config = config
     this.account = config.account ?? config.signer?._address ?? ZERO_ADDRESS
     this.chainId = config.chainId
     this.scanApi = profile.configs.scanApi
-    this.provider = new ethers.providers.JsonRpcProvider(profile.configs.rpc)
-    this.overrideProvider = new JsonRpcProvider(profile.configs.rpc)
+    this.provider = config.RESOURCE.provider
+    this.overrideProvider = config.RESOURCE.overrideProvider
     this.providerGetProof = new JsonRpcProvider(profile.configs.rpcGetProof || profile.configs.rpc)
     this.signer = config.signer ?? new VoidSigner(this.account, this.provider)
-    this.RESOURCE = config.RESOURCE
     this.profile = profile
     this.derivableAdr = profile.configs.derivable
   }
