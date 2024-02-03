@@ -76,7 +76,7 @@ export class BnA {
           if (from == this.account) {
             balances[token] = (balances[token] ?? bn(0)).sub(value)
           }
-          if (balances[token].isZero()) {
+          if (!balances[token] || balances[token].isZero()) {
             delete balances[token]
           }
         }
