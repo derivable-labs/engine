@@ -36,13 +36,22 @@ describe('Price Service', () => {
     expect(changedIn24h).toBeDefined()
   })
 
-  test('get tokens price on router.json', async () => {
+  test('get tokens price on router.json arb', async () => {
     const chainId = 42161
     const engine = await getEngine(chainId)
     await engine.RESOURCE.getWhiteListResource([])
     const prices = await engine.PRICE.getTokenPriceByRoutes()
 
-    expect(prices['0x82aF49447D8a07e3bd95BD0d56f35241523fBab1']).toBeDefined()
+    expect(prices['0x82aF49447D8a07e3bd95BD0d56f35241523fBab1']).toEqual('2296.788233358644033792718165')
+  })
+
+  test('get tokens price on router.json bsc', async () => {
+    const chainId = 56
+    const engine = await getEngine(chainId)
+    await engine.RESOURCE.getWhiteListResource([])
+    const prices = await engine.PRICE.getTokenPriceByRoutes()
+
+    expect(prices['0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c']).toEqual('299.580826636659236116343909233509775829')
   })
 
   test('get price of any token', async () => {
