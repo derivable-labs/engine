@@ -29,9 +29,10 @@ export interface INetworkConfig {
   wrappedTokenAddress: string
   nativePriceUSD: number
   stablecoins: string[]
-  tokens?: { [address: string]: { price?: number | string; symbol: string; name: string; decimals: number, logo: string } }
+  tokens?: { [address: string]: { price?: number | string; symbol: string; name: string; decimals: number; logo: string } }
   helperContract: IHelperContract
-  fetchers: { [fetcher: string]: { type: 'uniswap2' | 'uniswap3' | 'pancake3', factory: string[] } }
+  factory: { [factory: string]: { type: 'uniswap2' | 'uniswap3' | 'pancake3'; topic0: string; fetcher?: string; } }
+  fetchers: { [fetcher: string]: { type: 'uniswap2' | 'uniswap3' | 'pancake3'; factory: string[] } }
   chartReplacements?: { [origin: string]: string }
   uniswap: IUniswapContractAddress
   derivable: IDerivableContractAddress
@@ -59,6 +60,7 @@ export interface IDerivableContractAddress {
   compositeFetcher: string
   multiCall: string
   uniswapV2Fetcher?: string
+  poolDeployer?: string
 }
 
 export const DEFAULT_CHAIN = 42161

@@ -15,6 +15,7 @@ import PoolOverride from './abi/PoolOverride.json'
 import UTR from './abi/UTR.json'
 import FetcherV2 from './abi/FetcherV2.json'
 import UTROverride from './abi/UTROverride.json'
+import FetcherV2Override from './abi/FetcherV2Override.json'
 import fetch from 'node-fetch'
 import { PoolType } from './types'
 
@@ -33,7 +34,8 @@ const abis = {
   PoolOverride,
   UTR,
   UTROverride,
-  FetcherV2Mock
+  FetcherV2Mock,
+  FetcherV2Override,
 }
 
 const DDL_CONFIGS_URL = {
@@ -41,6 +43,7 @@ const DDL_CONFIGS_URL = {
   production: `https://raw.githubusercontent.com/derivable-labs/configs/main/`,
 }
 
+// TODO: Change name from profile to ...
 export class Profile {
   chainId: number
   env: 'development' | 'production'
@@ -48,6 +51,7 @@ export class Profile {
   routes: {
     [key: string]: { type: string; address: string }[]
   }
+  whitelistPools: string[]
 
   constructor(engineConfig: IEngineConfig) {
     this.chainId = engineConfig.chainId
@@ -55,17 +59,25 @@ export class Profile {
   }
 
   async loadConfig() {
-    const [networkConfig, uniV3Pools] = await Promise.all([
-      fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/network.json').then((r) => r.json()),
+    const [networkConfig, uniV3Pools, whitelistPools] = await Promise.all([
+      fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/network.json')
+        .then((r) => r.json())
+        .catch(() => []),
       fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/routes.json')
+        .then((r) => r.json())
+        .catch(() => []),
+      fetch(DDL_CONFIGS_URL[this.env] + this.chainId + '/pools.json')
         .then((r) => r.json())
         .catch(() => []),
     ])
     this.configs = networkConfig
     this.routes = uniV3Pools
+    this.whitelistPools = whitelistPools
+    // this.configs.helperContract.utr = '0x2222C5F0999E74D8D88F7bbfE300147d34c22222'
   }
 
   getAbi(name: string) {
+    //@ts-ignore
     return abis[name] ? abis[name] : abis[this.chainId][name] || []
   }
 
@@ -73,7 +85,7 @@ export class Profile {
     return EventDataAbis
   }
 
-  getExp(pool: PoolType): number {
-    return this.configs?.fetchers?.[pool.FETCHER]?.type?.endsWith('3') ? 2 : 1
+  getExp(fetcher: string): number {
+    return this.configs?.fetchers?.[fetcher]?.type?.endsWith('3') ? 2 : 1
   }
 }

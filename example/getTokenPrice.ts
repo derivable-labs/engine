@@ -6,19 +6,20 @@ const test = async () => {
   const engine = new Engine(configs)
   await engine.initServices()
   await engine.RESOURCE.fetchResourceData(
-    '0xE3C75f8963E4CA02ea9a281c32b41FdfC248e07f',
+    ['0xE3C75f8963E4CA02ea9a281c32b41FdfC248e07f'],
+    '',
   )
 
   const changedIn24h = await engine.PRICE.get24hChange({
     baseToken: {
       address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
-      decimal: 18,
+      decimals: 18,
       name: '',
       symbol: '',
     },
     quoteToken: {
       address: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8',
-      decimal: 6,
+      decimals: 6,
       name: '',
       symbol: '',
     },
