@@ -20,6 +20,7 @@ const PoolOverride_json_1 = __importDefault(require("./abi/PoolOverride.json"));
 const UTR_json_1 = __importDefault(require("./abi/UTR.json"));
 const FetcherV2_json_1 = __importDefault(require("./abi/FetcherV2.json"));
 const UTROverride_json_1 = __importDefault(require("./abi/UTROverride.json"));
+const FetcherV2Override_json_1 = __importDefault(require("./abi/FetcherV2Override.json"));
 const node_fetch_1 = __importDefault(require("node-fetch"));
 const abis = {
     BnA: BnA_json_1.default,
@@ -36,35 +37,45 @@ const abis = {
     PoolOverride: PoolOverride_json_1.default,
     UTR: UTR_json_1.default,
     UTROverride: UTROverride_json_1.default,
-    FetcherV2Mock: FetcherV2Mock_json_1.default
+    FetcherV2Mock: FetcherV2Mock_json_1.default,
+    FetcherV2Override: FetcherV2Override_json_1.default,
 };
 const DDL_CONFIGS_URL = {
     development: `https://raw.githubusercontent.com/derivable-labs/configs/dev/`,
     production: `https://raw.githubusercontent.com/derivable-labs/configs/main/`,
 };
+// TODO: Change name from profile to ...
 class Profile {
     constructor(engineConfig) {
         this.chainId = engineConfig.chainId;
         this.env = engineConfig.env || 'production';
     }
     async loadConfig() {
-        const [networkConfig, uniV3Pools] = await Promise.all([
-            (0, node_fetch_1.default)(DDL_CONFIGS_URL[this.env] + this.chainId + '/network.json').then((r) => r.json()),
+        const [networkConfig, uniV3Pools, whitelistPools] = await Promise.all([
+            (0, node_fetch_1.default)(DDL_CONFIGS_URL[this.env] + this.chainId + '/network.json')
+                .then((r) => r.json())
+                .catch(() => []),
             (0, node_fetch_1.default)(DDL_CONFIGS_URL[this.env] + this.chainId + '/routes.json')
+                .then((r) => r.json())
+                .catch(() => []),
+            (0, node_fetch_1.default)(DDL_CONFIGS_URL[this.env] + this.chainId + '/pools.json')
                 .then((r) => r.json())
                 .catch(() => []),
         ]);
         this.configs = networkConfig;
         this.routes = uniV3Pools;
+        this.whitelistPools = whitelistPools;
+        // this.configs.helperContract.utr = '0x2222C5F0999E74D8D88F7bbfE300147d34c22222'
     }
     getAbi(name) {
+        //@ts-ignore
         return abis[name] ? abis[name] : abis[this.chainId][name] || [];
     }
     getEventDataAbi() {
         return constant_1.EventDataAbis;
     }
-    getExp(pool) {
-        return this.configs?.fetchers?.[pool.FETCHER]?.type?.endsWith('3') ? 2 : 1;
+    getExp(fetcher) {
+        return this.configs?.fetchers?.[fetcher]?.type?.endsWith('3') ? 2 : 1;
     }
 }
 exports.Profile = Profile;

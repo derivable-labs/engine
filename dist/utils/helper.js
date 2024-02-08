@@ -7,14 +7,17 @@ exports.DIV = exports.WEI = exports.IEW = exports.round = exports.truncate = exp
 const ethers_1 = require("ethers");
 const Events_json_1 = __importDefault(require("../abi/Events.json"));
 const constant_1 = require("./constant");
+// TODO: Change name a some function
+// TODO: Convert require to import
 const mdp = require('move-decimal-point');
+// TODO: Move RPC Url to config or env
 exports.provider = new ethers_1.ethers.providers.JsonRpcProvider('https://bsc-dataseed.binance.org/');
 exports.bn = ethers_1.BigNumber.from;
-const weiToNumber = (wei, decimal = 18, decimalToDisplay) => {
+const weiToNumber = (wei, decimals = 18, decimalToDisplay) => {
     if (!wei || !Number(wei))
         return '0';
     wei = wei.toString();
-    const num = mdp(wei, -decimal);
+    const num = mdp(wei, -decimals);
     if (decimalToDisplay != null) {
         if (decimalToDisplay > 0) {
             return num.slice(0, num.indexOf('.') + decimalToDisplay + 1);
@@ -24,14 +27,14 @@ const weiToNumber = (wei, decimal = 18, decimalToDisplay) => {
     return num;
 };
 exports.weiToNumber = weiToNumber;
-const numberToWei = (number, decimal = 18) => {
+const numberToWei = (number, decimals = 18) => {
     if (!number)
         return '0';
     number = number.toString();
     if (Number.isFinite(number)) {
         number = number.toLocaleString('en-US', { useGrouping: false });
     }
-    return mdp(number, decimal).split(number.indexOf('.') === -1 ? ',' : '.')[0];
+    return mdp(number, decimals).split(number.indexOf('.') === -1 ? ',' : '.')[0];
 };
 exports.numberToWei = numberToWei;
 const decodePowers = (powersBytes) => {
@@ -39,7 +42,7 @@ const decodePowers = (powersBytes) => {
     const raws = powersBytes.match(/.{1,4}/g);
     const powers = [];
     for (let i = raws.length - 1; i >= 0; --i) {
-        let power = Number('0x' + raws[i]);
+        let power = Number(`0x${raws[i]}`);
         if (power > 0x8000) {
             power = 0x8000 - power;
         }
@@ -90,18 +93,18 @@ const getNormalAddress = (addresses) => {
     return addresses.filter((adr) => /^0x[0-9,a-f,A-Z]{40}$/g.test(adr));
 };
 exports.getNormalAddress = getNormalAddress;
-const formatFloat = (number, decimal = 4) => {
+const formatFloat = (number, decimals = 4) => {
     number = number.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
     const arr = number.split('.');
     if (arr.length > 1) {
-        arr[1] = arr[1].slice(0, decimal);
+        arr[1] = arr[1].slice(0, decimals);
     }
     return arr.join('.');
 };
 exports.formatFloat = formatFloat;
-const formatPercent = (floatNumber, decimal = 2) => {
+const formatPercent = (floatNumber, decimals = 2) => {
     floatNumber = floatNumber.toLocaleString(['en-US', 'fullwide'], { useGrouping: false });
-    return (0, exports.formatFloat)((0, exports.weiToNumber)((0, exports.numberToWei)(floatNumber), 16), decimal);
+    return (0, exports.formatFloat)((0, exports.weiToNumber)((0, exports.numberToWei)(floatNumber), 16), decimals);
 };
 exports.formatPercent = formatPercent;
 const mul = (a, b, useFullwide = true) => {
@@ -163,15 +166,15 @@ const parsePrice = (value, baseToken, quoteToken, pool) => {
     if (exp == 2) {
         value = value.mul(value);
     }
-    let price = (0, exports.weiToNumber)(value.mul((0, exports.numberToWei)(1, baseToken.decimal)).shr(128 * exp), quoteToken.decimal);
+    const price = (0, exports.weiToNumber)(value.mul((0, exports.numberToWei)(1, baseToken?.decimals || 18)).shr(128 * exp), quoteToken?.decimals || 18);
     return (0, exports.formatFloat)(price, 18);
 };
 exports.parsePrice = parsePrice;
 const parseSqrtX96 = (price, baseToken, quoteToken) => {
     return (0, exports.weiToNumber)(price
         .mul(price)
-        .mul((0, exports.numberToWei)(1, baseToken.decimal + 18))
-        .shr(192), quoteToken.decimal + 18);
+        .mul((0, exports.numberToWei)(1, baseToken.decimals + 18))
+        .shr(192), quoteToken.decimals + 18);
 };
 exports.parseSqrtX96 = parseSqrtX96;
 const isObject = (item) => {
@@ -211,13 +214,13 @@ const getTopics = () => {
     return topics;
 };
 exports.getTopics = getTopics;
-function rateToHL(r, k, DURATION = constant_1.SECONDS_PER_DAY) {
+const rateToHL = (r, k, DURATION = constant_1.SECONDS_PER_DAY) => {
     return Math.ceil((DURATION * Math.LN2) / r / k / k);
-}
+};
 exports.rateToHL = rateToHL;
-function rateFromHL(HL, k, DURATION = constant_1.SECONDS_PER_DAY) {
+const rateFromHL = (HL, k, DURATION = constant_1.SECONDS_PER_DAY) => {
     return (DURATION * Math.LN2) / HL / k / k;
-}
+};
 exports.rateFromHL = rateFromHL;
 const kx = (k, R, v, spot, MARK) => {
     try {
@@ -328,9 +331,9 @@ const round = (num, decimals = 0) => {
     return (0, exports.truncate)(num, decimals, true);
 };
 exports.round = round;
-function _replaceAt(str, index, replacement) {
+const _replaceAt = (str, index, replacement) => {
     return str.substring(0, index) + replacement + str.substring(index + replacement.length);
-}
+};
 /// revert of WEI: weiToNumber
 const IEW = (wei, decimals = 18, decimalsToDisplay) => {
     let num = mdp((0, exports.STR)(wei), -decimals);

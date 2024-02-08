@@ -39,7 +39,7 @@ function getBlockByNumberFactory(provider) {
             extraData: stringToByteArray(block.extraData),
             mixHash: block.mixHash,
             nonce: block.nonce,
-            baseFeePerGas: block.baseFeePerGas
+            baseFeePerGas: block.baseFeePerGas,
         };
     };
 }
@@ -66,11 +66,11 @@ function getProofFactory(provider) {
         assertPlainObject(result);
         assertProperty(result, 'accountProof', 'array');
         assertProperty(result, 'storageProof', 'array');
-        const accountProof = result.accountProof.map(entry => {
+        const accountProof = result.accountProof.map((entry) => {
             assertType(entry, 'string');
             return stringToByteArray(entry);
         });
-        const storageProof = result.storageProof.map(entry => {
+        const storageProof = result.storageProof.map((entry) => {
             assertPlainObject(entry);
             assertProperty(entry, 'key', 'string');
             assertProperty(entry, 'value', 'string');
@@ -78,10 +78,10 @@ function getProofFactory(provider) {
             return {
                 key: entry.key,
                 value: entry.key,
-                proof: entry.proof.map(proofEntry => {
+                proof: entry.proof.map((proofEntry) => {
                     assertType(proofEntry, 'string');
                     return stringToByteArray(proofEntry);
-                })
+                }),
             };
         });
         return { accountProof, storageProof };
@@ -91,7 +91,7 @@ exports.getProofFactory = getProofFactory;
 function normalizeProvider(provider) {
     if ('send' in provider) {
         return {
-            request: async ({ method, params }) => provider.send(method, params)
+            request: async ({ method, params }) => provider.send(method, params),
         };
     }
     else {

@@ -15,11 +15,10 @@ const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111
 // }
 class UniV2Pair {
     constructor(config, profile) {
-        this.pairsInfoAddress = '0x' + PairDetail_json_1.default.deployedBytecode.slice(-40);
+        this.pairsInfoAddress = `0x${PairDetail_json_1.default.deployedBytecode.slice(-40)}`;
         this.chainId = config.chainId;
         this.scanApi = profile.configs.scanApi;
         const provider = new providers_1.JsonRpcProvider(profile.configs.rpc);
-        // @ts-ignore
         provider.setStateOverride({
             [this.pairsInfoAddress]: {
                 code: PairDetail_json_1.default.deployedBytecode,

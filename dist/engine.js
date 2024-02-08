@@ -22,22 +22,17 @@ class Engine {
         await this.profile.loadConfig();
         this.UNIV2PAIR = new uniV2Pair_1.UniV2Pair(this.enginConfigs, this.profile);
         this.UNIV3PAIR = new uniV3Pair_1.UniV3Pair(this.enginConfigs, this.profile);
-        this.BNA = new balanceAndAllowance_1.BnA(this.enginConfigs, this.profile);
         this.RESOURCE = new resource_1.Resource(this.enginConfigs, this.profile);
-        this.PRICE = new price_1.Price({
-            ...this.enginConfigs,
-            RESOURCE: this.RESOURCE,
-        }, this.profile);
         this.CURRENT_POOL = new currentPool_1.CurrentPool(this.enginConfigs);
-        this.HISTORY = new history_1.History({
-            ...this.enginConfigs,
-            RESOURCE: this.RESOURCE,
-        }, this.profile);
-        this.SWAP = new swap_1.Swap({
-            ...this.enginConfigs,
-            RESOURCE: this.RESOURCE,
-        }, this.profile);
         this.CREATE_POOL = new createPool_1.CreatePool(this.enginConfigs, this.profile);
+        const configs = {
+            ...this.enginConfigs,
+            RESOURCE: this.RESOURCE,
+        };
+        this.BNA = new balanceAndAllowance_1.BnA(configs, this.profile);
+        this.PRICE = new price_1.Price(configs, this.profile);
+        this.HISTORY = new history_1.History(configs, this.profile);
+        this.SWAP = new swap_1.Swap(configs, this.profile);
     }
     setCurrentPool(poolData) {
         this.CURRENT_POOL.initCurrentPoolData(poolData);

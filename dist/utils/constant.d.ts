@@ -10,6 +10,8 @@ export declare const LOCALSTORAGE_KEY: {
     SWAP_BLOCK_LOGS: string;
     TRANSFER_LOGS: string;
     TRANSFER_BLOCK_LOGS: string;
+    ACCOUNT_LOGS: string;
+    ACCOUNT_BLOCK_LOGS: string;
 };
 export declare const POOL_IDS: {
     cToken: number;

@@ -1,18 +1,17 @@
-import { ethers } from 'ethers';
 import { IEngineConfig } from '../utils/configs';
 import { Profile } from '../profile';
+import { JsonRpcProvider } from '@ethersproject/providers';
+import { GetPairInfoParameterType, GetPairsInfoParameterType } from './uniV3Pair';
 export declare class UniV2Pair {
     chainId: number;
     scanApi?: string;
     pairsInfoAddress: string;
-    provider: ethers.providers.Provider;
+    provider: JsonRpcProvider;
     constructor(config: IEngineConfig, profile: Profile);
-    getPairInfo({ pairAddress, flag }: {
-        pairAddress: string;
-        flag?: string;
-    }): Promise<any>;
-    getPairsInfo({ pairAddresses, flag }: {
-        flag?: string;
-        pairAddresses: string[];
-    }): Promise<{}>;
+    getPairInfo({ pairAddress, flag }: GetPairInfoParameterType): Promise<{
+        [key: string]: any;
+    }>;
+    getPairsInfo({ pairAddresses, flag }: GetPairsInfoParameterType): Promise<{
+        [key: string]: any;
+    }>;
 }

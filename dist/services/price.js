@@ -15,8 +15,8 @@ const utils_1 = require("ethers/lib/utils");
 const lodash_1 = __importDefault(require("lodash"));
 class Price {
     constructor(config, profile) {
-        this.reserveTokenPrice = '0x' + ReserveTokenPrice_json_1.default.deployedBytecode.slice(-40);
-        this.tokenPriceByRoute = '0x' + TokenPriceByRoute_json_1.default.deployedBytecode.slice(-40);
+        this.reserveTokenPrice = `0x${ReserveTokenPrice_json_1.default.deployedBytecode.slice(-40)}`;
+        this.tokenPriceByRoute = `0x${TokenPriceByRoute_json_1.default.deployedBytecode.slice(-40)}`;
         this.chainId = config.chainId;
         this.scanApi = profile.configs.scanApi;
         this.provider = new providers_1.JsonRpcProvider(profile.configs.rpc);
@@ -24,9 +24,10 @@ class Price {
         this.profile = profile;
         this.RESOURCE = config.RESOURCE;
     }
-    async get24hChange({ baseToken, cToken, quoteToken, chainId, currentPrice, }) {
+    async get24hChange({ baseToken, cToken, quoteToken, chainId, currentPrice, toTimeMs }) {
         try {
-            const toTime = Math.floor((new Date().getTime() - constant_1.MINI_SECOND_PER_DAY) / 1000);
+            toTimeMs = toTimeMs ?? new Date().getTime();
+            const toTime = Math.floor((toTimeMs - constant_1.MINI_SECOND_PER_DAY) / 1000);
             const result = await historyProvider_1.default.getBars({
                 to: toTime,
                 limit: 1,
@@ -45,61 +46,69 @@ class Price {
         }
     }
     async getTokenPriceByRoutes() {
-        const results = {};
-        const tokens = this.RESOURCE.tokens;
-        const params = this._genFetchTokenParams();
-        const provider = new providers_1.JsonRpcProvider(this.rpcUrl);
-        // @ts-ignore
-        provider.setStateOverride({
-            [this.tokenPriceByRoute]: {
-                code: TokenPriceByRoute_json_1.default.deployedBytecode,
-            },
-        });
-        const contract = new ethers_1.ethers.Contract(this.tokenPriceByRoute, TokenPriceByRoute_json_1.default.abi, provider);
-        const prices = await contract.functions.fetchPrices(params);
-        if (prices && prices[0]) {
-            params.forEach(({ tokenQuote, tokenBase }, key) => {
-                const tokenBaseObject = tokens.find((t) => (t.address === tokenBase));
-                const tokenQuoteObject = tokens.find((t) => (t.address === tokenQuote));
-                if (!tokenBaseObject || !tokenQuoteObject)
-                    return;
-                results[tokenBase] = (0, helper_1.parseSqrtX96)(prices[0][key], tokenBaseObject, tokenQuoteObject);
+        try {
+            const results = {};
+            const tokens = this.RESOURCE.tokens;
+            const params = this._genFetchTokenParams();
+            const provider = new providers_1.JsonRpcProvider(this.rpcUrl);
+            provider.setStateOverride({
+                [this.tokenPriceByRoute]: {
+                    code: TokenPriceByRoute_json_1.default.deployedBytecode,
+                },
             });
-        }
-        const whiteListToken = this.profile.configs.tokens;
-        for (let address in whiteListToken) {
-            if (whiteListToken[address].price) {
-                results[address] = whiteListToken[address].price ?? 1;
+            const contract = new ethers_1.ethers.Contract(this.tokenPriceByRoute, TokenPriceByRoute_json_1.default.abi, provider);
+            const prices = await contract.functions.fetchPrices(params);
+            if (prices?.[0]) {
+                params.forEach(({ tokenQuote, tokenBase }, key) => {
+                    const tokenBaseObject = tokens.find((t) => t.address === tokenBase);
+                    const tokenQuoteObject = tokens.find((t) => t.address === tokenQuote);
+                    if (!tokenBaseObject || !tokenQuoteObject)
+                        return;
+                    results[tokenBase] = (0, helper_1.parseSqrtX96)(prices[0][key], tokenBaseObject, tokenQuoteObject);
+                });
             }
+            const whiteListToken = this.profile.configs.tokens;
+            for (const address in whiteListToken) {
+                if (whiteListToken[address].price) {
+                    results[address] = whiteListToken[address].price ?? 1;
+                }
+            }
+            return results;
         }
-        return results;
+        catch (error) {
+            throw error;
+        }
     }
     _genFetchTokenParams() {
-        return lodash_1.default.uniqBy(Object.keys(this.profile.routes)
-            .filter((pair) => {
-            const [token0, token1] = pair.split('-');
-            return this.profile.configs.stablecoins.includes(token0) ||
-                this.profile.configs.stablecoins.includes(token1);
-        })
-            .map((pairs) => {
-            let routes = this.profile.routes[pairs].map((route) => {
-                return {
-                    version: route.type === "uniswap3" ? 3 : 2,
-                    uniPool: route.address
-                };
-            });
-            let [tokenBase, tokenQuote] = pairs.split('-');
-            if (this.profile.configs.stablecoins.includes(tokenBase)) {
-                [tokenBase, tokenQuote] = [tokenQuote, tokenBase];
-                routes = routes.reverse();
-            }
-            return { tokenBase, tokenQuote, routes: routes };
-        }), 'tokenBase');
+        try {
+            return lodash_1.default.uniqBy(Object.keys(this.profile.routes)
+                .filter((pair) => {
+                const [token0, token1] = pair.split('-');
+                return this.profile.configs.stablecoins.includes(token0) || this.profile.configs.stablecoins.includes(token1);
+            })
+                .map((pairs) => {
+                let routes = this.profile.routes[pairs].map((route) => {
+                    return {
+                        version: route.type === 'uniswap3' ? 3 : 2,
+                        uniPool: route.address,
+                    };
+                });
+                let [tokenBase, tokenQuote] = pairs.split('-');
+                if (this.profile.configs.stablecoins.includes(tokenBase)) {
+                    ;
+                    [tokenBase, tokenQuote] = [tokenQuote, tokenBase];
+                    routes = routes.reverse();
+                }
+                return { tokenBase, tokenQuote, routes: routes };
+            }), 'tokenBase');
+        }
+        catch (error) {
+            throw error;
+        }
     }
     async getTokenPrices(tokens) {
         try {
             const provider = new providers_1.JsonRpcProvider(this.rpcUrl);
-            // @ts-ignore
             provider.setStateOverride({
                 [this.reserveTokenPrice]: {
                     code: ReserveTokenPrice_json_1.default.deployedBytecode,
@@ -112,11 +121,11 @@ class Price {
             });
             const res = await pairDetailContract.functions.fetchMarketBatch(_tokensToFetch, this.profile.configs.uniswap.v3Factory, this.profile.configs.stablecoins, this.profile.configs.wrappedTokenAddress, this.profile.configs.stablecoins[0]);
             const result = {};
-            for (let i in _tokensToFetch) {
+            for (const i in _tokensToFetch) {
                 result[_tokensToFetch[i]] = res.sqrtPriceX96[i];
             }
             if (whiteListToken) {
-                for (let address in whiteListToken) {
+                for (const address in whiteListToken) {
                     if (whiteListToken[address].price) {
                         result[address] = (0, helper_1.bn)(whiteListToken[address].price ?? '0x01000000000000000000000000');
                     }

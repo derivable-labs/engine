@@ -35,31 +35,42 @@ class CreatePool {
                 gasLimit: gasLimit || undefined,
             });
             const tx = await res.wait(1);
+            // TODO: tx status checking before return
             console.log('tx', tx);
             return true;
         }
-        catch (e) {
-            throw e;
+        catch (error) {
+            throw error;
         }
     }
     generateConfig(k, a, b, mark, recipient, oracle, initTime, halfLife) {
-        return {
-            utr: this.profile.configs.helperContract.utr,
-            token: this.contractAddresses.token,
-            logic: this.contractAddresses.logic,
-            oracle,
-            reserveToken: this.profile.configs.wrappedTokenAddress,
-            recipient,
-            mark,
-            k,
-            a,
-            b,
-            initTime,
-            halfLife,
-        };
+        try {
+            return {
+                utr: this.profile.configs.helperContract.utr,
+                token: this.contractAddresses.token,
+                logic: this.contractAddresses.logic,
+                oracle,
+                reserveToken: this.profile.configs.wrappedTokenAddress,
+                recipient,
+                mark,
+                k,
+                a,
+                b,
+                initTime,
+                halfLife,
+            };
+        }
+        catch (error) {
+            throw error;
+        }
     }
     getStateCalHelperContract(provider) {
-        return new ethers_1.ethers.Contract(this.contractAddresses.stateCalHelper, this.profile.getAbi('Helper'), provider || this.provider);
+        try {
+            return new ethers_1.ethers.Contract(this.contractAddresses.stateCalHelper, this.profile.getAbi('Helper'), provider || this.provider);
+        }
+        catch (error) {
+            throw error;
+        }
     }
 }
 exports.CreatePool = CreatePool;

@@ -16,11 +16,11 @@ const unpackId = (id) => {
     return { k, p };
 };
 exports.unpackId = unpackId;
-function encodeSqrtX96(reserve1, reserve0) {
+const encodeSqrtX96 = (reserve1, reserve0) => {
     return (0, helper_1.bn)((Math.sqrt(reserve1 / reserve0) * 10 ** 12).toFixed(0))
         .mul((0, helper_1.bn)(2).pow(96))
         .div(10 ** 12);
-}
+};
 const FLOAT_UNIT = 100000;
 const floatToFixed128 = (n) => {
     return (0, helper_1.bn)(n * FLOAT_UNIT)
@@ -33,11 +33,11 @@ const fixed128ToFloat = (fixed128) => {
 };
 exports.fixed128ToFloat = fixed128ToFloat;
 //
-// export const formatFloat = (number: number | string, decimal = 4) => {
+// export const formatFloat = (number: number | string, decimals = 4) => {
 //   number = number.toString()
 //   const arr = number.split('.')
 //   if (arr.length > 1) {
-//     arr[1] = arr[1].slice(0, decimal)
+//     arr[1] = arr[1].slice(0, decimals)
 //   }
 //   return arr.join('.')
 // }

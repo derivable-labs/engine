@@ -5,10 +5,10 @@ export type PoolData = {
     baseToken: string;
     quoteToken: string;
     cToken: string;
-    dTokens: string[];
+    dTokens: Array<string>;
     cTokenPrice: number;
     states: any;
-    powers: number[];
+    powers: Array<number>;
     basePrice: string;
     poolAddress: string;
     baseId: number;
@@ -23,9 +23,9 @@ export declare class CurrentPool {
     baseToken: string;
     quoteToken: string;
     TOKEN: string;
-    dTokens: string[];
+    dTokens: Array<string>;
     states: any;
-    powers: number[];
+    powers: Array<number>;
     basePrice: string;
     poolAddress?: string;
     chainId: number;

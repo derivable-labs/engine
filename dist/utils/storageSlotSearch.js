@@ -86,6 +86,7 @@ const overrideBnA = async (override) => {
     balance = ethers_1.ethers.BigNumber.from(override.balance.toString());
     balance = ethers_1.ethers.utils.hexZeroPad(balance.toHexString(), 32);
     if (override.balance) {
+        // @ts-ignore
         state[result.balance.slot] = balance;
     }
     if (override.allowances) {
@@ -94,6 +95,7 @@ const overrideBnA = async (override) => {
             allowance = ethers_1.ethers.BigNumber.from(allowance.toString());
             allowance = ethers_1.ethers.utils.hexZeroPad(allowance.toHexString(), 32);
             let slot = getAllowanceSlot(override.account, spender, result.allowance.index);
+            // @ts-ignore
             state[slot] = allowance;
         }
     }

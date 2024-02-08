@@ -37,6 +37,13 @@ export interface INetworkConfig {
         };
     };
     helperContract: IHelperContract;
+    factory: {
+        [factory: string]: {
+            type: 'uniswap2' | 'uniswap3' | 'pancake3';
+            topic0: string;
+            fetcher?: string;
+        };
+    };
     fetchers: {
         [fetcher: string]: {
             type: 'uniswap2' | 'uniswap3' | 'pancake3';
@@ -69,5 +76,6 @@ export interface IDerivableContractAddress {
     compositeFetcher: string;
     multiCall: string;
     uniswapV2Fetcher?: string;
+    poolDeployer?: string;
 }
 export declare const DEFAULT_CHAIN = 42161;

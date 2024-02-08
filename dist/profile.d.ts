@@ -1,5 +1,4 @@
 import { IEngineConfig, INetworkConfig } from './utils/configs';
-import { PoolType } from './types';
 export declare class Profile {
     chainId: number;
     env: 'development' | 'production';
@@ -10,6 +9,7 @@ export declare class Profile {
             address: string;
         }[];
     };
+    whitelistPools: string[];
     constructor(engineConfig: IEngineConfig);
     loadConfig(): Promise<void>;
     getAbi(name: string): any;
@@ -19,5 +19,5 @@ export declare class Profile {
         Swap1: string[];
         Swap2: string[];
     };
-    getExp(pool: PoolType): number;
+    getExp(fetcher: string): number;
 }

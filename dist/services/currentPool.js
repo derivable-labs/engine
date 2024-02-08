@@ -8,6 +8,8 @@ class CurrentPool {
     }
     initCurrentPoolData(poolData) {
         for (let i in poolData) {
+            // @ts-ignore
+            // TODO: Logic checking & review
             this[i] = poolData[i];
         }
     }

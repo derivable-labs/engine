@@ -16,7 +16,7 @@ const POOL_FEES = [100, 300, 500];
 const FLAG = '0x0000110000000000000000000000000000000000000000000000000000000111';
 class UniV3Pair {
     constructor(config, profile) {
-        const pairsV3Info = '0x' + PairV3Detail_json_1.default.deployedBytecode.slice(-40);
+        const pairsV3Info = `0x${PairV3Detail_json_1.default.deployedBytecode.slice(-40)}`;
         this.chainId = config.chainId;
         this.scanApi = profile.configs.scanApi;
         this.provider = new providers_1.JsonRpcProvider(profile.configs.rpc);
@@ -25,8 +25,13 @@ class UniV3Pair {
         this.profile = profile;
     }
     async getLargestPoolAddress({ baseToken, quoteTokens }) {
-        const pools = await this.getPairAddress({ baseToken, quoteTokens });
-        return await this._getLargestPoolByPools(baseToken, pools);
+        try {
+            const pools = await this.getPairAddress({ baseToken, quoteTokens });
+            return await this._getLargestPoolByPools(baseToken, pools);
+        }
+        catch (error) {
+            throw error;
+        }
     }
     /**
      *
@@ -37,87 +42,131 @@ class UniV3Pair {
      * }
      */
     async _getLargestPoolByPools(baseToken, pools) {
-        const multicall = this._getMulticall();
-        const res = await multicall.call(this._generatePoolBalanceContext(baseToken, pools));
-        return this._parsePoolBalanceReturnContext(res.results.poolBalances.callsReturnContext);
+        try {
+            const multicall = this._getMulticall();
+            const res = await multicall.call(this._generatePoolBalanceContext(baseToken, pools));
+            return this._parsePoolBalanceReturnContext(res.results.poolBalances.callsReturnContext);
+        }
+        catch (error) {
+            throw error;
+        }
     }
     _parsePoolBalanceReturnContext(returnContexts) {
-        let poolResults = constant_1.ZERO_ADDRESS;
-        let max = (0, helper_1.bn)(0);
-        returnContexts.forEach((returnContext) => {
-            if ((0, helper_1.bn)(returnContext.returnValues[0].hex).gt(max)) {
-                poolResults = returnContext.reference;
-                max = (0, helper_1.bn)(returnContext.returnValues[0].hex);
-            }
-        });
-        return poolResults;
+        try {
+            let poolResults = constant_1.ZERO_ADDRESS;
+            let max = (0, helper_1.bn)(0);
+            returnContexts.forEach((returnContext) => {
+                if ((0, helper_1.bn)(returnContext.returnValues[0].hex).gt(max)) {
+                    poolResults = returnContext.reference;
+                    max = (0, helper_1.bn)(returnContext.returnValues[0].hex);
+                }
+            });
+            return poolResults;
+        }
+        catch (error) {
+            throw error;
+        }
     }
     _generatePoolBalanceContext(baseToken, pools) {
-        const calls = [];
-        for (let i in pools) {
-            calls.push({
-                reference: pools[i],
-                methodName: 'balanceOf',
-                methodParameters: [pools[i]],
-            });
+        try {
+            const calls = [];
+            for (const i in pools) {
+                calls.push({
+                    reference: pools[i],
+                    methodName: 'balanceOf',
+                    methodParameters: [pools[i]],
+                });
+            }
+            return [
+                {
+                    reference: 'poolBalances',
+                    contractAddress: baseToken,
+                    abi: ERC20_json_1.default,
+                    calls,
+                },
+            ];
         }
-        return [
-            {
-                reference: 'poolBalances',
-                contractAddress: baseToken,
-                abi: ERC20_json_1.default,
-                calls,
-            },
-        ];
+        catch (error) {
+            throw error;
+        }
     }
     async getPairAddress({ baseToken, quoteTokens }) {
-        const multicall = this._getMulticall();
-        //@ts-ignore
-        const context = this._generatePoolAddressContext(baseToken, quoteTokens);
-        const res = await multicall.call(context);
-        return this._parsePoolAddressReturnContext(res.results.poolAddresses['callsReturnContext']);
+        try {
+            const multicall = this._getMulticall();
+            const context = this._generatePoolAddressContext(baseToken, quoteTokens);
+            const res = await multicall.call(context);
+            return this._parsePoolAddressReturnContext(res.results.poolAddresses['callsReturnContext']);
+        }
+        catch (error) {
+            throw error;
+        }
     }
     _parsePoolAddressReturnContext(returnContexts) {
-        const results = {};
-        returnContexts.forEach((returnContext) => {
-            if (returnContext.returnValues[0] !== constant_1.ZERO_ADDRESS) {
-                results[returnContext.reference] = returnContext.returnValues[0];
-            }
-        });
-        return results;
+        try {
+            const results = {};
+            returnContexts.forEach((returnContext) => {
+                if (returnContext.returnValues[0] !== constant_1.ZERO_ADDRESS) {
+                    results[returnContext.reference] = returnContext.returnValues[0];
+                }
+            });
+            return results;
+        }
+        catch (error) {
+            throw error;
+        }
     }
     _generatePoolAddressContext(baseToken, quoteTokens) {
-        const calls = [];
-        POOL_FEES.forEach((fee) => {
-            quoteTokens.forEach((quoteToken) => {
-                calls.push({
-                    reference: `${baseToken}-${quoteToken}-${fee}`,
-                    methodName: 'getPool',
-                    methodParameters: [baseToken, quoteToken, fee],
+        try {
+            const calls = [];
+            POOL_FEES.forEach((fee) => {
+                quoteTokens.forEach((quoteToken) => {
+                    calls.push({
+                        reference: `${baseToken}-${quoteToken}-${fee}`,
+                        methodName: 'getPool',
+                        methodParameters: [baseToken, quoteToken, fee],
+                    });
                 });
             });
-        });
-        return [
-            {
-                reference: 'poolAddresses',
-                contractAddress: this.profile.configs.uniswap.v3Factory,
-                abi: UniswapV3Factory_json_1.default,
-                calls,
-            },
-        ];
+            return [
+                {
+                    reference: 'poolAddresses',
+                    contractAddress: this.profile.configs.uniswap.v3Factory,
+                    abi: UniswapV3Factory_json_1.default,
+                    calls,
+                },
+            ];
+        }
+        catch (error) {
+            throw error;
+        }
     }
     async getPairInfo({ pairAddress, flag = FLAG }) {
         try {
             const provider = new providers_1.JsonRpcProvider(this.rpcUrl);
-            // @ts-ignore
             provider.setStateOverride({
                 [this.pairsV3Info]: {
                     code: PairV3Detail_json_1.default.deployedBytecode,
                 },
             });
             const pairDetailContract = new ethers_1.ethers.Contract(this.pairsV3Info, PairV3Detail_json_1.default.abi, provider);
-            const res = await pairDetailContract.functions.query([pairAddress], flag);
-            return res.details[0];
+            const { details } = await pairDetailContract.functions.query([pairAddress], flag);
+            const i = 0;
+            return {
+                token0: {
+                    address: details[i].token0.adr,
+                    name: details[i].token0.name,
+                    symbol: details[i].token0.symbol,
+                    decimals: details[i].token0.decimals.toNumber(),
+                    reserve: details[i].token0.reserve,
+                },
+                token1: {
+                    address: details[i].token1.adr,
+                    name: details[i].token1.name,
+                    symbol: details[i].token1.symbol,
+                    decimals: details[i].token1.decimals.toNumber(),
+                    reserve: details[i].token1.reserve,
+                },
+            };
         }
         catch (e) {
             throw e;
@@ -126,7 +175,6 @@ class UniV3Pair {
     async getPairsInfo({ pairAddresses, flag = FLAG }) {
         try {
             const provider = new providers_1.JsonRpcProvider(this.rpcUrl);
-            // @ts-ignore
             provider.setStateOverride({
                 [this.pairsV3Info]: {
                     code: PairV3Detail_json_1.default.deployedBytecode,
@@ -141,15 +189,15 @@ class UniV3Pair {
                         address: details[i].token0.adr,
                         name: details[i].token0.name,
                         symbol: details[i].token0.symbol,
-                        decimal: details[i].token0.decimals.toNumber(),
+                        decimals: details[i].token0.decimals.toNumber(),
                         reserve: details[i].token0.reserve,
                     },
                     token1: {
                         address: details[i].token1.adr,
                         name: details[i].token1.name,
                         symbol: details[i].token1.symbol,
-                        decimal: details[i].token1.decimals.toNumber(),
-                        reserve: details[i].token1.reserve
+                        decimals: details[i].token1.decimals.toNumber(),
+                        reserve: details[i].token1.reserve,
                     },
                 };
             }
@@ -160,11 +208,16 @@ class UniV3Pair {
         }
     }
     _getMulticall() {
-        return new ethereum_multicall_1.Multicall({
-            multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
-            ethersProvider: this.provider,
-            tryAggregate: true,
-        });
+        try {
+            return new ethereum_multicall_1.Multicall({
+                multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
+                ethersProvider: this.provider,
+                tryAggregate: true,
+            });
+        }
+        catch (error) {
+            throw error;
+        }
     }
 }
 exports.UniV3Pair = UniV3Pair;

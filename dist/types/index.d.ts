@@ -3,14 +3,6 @@ export type Storage = {
     setItem?: (itemName: string, value: string) => void;
     getItem?: (itemName: string) => string;
 };
-export type ParseLogType = {
-    address: string;
-    contractAddress: string;
-    name: string;
-    topic: string;
-    args: any;
-    topics: string[];
-};
 export type LogType = {
     contractAddress: string;
     address: string;
@@ -61,6 +53,7 @@ export type PoolGroupType = {
         [key: string]: PoolType;
     };
     ORACLE: string;
+    basePrice: string;
     k: number[];
     states: {
         twapBase: BigNumber;
@@ -88,6 +81,7 @@ export type PoolType = {
     ORACLE: string;
     TOKEN_R: string;
     FETCHER: string;
+    MATURITY: BigNumber;
     pool: string;
     logic: string;
     k: BigNumber;
@@ -126,9 +120,10 @@ export type PoolGroupsType = {
 };
 export type TokenType = {
     address: string;
-    decimal: number;
+    decimals: number;
     name: string;
     symbol: string;
+    totalSupply?: any;
     icon?: string;
 };
 export type MaturitiesType = {

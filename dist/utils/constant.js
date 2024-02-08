@@ -13,6 +13,8 @@ exports.LOCALSTORAGE_KEY = {
     SWAP_BLOCK_LOGS: 'last-block-swap-log-v1.2',
     TRANSFER_LOGS: 'transfer-log-v1.2',
     TRANSFER_BLOCK_LOGS: 'last-block-transfer-log-v1.2',
+    ACCOUNT_LOGS: 'account-log-v1.2',
+    ACCOUNT_BLOCK_LOGS: 'account-block-log-v1.2',
 };
 exports.POOL_IDS = {
     cToken: 0x20000,
@@ -32,6 +34,7 @@ exports.EventDataAbis = {
     PoolCreated: [
         'address FETCHER',
         'bytes32 ORACLE',
+        'address TOKEN_R',
         'uint k',
         'uint MARK',
         'uint INTEREST_HL',
@@ -74,6 +77,7 @@ exports.EventDataAbis = {
         'uint amountOut',
         'uint price',
         'uint priceR',
+        'uint amountR',
     ],
 };
 //# sourceMappingURL=constant.js.map
