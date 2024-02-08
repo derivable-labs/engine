@@ -1,18 +1,21 @@
-import {BigNumber, ethers} from 'ethers'
-import {PoolType, TokenType} from '../types'
+import { BigNumber, ethers } from 'ethers'
+import { PoolType, TokenType } from '../types'
 import EventsAbi from '../abi/Events.json'
-import {SECONDS_PER_DAY, ZERO_ADDRESS} from './constant'
+import { SECONDS_PER_DAY } from './constant'
 
+// TODO: Change name a some function
+// TODO: Convert require to import
 const mdp = require('move-decimal-point')
 
+// TODO: Move RPC Url to config or env
 export const provider = new ethers.providers.JsonRpcProvider('https://bsc-dataseed.binance.org/')
 
 export const bn = BigNumber.from
 
-export const weiToNumber = (wei: any, decimal: number = 18, decimalToDisplay?: number) => {
+export const weiToNumber = (wei: any, decimals: number = 18, decimalToDisplay?: number): string => {
   if (!wei || !Number(wei)) return '0'
   wei = wei.toString()
-  const num = mdp(wei, -decimal)
+  const num = mdp(wei, -decimals)
   if (decimalToDisplay != null) {
     if (decimalToDisplay > 0) {
       return num.slice(0, num.indexOf('.') + decimalToDisplay + 1)
@@ -22,21 +25,21 @@ export const weiToNumber = (wei: any, decimal: number = 18, decimalToDisplay?: n
   return num
 }
 
-export const numberToWei = (number: any, decimal: number = 18) => {
+export const numberToWei = (number: any, decimals: number = 18): string => {
   if (!number) return '0'
   number = number.toString()
   if (Number.isFinite(number)) {
-    number = number.toLocaleString('en-US', {useGrouping: false})
+    number = number.toLocaleString('en-US', { useGrouping: false })
   }
-  return mdp(number, decimal).split(number.indexOf('.') === -1 ? ',' : '.')[0]
+  return mdp(number, decimals).split(number.indexOf('.') === -1 ? ',' : '.')[0]
 }
 
-export const decodePowers = (powersBytes: string) => {
+export const decodePowers = (powersBytes: string): Array<number> => {
   powersBytes = powersBytes.slice(6)
   const raws: any = powersBytes.match(/.{1,4}/g)
   const powers = []
   for (let i = raws.length - 1; i >= 0; --i) {
-    let power = Number('0x' + raws[i])
+    let power = Number(`0x${raws[i]}`)
     if (power > 0x8000) {
       power = 0x8000 - power
     }
@@ -47,7 +50,7 @@ export const decodePowers = (powersBytes: string) => {
   return powers
 }
 
-export const formatMultiCallBignumber = (data: any) => {
+export const formatMultiCallBignumber = (data: any): Array<any> => {
   return data.map((item: any) => {
     if (item.type === 'BigNumber') {
       item = bn(item.hex)
@@ -60,9 +63,9 @@ export const formatMultiCallBignumber = (data: any) => {
   })
 }
 
-export const getErc1155Token = (addresses: string[]) => {
+export const getErc1155Token = (addresses: string[]): { [key: string]: BigNumber[] } => {
   const erc1155Addresses = addresses.filter(isErc1155Address)
-  const result = {}
+  const result: { [key: string]: BigNumber[] } = {}
   for (let i = 0; i < erc1155Addresses.length; i++) {
     const address = erc1155Addresses[i].split('-')[0]
     const id = erc1155Addresses[i].split('-')[1]
@@ -79,32 +82,32 @@ export const getErc1155Token = (addresses: string[]) => {
  * format of erc1155 = 0xabc...abc-id
  * @param address
  */
-export const isErc1155Address = (address: string) => {
+export const isErc1155Address = (address: string): boolean => {
   return /^0x[0-9,a-f,A-Z]{40}-[0-9]{1,}$/g.test(address)
 }
 
-export const getNormalAddress = (addresses: string[]) => {
+export const getNormalAddress = (addresses: string[]): Array<string> => {
   return addresses.filter((adr: string) => /^0x[0-9,a-f,A-Z]{40}$/g.test(adr))
 }
 
-export const formatFloat = (number: number | string, decimal = 4) => {
-  number = number.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+export const formatFloat = (number: number | string, decimals = 4): string => {
+  number = number.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   const arr = number.split('.')
   if (arr.length > 1) {
-    arr[1] = arr[1].slice(0, decimal)
+    arr[1] = arr[1].slice(0, decimals)
   }
   return arr.join('.')
 }
 
-export const formatPercent = (floatNumber: any, decimal: number = 2) => {
-  floatNumber = floatNumber.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
-  return formatFloat(weiToNumber(numberToWei(floatNumber), 16), decimal)
+export const formatPercent = (floatNumber: any, decimals: number = 2): string => {
+  floatNumber = floatNumber.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
+  return formatFloat(weiToNumber(numberToWei(floatNumber), 16), decimals)
 }
 
-export const mul = (a: any, b: any, useFullwide = true) => {
+export const mul = (a: any, b: any, useFullwide = true): string => {
   if (useFullwide) {
-    a = a.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
-    b = b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+    a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
+    b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   }
   const result = weiToNumber(BigNumber.from(numberToWei(a)).mul(numberToWei(b)), 36)
   const arr = result.split('.')
@@ -112,68 +115,68 @@ export const mul = (a: any, b: any, useFullwide = true) => {
   return arr[1] ? arr.join('.') : arr.join('')
 }
 
-export const sub = (a: any, b: any) => {
-  a = a.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
-  b = b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+export const sub = (a: any, b: any): string => {
+  a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
+  b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   return weiToNumber(BigNumber.from(numberToWei(a)).sub(numberToWei(b)))
 }
 
-export const div = (a: any, b: any) => {
-  if (b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false}) == '0') {
-    return weiToNumber(BigNumber.from(numberToWei((Number(a) / Number(b)).toLocaleString(['en-US', 'fullwide'], {useGrouping: false}))))
+export const div = (a: any, b: any): string => {
+  if (b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false }) == '0') {
+    return weiToNumber(BigNumber.from(numberToWei((Number(a) / Number(b)).toLocaleString(['en-US', 'fullwide'], { useGrouping: false }))))
   }
-  a = a.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
-  b = b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+  a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
+  b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   return weiToNumber(BigNumber.from(numberToWei(a, 36)).div(numberToWei(b)))
 }
 
-export const max = (a: any, b: any) => (bn(numberToWei(a)).gt(numberToWei(b)) ? a : b)
+export const max = (a: any, b: any): string => (bn(numberToWei(a)).gt(numberToWei(b)) ? a : b)
 
-export const add = (a: any, b: any) => {
-  a = a.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
-  b = b.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+export const add = (a: any, b: any): string => {
+  a = a.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
+  b = b.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
   return weiToNumber(BigNumber.from(numberToWei(a)).add(numberToWei(b)))
 }
 
-export const detectDecimalFromPrice = (price: number | string) => {
+export const detectDecimalFromPrice = (price: number | string): number => {
   if (Number(price || 0) === 0 || Number(price || 0) >= 1) {
     return 4
   } else {
-    price = price.toLocaleString(['en-US', 'fullwide'], {useGrouping: false})
+    price = price.toLocaleString(['en-US', 'fullwide'], { useGrouping: false })
     const rate = !bn(numberToWei(price)).isZero() ? weiToNumber(BigNumber.from(numberToWei(1, 36)).div(numberToWei(price)).toString()) : '0'
     return rate.split('.')[0].length + 3
   }
 }
 
-export const packId = (kind: string, address: string) => {
+export const packId = (kind: string | BigNumber, address: string): BigNumber => {
   const k = bn(kind)
   return k.shl(160).add(address)
 }
 
-export const parseUq128x128 = (value: BigNumber, unit = 1000) => {
+export const parseUq128x128 = (value: BigNumber, unit = 1000): number => {
   return value.mul(unit).shr(112).toNumber() / unit
 }
 
-export const parsePrice = (value: BigNumber, baseToken: TokenType, quoteToken: TokenType, pool?: PoolType) => {
+export const parsePrice = (value: BigNumber, baseToken?: TokenType, quoteToken?: TokenType, pool?: PoolType): string => {
   const exp = pool?.exp ?? 2
   if (exp == 2) {
     value = value.mul(value)
   }
-  let price = weiToNumber(value.mul(numberToWei(1, baseToken.decimal)).shr(128*exp), quoteToken.decimal)
+  const price = weiToNumber(value.mul(numberToWei(1, baseToken?.decimals || 18)).shr(128 * exp), quoteToken?.decimals || 18)
   return formatFloat(price, 18)
 }
 
-export const parseSqrtX96 = (price: BigNumber, baseToken: TokenType, quoteToken: TokenType) => {
+export const parseSqrtX96 = (price: BigNumber, baseToken: TokenType, quoteToken: TokenType): string => {
   return weiToNumber(
     price
       .mul(price)
-      .mul(numberToWei(1, baseToken.decimal + 18))
+      .mul(numberToWei(1, baseToken.decimals + 18))
       .shr(192),
-    quoteToken.decimal + 18,
+    quoteToken.decimals + 18,
   )
 }
 
-const isObject = (item: any) => {
+const isObject = (item: any): boolean => {
   return item && typeof item === 'object' && !Array.isArray(item)
 }
 
@@ -184,10 +187,10 @@ export const mergeDeep = (target: any, ...sources: any): any => {
   if (isObject(target) && isObject(source)) {
     for (const key in source) {
       if (isObject(source[key])) {
-        if (!target[key]) Object.assign(target, {[key]: {}})
+        if (!target[key]) Object.assign(target, { [key]: {} })
         mergeDeep(target[key], source[key])
       } else {
-        Object.assign(target, {[key]: source[key]})
+        Object.assign(target, { [key]: source[key] })
       }
     }
   }
@@ -209,21 +212,15 @@ export const getTopics = (): { [key: string]: string[] } => {
   return topics
 }
 
-export function rateToHL(r: number, k: number, DURATION = SECONDS_PER_DAY) {
+export const rateToHL = (r: number, k: number, DURATION = SECONDS_PER_DAY): number => {
   return Math.ceil((DURATION * Math.LN2) / r / k / k)
 }
 
-export function rateFromHL(HL: number, k: number, DURATION = SECONDS_PER_DAY) {
+export const rateFromHL = (HL: number, k: number, DURATION = SECONDS_PER_DAY): number => {
   return (DURATION * Math.LN2) / HL / k / k
 }
 
-export const kx = (
-  k: number,
-  R: BigNumber,
-  v: BigNumber,
-  spot: BigNumber,
-  MARK: BigNumber
-): number => {
+export const kx = (k: number, R: BigNumber, v: BigNumber, spot: BigNumber, MARK: BigNumber): number => {
   try {
     const xk = k > 0 ? spot.pow(k).div(MARK.pow(k)) : MARK.pow(-k).div(spot.pow(-k))
     const vxk4 = v.mul(xk).shl(2)
@@ -330,16 +327,12 @@ export const round = (num: string, decimals: number = 0): string => {
   return truncate(num, decimals, true)
 }
 
-function _replaceAt(str: string, index: number, replacement: string) {
+const _replaceAt = (str: string, index: number, replacement: string) => {
   return str.substring(0, index) + replacement + str.substring(index + replacement.length)
 }
 
 /// revert of WEI: weiToNumber
-export const IEW = (
-  wei: BigNumber | string,
-  decimals: number = 18,
-  decimalsToDisplay?: number
-): string => {
+export const IEW = (wei: BigNumber | string, decimals: number = 18, decimalsToDisplay?: number): string => {
   let num = mdp(STR(wei), -decimals)
   if (decimalsToDisplay != null) {
     num = truncate(num, decimalsToDisplay)
@@ -357,9 +350,9 @@ export const DIV = (a: BigNumber, b: BigNumber, precision = 4): string => {
   const bl = b.toString().length
   const d = al - bl
   if (d > 0) {
-      b = b.mul(WEI(1, d))
+    b = b.mul(WEI(1, d))
   } else if (d < 0) {
-      a = a.mul(WEI(1, -d))
+    a = a.mul(WEI(1, -d))
   }
   a = a.mul(WEI(1, precision))
   const c = truncate(a.div(b).toString(), 0, true)

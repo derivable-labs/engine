@@ -16,12 +16,15 @@
     "example:history": "npx ts-node --files ./example/history.ts",
     "example:power": "npx ts-node --files ./example/power.ts",
     "example:getPairAddress": "npx ts-node --files ./example/getPairAddress.ts",
-    "pretty": "prettier --write \"./src/**/*.ts\""
+    "pretty": "prettier --write \"./src/**/*.ts\"",
+    "record": "RECORD=1 jest",
+    "trace": "TRACE=1 RECORD=1 jest",
+    "test": "jest"
   },
   "author": "Derivable Labs",
   "license": "MIT",
   "dependencies": {
-    "@ethersproject/providers": "https://gitpkg.now.sh/derivable-labs/ethers.js/packages/providers?master",
+    "@ethersproject/providers": "https://gitpkg.now.sh/derivable-labs/ethers.js/packages/providers?v5.3.5.0",
     "@zoltu/ethereum-crypto": "^2.3.0",
     "@zoltu/ethereum-fetch-json-rpc": "^13.1.4",
     "@zoltu/ethereum-types": "^9.0.4",
@@ -36,6 +39,8 @@
     "node-fetch": "^2.6.7"
   },
   "devDependencies": {
+    "@mswjs/interceptors": "^0.25.13",
+    "@types/jest": "^29.5.11",
     "@types/lodash": "^4.14.179",
     "@types/node-fetch": "^2.6.1",
     "@typescript-eslint/eslint-plugin": "^2.26.0",
@@ -50,7 +55,10 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-react": "^7.17.0",
     "eslint-plugin-standard": "^4.0.1",
+    "jest": "^29.7.0",
+    "object-hash": "^3.0.0",
     "prettier": "2.8.8",
+    "ts-jest": "^29.1.1",
     "typescript": "4"
   }
 }

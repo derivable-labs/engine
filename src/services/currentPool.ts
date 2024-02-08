@@ -6,10 +6,10 @@ export type PoolData = {
   baseToken: string
   quoteToken: string
   cToken: string
-  dTokens: string[]
+  dTokens: Array<string>
   cTokenPrice: number
   states: any
-  powers: number[]
+  powers: Array<number>
   basePrice: string
   poolAddress: string
   baseId: number
@@ -23,9 +23,9 @@ export class CurrentPool {
   baseToken: string
   quoteToken: string
   TOKEN: string
-  dTokens: string[]
+  dTokens: Array<string>
   states: any
-  powers: number[]
+  powers: Array<number>
   basePrice: string
   poolAddress?: string
   chainId: number
@@ -37,6 +37,8 @@ export class CurrentPool {
 
   initCurrentPoolData(poolData: PoolData) {
     for (let i in poolData) {
+      // @ts-ignore
+      // TODO: Logic checking & review
       this[i] = poolData[i]
     }
   }

@@ -1,147 +1,162 @@
-import { bn, getErc1155Token, getNormalAddress, packId } from '../utils/helper'
-import { ethers } from 'ethers'
-import { Multicall } from 'ethereum-multicall'
-import { LARGE_VALUE } from '../utils/constant'
+import { bn, getTopics, isErc1155Address } from '../utils/helper'
+import { BigNumber } from 'ethers'
+import { LARGE_VALUE, NATIVE_ADDRESS } from '../utils/constant'
 import BnAAbi from '../abi/BnA.json'
-import TokenAbi from '../abi/Token.json'
 import { AllowancesType, BalancesType, MaturitiesType } from '../types'
-import { IDerivableContractAddress, IEngineConfig } from '../utils/configs'
-import { unpackId } from '../utils/number'
+import { IEngineConfig } from '../utils/configs'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { Profile } from '../profile'
+import { Resource } from './resource'
+import _ from 'lodash'
+import { getAddress } from 'ethers/lib/utils'
 
-type BnAReturnType = { balances: BalancesType; allowances: AllowancesType; maturity: MaturitiesType }
+const TOPICS = getTopics()
+
+function keyFromTokenId(id: BigNumber): string {
+  const s = id.toHexString()
+  const side = Number.parseInt(s.substring(2, 4), 16)
+  const pool = getAddress('0x' + s.substring(4))
+  return pool + '-' + side
+}
+
+export type BnAReturnType = {
+  chainId: number
+  account: string
+  balances: BalancesType
+  allowances: AllowancesType
+  maturity: MaturitiesType
+}
 
 export class BnA {
-  chainId: number
   account?: string
-  provider: ethers.providers.Provider
+  provider: JsonRpcProvider
   rpcUrl: string
   bnAAddress: string
   profile: Profile
+  RESOURCE: Resource
 
-  constructor(config: IEngineConfig, profile: Profile) {
-    this.chainId = config.chainId
-    this.account = config.account
+  constructor(config: IEngineConfig  & { RESOURCE: Resource }, profile: Profile) {
+    this.account = config.account ?? config.signer?._address
     this.provider = new JsonRpcProvider(profile.configs.rpc)
-    this.bnAAddress = '0x' + BnAAbi.deployedBytecode.slice(-40)
+    this.bnAAddress = `0x${BnAAbi.deployedBytecode.slice(-40)}`
     this.profile = profile
+    this.RESOURCE = config.RESOURCE
   }
 
-  async getBalanceAndAllowance({ tokens }: any): Promise<BnAReturnType> {
-    if (this.account) {
-      // @ts-ignore
-      this.provider.setStateOverride({
-        [this.bnAAddress as string]: {
-          code: BnAAbi.deployedBytecode,
-        },
-      })
-
-      const multicall = new Multicall({
-        multicallCustomContractAddress: this.profile.configs.helperContract.multiCall,
-        ethersProvider: this.provider,
-        tryAggregate: true,
-      })
-      const erc20Tokens = getNormalAddress(tokens)
-      const erc1155Tokens = getErc1155Token(tokens)
-      const multiCallRequest = this.getBnAMulticallRequest({
-        erc20Tokens,
-        erc1155Tokens,
-      })
-      const { results } = await multicall.call(multiCallRequest)
-
-      return this.parseBnAMultiRes(erc20Tokens, erc1155Tokens, results)
+  // TODO: change tokens to a bool flag for native balance
+  async getBalanceAndAllowance(tokens: Array<string>): Promise<BnAReturnType> {
+    if (!this.account) {
+      throw new Error('missing account')
     }
-    return { balances: {}, allowances: {}, maturity: {} }
-  }
-
-  getBnAMulticallRequest({ erc20Tokens, erc1155Tokens }: { erc20Tokens: string[]; erc1155Tokens: { [key: string]: string[] } }) {
-    const packs = []
-    const accounts = []
-    for (const poolAddress in erc1155Tokens) {
-      for (let side of erc1155Tokens[poolAddress]) {
-        packs.push(packId(side, poolAddress))
-        accounts.push(this.account)
+    try {
+      // get native balance
+      let nativeBalancePromise: Promise<BigNumber> | undefined
+      if (tokens.includes(NATIVE_ADDRESS)) {
+        nativeBalancePromise = this.provider.getBalance(this.account)
       }
-    }
 
-    const request: any = [
-      {
-        reference: 'erc20',
-        contractAddress: this.bnAAddress,
-        abi: BnAAbi.abi,
-        calls: [
-          {
-            reference: 'bna',
-            methodName: 'getBnA',
-            methodParameters: [erc20Tokens, [this.account], [this.profile.configs.helperContract.utr]],
-          },
-        ],
-      },
-      {
-        reference: 'erc1155',
-        contractAddress: this.profile.configs.derivable.token,
-        abi: TokenAbi,
-        calls: [
-          {
-            reference: 'balanceOfBatch',
-            methodName: 'balanceOfBatch',
-            methodParameters: [accounts, packs],
-          },
-          {
-            reference: 'isApprovedForAll',
-            methodName: 'isApprovedForAll',
-            methodParameters: [this.account, this.profile.configs.helperContract.utr],
-          },
-        ],
-      },
-    ]
+      const balances: { [token: string]: BigNumber } = {}
+      const allowances: AllowancesType = {}
+      const maturity: MaturitiesType = {}
 
-    for (let pack of packs) {
-      request[1].calls.push({
-        reference: 'maturityOf-' + pack,
-        methodName: 'maturityOf',
-        methodParameters: [this.account, pack],
-      })
-    }
-
-    return request
-  }
-
-  parseBnAMultiRes(erc20Address: any, erc1155Tokens: any, data: any): BnAReturnType {
-    const maturity: MaturitiesType = {}
-    const balances: BalancesType = {}
-    const allowances: AllowancesType = {}
-    const erc20Info = data.erc20.callsReturnContext[0].returnValues[0]
-    for (let i = 0; i < erc20Address.length; i++) {
-      const address = erc20Address[i]
-      balances[address] = bn(erc20Info[i * 2])
-      allowances[address] = bn(erc20Info[i * 2 + 1])
-    }
-
-    const erc1155BalanceInfo = data.erc1155.callsReturnContext[0].returnValues
-    const erc1155ApproveInfo = data.erc1155.callsReturnContext[1].returnValues[0]
-
-    let index = 0
-    for (let poolAddress in erc1155Tokens) {
-      for (let i = 0; i < erc1155Tokens[poolAddress].length; i++) {
-        const key = poolAddress + '-' + erc1155Tokens[poolAddress][i].toString()
-        allowances[key] = erc1155ApproveInfo ? bn(LARGE_VALUE) : bn(0)
-        balances[key] = bn(erc1155BalanceInfo[index]?.hex ?? 0)
-        ++index
+      const logs = this.RESOURCE.bnaLogs.sort((a, b) =>
+        a.blockNumber - b.blockNumber || a.logIndex - b.logIndex
+      )
+      for (const log of logs) {
+        if (!log.args) {
+          console.error('Unparsed log', log)
+          continue
+        }
+        const token = log.address
+        if (TOPICS.Transfer.includes(log.topics[0])) {
+          const { from, to, value } = log.args
+          if (to == this.account) {
+            balances[token] = (balances[token] ?? bn(0)).add(value)
+          }
+          if (from == this.account) {
+            balances[token] = (balances[token] ?? bn(0)).sub(value)
+          }
+          if (!balances[token] || balances[token].isZero()) {
+            delete balances[token]
+          }
+        }
+        if (TOPICS.Approval.includes(log.topics[0])) {
+          const { owner, spender, value } = log.args
+          if (owner == this.account && spender == this.profile.configs.helperContract.utr) {
+            if (value.isZero()) {
+              delete allowances[token]
+            } else {
+              allowances[token] = value
+            }
+          }
+        }
+        if (token != this.profile.configs.derivable.token) {
+          // not our 1155 token, don't care
+          continue
+        }
+        if (TOPICS.TransferSingle.includes(log.topics[0])) {
+          const { from, to, id, value } = log.args
+          const key = keyFromTokenId(id)
+          allowances[key] = bn(LARGE_VALUE)
+          if (to == this.account) {
+            balances[key] = (balances[key] ?? bn(0)).add(value)
+            maturity[key] = bn(log.timeStamp)
+          }
+          if (from == this.account) {
+            balances[key] = (balances[key] ?? bn(0)).sub(value)
+            if (balances[key].isZero()) {
+              delete balances[key]
+            }
+          }
+        }
+        if (TOPICS.TransferBatch.includes(log.topics[0])) {
+          const { from, to, ids, } = log.args
+          // TODO: where is log.args.values?
+          const values = log.args['4']
+          for (let i = 0; i < ids.length; ++i) {
+            const value = values[i]
+            const key = keyFromTokenId(ids[i])
+            allowances[key] = bn(LARGE_VALUE)
+            if (to == this.account) {
+              balances[key] = (balances[key] ?? bn(0)).add(value)
+              maturity[key] = bn(log.timeStamp)
+            }
+            if (from == this.account) {
+              balances[key] = (balances[key] ?? bn(0)).sub(value)
+              if (balances[key].isZero()) {
+                delete balances[key]
+              }
+            }
+          }
+        }
+        if (TOPICS.ApprovalForAll.includes(log.topics[0])) {
+          // TODO: handle 1155 Approval events
+        }
       }
-    }
-
-    for (let maturityIndex = 2; maturityIndex < data.erc1155.callsReturnContext.length; maturityIndex++) {
-      const responseData = data.erc1155.callsReturnContext[maturityIndex]
-      const { k, p } = unpackId(bn(responseData.reference?.split('-')[1]))
-      maturity[p + '-' + Number(k)] = bn(responseData.returnValues[0]?.hex)
-    }
-
-    return {
-      balances,
-      allowances,
-      maturity,
+      // calculate the MATURITY assume that each 
+      for (const key of Object.keys(balances)) {
+        if (!isErc1155Address(key)) {
+          continue
+        }
+        const [poolAddress] = key.split('-')
+        const MATURIY = this.RESOURCE.pools[poolAddress]?.MATURITY
+        if (MATURIY) {
+          maturity[key] = MATURIY.add(maturity[key] ?? 0)
+        }
+      }
+      // await the native balance response
+      if (nativeBalancePromise) {
+        balances[NATIVE_ADDRESS] = await nativeBalancePromise
+      }
+      return {
+        chainId: this.profile.chainId,
+        account: this.account,
+        balances,
+        allowances,
+        maturity,
+      }
+    } catch (error) {
+      throw error
     }
   }
 }
