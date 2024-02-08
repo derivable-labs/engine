@@ -1167,23 +1167,27 @@ export class Resource {
   }
 
   poolHasOpeningPosition(tokenTransferLogs: Array<LogType>): Array<string> {
-    try {
-      const balances: { [id: string]: BigNumber } = {}
-      tokenTransferLogs.forEach((log) => {
-        const tokenId = log.args.id.toString()
-        if (log.args.from === this.account) {
-          balances[tokenId] = balances[tokenId] ? balances[tokenId].sub(log.args.value) : bn(0).sub(log.args.value)
-          if (balances[tokenId].isZero()) delete balances[tokenId]
-        } else {
-          balances[tokenId] = balances[tokenId] ? balances[tokenId].add(log.args.value) : log.args.value
+    const balances: { [id: string]: BigNumber } = {}
+    tokenTransferLogs.forEach((log) => {
+      const { from, to } = log.args
+      const isBatch = !log.args.id
+      const ids = isBatch ? log.args.ids : [log.args.id]
+      // TODO: where is log.args.values?
+      const values = isBatch ? log.args['4'] : [log.args.value]
+      for (let i = 0; i < ids.length; ++i) {
+        const value = values[i]
+        const id = ids[i].toString()
+        if (from == this.account) {
+          balances[id] = balances[id] ? balances[id].sub(value) : bn(0).sub(value)
+          if (balances[id].isZero()) delete balances[id]
+        } else if (to == this.account) {
+          balances[id] = balances[id] ? balances[id].add(value) : value
         }
-      })
+      }
+    })
 
-      // unpack id to get Pool address
-      return _.uniq(Object.keys(balances).map((id) => unpackId(bn(id)).p))
-    } catch (error) {
-      throw error
-    }
+    // unpack id to get Pool address
+    return _.uniq(Object.keys(balances).map((id) => unpackId(bn(id)).p))
   }
 
   getPoolGroupId({ pair, quoteTokenIndex, tokenR }: GetPoolGroupIdParameterType): string {

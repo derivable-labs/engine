@@ -110,9 +110,12 @@ export class BnA {
           }
         }
         if (TOPICS.TransferBatch.includes(log.topics[0])) {
-          const { from, to, ids, value } = log.args
-          for (const id of ids) {
-            const key = keyFromTokenId(id)
+          const { from, to, ids, } = log.args
+          // TODO: where is log.args.values?
+          const values = log.args['4']
+          for (let i = 0; i < ids.length; ++i) {
+            const value = values[i]
+            const key = keyFromTokenId(ids[i])
             allowances[key] = bn(LARGE_VALUE)
             if (to == this.account) {
               balances[key] = (balances[key] ?? bn(0)).add(value)
