@@ -41,8 +41,6 @@ export class History {
       }
 
       let positions = {}
-      // TODO: logs should be sorted once right after getLogs
-      logs = logs.sort((a, b) => a.blockNumber - b.blockNumber || a.logIndex - b.logIndex)
       logs.forEach((log: LogType) => {
         positions = this.generatePositionBySwapLog(positions, tokens, log)
       })
@@ -266,8 +264,7 @@ export class History {
         }
       })
 
-      // TODO: logs should be sorted once right after getLogs
-      return _swapLogs.filter((l) => l !== null).sort((a, b) => b!.blockNumber - a!.blockNumber || b!.logIndex - a!.logIndex)
+      return _swapLogs.filter((l) => l !== null)
     } catch (e) {
       throw e
     }
