@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from 'ethers'
-import { PoolType, TokenType } from '../types'
+import { LogType, PoolType, TokenType } from '../types'
 import EventsAbi from '../abi/Events.json'
 import { SECONDS_PER_DAY } from './constant'
 
@@ -357,4 +357,50 @@ export const DIV = (a: BigNumber, b: BigNumber, precision = 4): string => {
   a = a.mul(WEI(1, precision))
   const c = truncate(a.div(b).toString(), 0, true)
   return mdp(c, d - precision)
+}
+
+export function compareLog(a: LogType, b: LogType): number {
+  if (a.blockNumber < b.blockNumber) {
+    return -2
+  } else if (a.blockNumber > b.blockNumber) {
+    return 2
+  }
+  if (a.logIndex < b.logIndex) {
+    return -1
+  } else if (a.logIndex > b.logIndex) {
+    return 1
+  }
+  return 0
+}
+
+export function mergeTwoUniqSortedLogs(a: LogType[], b: LogType[]): LogType[] {
+  if (!a?.length) {
+    return b ?? []
+  }
+  if (!b?.length) {
+    return a ?? []
+  }
+  const r: LogType[] = []
+  let i = 0
+  let j = 0
+  while (i < a.length || j < b.length) {
+    if (a[i] == null) {
+      r.push(b[j++])
+      continue
+    }
+    if (b[j] == null) {
+      r.push(a[i++])
+      continue
+    }
+    const c = compareLog(a[i], b[j])
+    if (c < 0) {
+      r.push(a[i++])
+      continue
+    }
+    if (c == 0) {
+      i++
+    }
+    r.push(b[j++])
+  }
+  return r;
 }

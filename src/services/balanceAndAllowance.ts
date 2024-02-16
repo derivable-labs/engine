@@ -59,9 +59,7 @@ export class BnA {
       const allowances: AllowancesType = {}
       const maturity: MaturitiesType = {}
 
-      const logs = this.RESOURCE.bnaLogs.sort((a, b) =>
-        a.blockNumber - b.blockNumber || a.logIndex - b.logIndex
-      )
+      const logs = this.RESOURCE.bnaLogs
       for (const log of logs) {
         if (!log.args) {
           console.error('Unparsed log', log)

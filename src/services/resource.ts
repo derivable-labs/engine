@@ -2,7 +2,7 @@ import { BigNumber, Contract, ethers } from 'ethers'
 import { LOCALSTORAGE_KEY, POOL_IDS, ZERO_ADDRESS } from '../utils/constant'
 import { ContractCallContext, Multicall } from 'ethereum-multicall'
 import { LogType, PoolGroupsType, PoolsType, PoolType, Storage, TokenType } from '../types'
-import { bn, div, formatMultiCallBignumber, getNormalAddress, getTopics, kx, rateFromHL, parsePrice } from '../utils/helper'
+import { bn, div, formatMultiCallBignumber, getNormalAddress, getTopics, kx, rateFromHL, parsePrice, mergeTwoUniqSortedLogs } from '../utils/helper'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import _, { concat, uniqBy } from 'lodash'
 import { IPairInfo, IPairsInfo, UniV3Pair } from './uniV3Pair'
@@ -192,10 +192,7 @@ export class Resource {
     const blockKey = `${this.chainId}-${LOCALSTORAGE_KEY.ACCOUNT_BLOCK_LOGS}-${account}`
 
     const cachedogs = JSON.parse(this.storage.getItem(key) || '[]')
-    const newCacheSwapLogs = [...logs, ...cachedogs].filter((log, index, self) => {
-      return index === self.findIndex((t) => t.logIndex === log.logIndex && t.transactionHash === log.transactionHash)
-    })
-    // TODO: sort the newCacheSwapLogs here?
+    const newCacheSwapLogs = mergeTwoUniqSortedLogs(cachedogs, logs)
     this.storage.setItem(blockKey, headBlock.toString())
     this.storage.setItem(key, JSON.stringify(newCacheSwapLogs))
   }
@@ -310,9 +307,9 @@ export class Resource {
         results.poolGroups = poolGroups
       }
 
-      this.swapLogs = this.swapLogs.concat(results.swapLogs)
-      this.transferLogs = this.transferLogs.concat(results.transferLogs)
-      this.bnaLogs = this.bnaLogs.concat(results.bnaLogs)
+      this.swapLogs = mergeTwoUniqSortedLogs(this.swapLogs, results.swapLogs)
+      this.transferLogs = mergeTwoUniqSortedLogs(this.transferLogs, results.transferLogs)
+      this.bnaLogs = mergeTwoUniqSortedLogs(this.bnaLogs, results.bnaLogs)
 
       return results
     } catch (error) {
@@ -436,9 +433,9 @@ export class Resource {
           // this.poolGroups = {...this.poolGroups, ...result.poolGroups}
           // this.pools = {...this.pools, ...result.pools}
           // this.tokens = [...this.tokens, ...result.tokens]
-          this.swapLogs = this.swapLogs.concat(result.swapLogs)
-          this.transferLogs = this.transferLogs.concat(result.transferLogs)
-          this.bnaLogs = this.bnaLogs.concat(result.bnaLogs)
+          this.swapLogs = mergeTwoUniqSortedLogs(this.swapLogs, result.swapLogs)
+          this.transferLogs = mergeTwoUniqSortedLogs(this.transferLogs, result.transferLogs)
+          this.bnaLogs = mergeTwoUniqSortedLogs(this.bnaLogs, result.bnaLogs)
 
           return result
         })
