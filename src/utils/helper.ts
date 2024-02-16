@@ -380,29 +380,27 @@ export function mergeTwoUniqSortedLogs(a: LogType[], b: LogType[]): LogType[] {
   if (!b?.length) {
     return a ?? []
   }
-  const r = []
-  const i = {
-    a: 0,
-    b: 0
-  }
-  while (i.a < a.length || i.b < b.length) {
-    if (a[i.a] == null) {
-      r.push(b[i.b++])
+  const r: LogType[] = []
+  let i = 0
+  let j = 0
+  while (i < a.length || j < b.length) {
+    if (a[i] == null) {
+      r.push(b[j++])
       continue
     }
-    if (b[i.b] == null) {
-      r.push(a[i.a++])
+    if (b[j] == null) {
+      r.push(a[i++])
       continue
     }
-    const c = compareLog(a[i.a], b[i.b])
+    const c = compareLog(a[i], b[j])
     if (c < 0) {
-      r.push(a[i.a++])
+      r.push(a[i++])
       continue
     }
     if (c == 0) {
-      i.a++
+      i++
     }
-    r.push(b[i.b++])
+    r.push(b[j++])
   }
   return r;
 }
