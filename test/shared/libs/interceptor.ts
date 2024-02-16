@@ -13,9 +13,19 @@ export function Interceptor() {
     interceptors: [new ClientRequestInterceptor()],
   })
   this.context = ''
+  this.requests = {}
+  this.responses = {}
 
   this.setContext = (context: string) => {
     this.context = (context ?? '').replace(/\s/g, "_");
+  }
+
+  this.orphanedRequests = (): any => {
+    const requests = {...this.requests}
+    for (const requestId of Object.keys(this.responses)) {
+      delete requests[requestId]
+    }
+    return requests
   }
 
   this.getResourcePath = (requestId: string, createFolder: boolean = false): string => {
@@ -36,6 +46,7 @@ export function Interceptor() {
     }
     try {
       const requestId = await calcRequestID(request)
+      this.requests[requestId] = request
       const resourcePath = this.getResourcePath(requestId)
       if (fs.existsSync(resourcePath)) {
         const resourceData = fs.readFileSync(resourcePath, 'utf8')
@@ -65,6 +76,7 @@ export function Interceptor() {
 
   this.interceptor.on('response', async ({ response, isMockedResponse, request }) => {
     const requestId = await calcRequestID(request)
+    this.responses[requestId] = response
     const resourcePath = this.getResourcePath(requestId, true)
     if (!this.context) {
       if (process.env.TRACE) {
