@@ -11,6 +11,7 @@ import _ from "lodash";
 import { TestConfiguration } from './shared/configurations/configurations'
 
 import { Interceptor } from './shared/libs/interceptor'
+import { Engine } from '../src/engine'
 const interceptor = new Interceptor()
 
 const confs = new TestConfiguration()
@@ -127,6 +128,18 @@ describe('Derivable Tools', () => {
     const pool = resource.newResource.pools[poolAddress] ?? resource.whiteListResource.pools[poolAddress] ?? resource.cacheResource.pools[poolAddress]
     expect(pool).toBeDefined()
     expect(pool?.riskFactor).toEqual('-0.005637139247406234')
+  })
+
+  test('search-bsc', async () => {
+    const configs = genConfig(56, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df')
+    const engine = new Engine(configs)
+    await engine.initServices()
+
+    const idxs = await engine.RESOURCE.searchIndex('CAKE')
+
+    const keys = Object.keys(idxs)
+    expect(keys.length).toEqual(2)
+    expect(idxs[keys[1]].pools.length).toEqual(4)
   })
 
   test('History', async () => {
