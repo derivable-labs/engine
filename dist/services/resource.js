@@ -116,10 +116,7 @@ class Resource {
         const key = `${this.chainId}-${constant_1.LOCALSTORAGE_KEY.ACCOUNT_LOGS}-${account}`;
         const blockKey = `${this.chainId}-${constant_1.LOCALSTORAGE_KEY.ACCOUNT_BLOCK_LOGS}-${account}`;
         const cachedogs = JSON.parse(this.storage.getItem(key) || '[]');
-        const newCacheSwapLogs = [...logs, ...cachedogs].filter((log, index, self) => {
-            return index === self.findIndex((t) => t.logIndex === log.logIndex && t.transactionHash === log.transactionHash);
-        });
-        // TODO: sort the newCacheSwapLogs here?
+        const newCacheSwapLogs = (0, helper_1.mergeTwoUniqSortedLogs)(cachedogs, logs);
         this.storage.setItem(blockKey, headBlock.toString());
         this.storage.setItem(key, JSON.stringify(newCacheSwapLogs));
     }
@@ -215,9 +212,9 @@ class Resource {
                 results.pools = pools;
                 results.poolGroups = poolGroups;
             }
-            this.swapLogs = this.swapLogs.concat(results.swapLogs);
-            this.transferLogs = this.transferLogs.concat(results.transferLogs);
-            this.bnaLogs = this.bnaLogs.concat(results.bnaLogs);
+            this.swapLogs = (0, helper_1.mergeTwoUniqSortedLogs)(this.swapLogs, results.swapLogs);
+            this.transferLogs = (0, helper_1.mergeTwoUniqSortedLogs)(this.transferLogs, results.transferLogs);
+            this.bnaLogs = (0, helper_1.mergeTwoUniqSortedLogs)(this.bnaLogs, results.bnaLogs);
             return results;
         }
         catch (error) {
@@ -328,9 +325,9 @@ class Resource {
                 // this.poolGroups = {...this.poolGroups, ...result.poolGroups}
                 // this.pools = {...this.pools, ...result.pools}
                 // this.tokens = [...this.tokens, ...result.tokens]
-                this.swapLogs = this.swapLogs.concat(result.swapLogs);
-                this.transferLogs = this.transferLogs.concat(result.transferLogs);
-                this.bnaLogs = this.bnaLogs.concat(result.bnaLogs);
+                this.swapLogs = (0, helper_1.mergeTwoUniqSortedLogs)(this.swapLogs, result.swapLogs);
+                this.transferLogs = (0, helper_1.mergeTwoUniqSortedLogs)(this.transferLogs, result.transferLogs);
+                this.bnaLogs = (0, helper_1.mergeTwoUniqSortedLogs)(this.bnaLogs, result.bnaLogs);
                 return result;
             })
                 .catch((e) => {

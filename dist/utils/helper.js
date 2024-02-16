@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DIV = exports.WEI = exports.IEW = exports.round = exports.truncate = exports.BIG = exports.NUM = exports.STR = exports.kx = exports.rateFromHL = exports.rateToHL = exports.getTopics = exports.mergeDeep = exports.parseSqrtX96 = exports.parsePrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.max = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
+exports.mergeTwoUniqSortedLogs = exports.compareLog = exports.DIV = exports.WEI = exports.IEW = exports.round = exports.truncate = exports.BIG = exports.NUM = exports.STR = exports.kx = exports.rateFromHL = exports.rateToHL = exports.getTopics = exports.mergeDeep = exports.parseSqrtX96 = exports.parsePrice = exports.parseUq128x128 = exports.packId = exports.detectDecimalFromPrice = exports.add = exports.max = exports.div = exports.sub = exports.mul = exports.formatPercent = exports.formatFloat = exports.getNormalAddress = exports.isErc1155Address = exports.getErc1155Token = exports.formatMultiCallBignumber = exports.decodePowers = exports.numberToWei = exports.weiToNumber = exports.bn = exports.provider = void 0;
 const ethers_1 = require("ethers");
 const Events_json_1 = __importDefault(require("../abi/Events.json"));
 const constant_1 = require("./constant");
@@ -363,4 +363,52 @@ const DIV = (a, b, precision = 4) => {
     return mdp(c, d - precision);
 };
 exports.DIV = DIV;
+function compareLog(a, b) {
+    if (a.blockNumber < b.blockNumber) {
+        return -2;
+    }
+    else if (a.blockNumber > b.blockNumber) {
+        return 2;
+    }
+    if (a.logIndex < b.logIndex) {
+        return -1;
+    }
+    else if (a.logIndex > b.logIndex) {
+        return 1;
+    }
+    return 0;
+}
+exports.compareLog = compareLog;
+function mergeTwoUniqSortedLogs(a, b) {
+    if (!a?.length) {
+        return b ?? [];
+    }
+    if (!b?.length) {
+        return a ?? [];
+    }
+    const r = [];
+    let i = 0;
+    let j = 0;
+    while (i < a.length || j < b.length) {
+        if (a[i] == null) {
+            r.push(b[j++]);
+            continue;
+        }
+        if (b[j] == null) {
+            r.push(a[i++]);
+            continue;
+        }
+        const c = compareLog(a[i], b[j]);
+        if (c < 0) {
+            r.push(a[i++]);
+            continue;
+        }
+        if (c == 0) {
+            i++;
+        }
+        r.push(b[j++]);
+    }
+    return r;
+}
+exports.mergeTwoUniqSortedLogs = mergeTwoUniqSortedLogs;
 //# sourceMappingURL=helper.js.map

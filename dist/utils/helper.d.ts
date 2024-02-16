@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from 'ethers';
-import { PoolType, TokenType } from '../types';
+import { LogType, PoolType, TokenType } from '../types';
 export declare const provider: ethers.providers.JsonRpcProvider;
 export declare const bn: typeof BigNumber.from;
 export declare const weiToNumber: (wei: any, decimals?: number, decimalToDisplay?: number) => string;
@@ -42,3 +42,5 @@ export declare const round: (num: string, decimals?: number) => string;
 export declare const IEW: (wei: BigNumber | string, decimals?: number, decimalsToDisplay?: number) => string;
 export declare const WEI: (num: number | string, decimals?: number) => string;
 export declare const DIV: (a: BigNumber, b: BigNumber, precision?: number) => string;
+export declare function compareLog(a: LogType, b: LogType): number;
+export declare function mergeTwoUniqSortedLogs(a: LogType[], b: LogType[]): LogType[];
