@@ -20,6 +20,14 @@ const TestConfigs = {
     signer: wallet,
     env: 'development'
   },
+  [204]: {
+    chainId: 204,
+    scanApi: 'https://api-opbnb.bscscan.com/api',
+    rpcUrl: 'https://opbnb-mainnet-rpc.bnbchain.org',
+    account,
+    signer: wallet,
+    env: 'development'
+  },
   [42161]: {
     chainId: 42161,
     scanApi: 'https://api.arbiscan.io/api',
