@@ -23,6 +23,14 @@ export class TestConfiguration {
       env: 'development',
     }
 
+    this.conf[204] = {
+      chainId: 204,
+      scanApiKey: process.env['SCAN_API_KEY_204'] ?? '',
+      scanApi: process.env['SCAN_API_URL_204'] ?? '',
+      rpcUrl: process.env['RPC_URL_204'] ?? 'https://opbnb-mainnet-rpc.bnbchain.org',
+      env: 'development',
+    }
+
     this.conf[42161] = {
       chainId: 42161,
       scanApiKey: process.env['SCAN_API_KEY_42161'] ?? '',

@@ -45,6 +45,15 @@ describe('Price Service', () => {
     expect(prices['0x82aF49447D8a07e3bd95BD0d56f35241523fBab1']).toEqual('2296.788233358644033792718165')
   })
 
+  test('get tokens price on router.json opbnb', async () => {
+    const chainId = 204
+    const engine = await getEngine(chainId)
+    await engine.RESOURCE.getWhiteListResource([])
+    const prices = await engine.PRICE.getTokenPriceByRoutes()
+
+    expect(prices['0x4200000000000000000000000000000000000006']).toEqual('397.350255852609982230506832479228433617')
+  })
+
   test('get tokens price on router.json bsc', async () => {
     const chainId = 56
     const engine = await getEngine(chainId)
