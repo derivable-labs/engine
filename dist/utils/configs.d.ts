@@ -23,6 +23,7 @@ export interface INetworkConfig {
     gasForProof: number;
     name: string;
     gtID: string;
+    dextoolsID?: string;
     nativeSymbol: string;
     wrappedTokenAddress: string;
     nativePriceUSD: number;
