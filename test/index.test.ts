@@ -130,6 +130,18 @@ describe('Derivable Tools', () => {
     expect(pool?.riskFactor).toEqual('-0.005637139247406234')
   })
 
+  test('Resource-opbnb', async () => {
+    const poolAddress = '0x425a2D1Bb983614d0866410A5fB14ac9ddE7927e'
+    const resource = await getResource(
+      genConfig(204, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'),
+      [poolAddress],
+    )
+
+    const pool = resource.newResource.pools[poolAddress] ?? resource.whiteListResource.pools[poolAddress] ?? resource.cacheResource.pools[poolAddress]
+    expect(pool).toBeDefined()
+    expect(pool?.riskFactor).toEqual('14.238916024088980636')
+  })
+
   test('search-bsc', async () => {
     const configs = genConfig(56, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df')
     const engine = new Engine(configs)
