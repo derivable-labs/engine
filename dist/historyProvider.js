@@ -30,14 +30,13 @@ exports.resolutionToPeriod = {
 };
 exports.default = {
     history: history,
-    getBars: function ({ route, resolution, inputToken, outputToken, limit, chainId, to, barValueType, }) {
+    getBars: async function ({ route, resolution, inputToken, outputToken, limit, chainId, to, barValueType, }) {
         const q = route.split('/').join(',');
         const url = `${CHART_API_ENDPOINT.replaceAll('{chartId}', chainId)}candleline4?q=${q}&r=${convertResolution(resolution)}&l=${limit}&t=${to}`;
-        return (0, node_fetch_1.default)(url)
-            .then((r) => r.json())
-            .then((response) => {
-            const bars = [];
+        try {
+            const response = await (0, node_fetch_1.default)(url).then((r) => r.json());
             if (response && response.s === 'ok' && response.t && response.t.length > 0) {
+                const bars = [];
                 const decimals = 18 + (outputToken?.decimals || 18) - (inputToken?.decimals || 18);
                 for (let i = 0; i < response.t.length; i++) {
                     bars.push({
@@ -51,14 +50,11 @@ exports.default = {
                 }
                 return bars;
             }
-            else {
-                return [];
-            }
-        })
-            .catch((e) => {
+        }
+        catch (e) {
             console.error(e);
-            return [];
-        });
+        }
+        return [];
     },
 };
 const formatResult = (value, type) => {
