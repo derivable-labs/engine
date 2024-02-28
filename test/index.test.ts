@@ -142,6 +142,18 @@ describe('Derivable Tools', () => {
     expect(idxs[keys[1]].pools.length).toEqual(4)
   })
 
+  test('search-opbnb', async () => {
+    const configs = genConfig(204, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df')
+    const engine = new Engine(configs)
+    await engine.initServices()
+
+    const idxs = await engine.RESOURCE.searchIndex('UI')
+
+    const keys = Object.keys(idxs)
+    expect(keys.length).toEqual(1)
+    expect(idxs[keys[0]].pools.length).toEqual(1)
+  })
+
   test('History', async () => {
     const { swapTxs, positions } = await history(
       genConfig(42161, '0xE61383556642AF1Bd7c5756b13f19A63Dc8601df'),
