@@ -25,6 +25,7 @@ export interface INetworkConfig {
   gasForProof: number
   name: string
   gtID: string
+  dextoolsID?: string // fallback to gtID
   nativeSymbol: string
   wrappedTokenAddress: string
   nativePriceUSD: number
