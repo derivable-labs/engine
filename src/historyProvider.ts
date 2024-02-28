@@ -53,7 +53,7 @@ type GetPricesType = {
 export default {
   history: history,
 
-  getBars: function ({
+  getBars: async function ({
     route,
     resolution,
     inputToken,
@@ -77,31 +77,27 @@ export default {
       resolution,
     )}&l=${limit}&t=${to}`
 
-    return fetch(url)
-      .then((r: any) => r.json())
-      .then((response: CandleFromApiType) => {
+    try {
+      const response = await fetch(url).then((r: any) => r.json())
+      if (response && response.s === 'ok' && response.t && response.t.length > 0) {
         const bars: CandleType[] = []
-        if (response && response.s === 'ok' && response.t && response.t.length > 0) {
-          const decimals = 18 + (outputToken?.decimals || 18) - (inputToken?.decimals || 18)
-          for (let i = 0; i < response.t.length; i++) {
-            bars.push({
-              low: formatResult(weiToNumber(numberToWei(response.l[i]), decimals), barValueType),
-              open: formatResult(weiToNumber(numberToWei(response.o[i]), decimals), barValueType),
-              time: response.t[i] * 1000,
-              volume: formatResult(weiToNumber(response.v[i].split('.')[0], outputToken?.decimals), barValueType),
-              close: formatResult(weiToNumber(numberToWei(response.c[i]), decimals), barValueType),
-              high: formatResult(weiToNumber(numberToWei(response.h[i]), decimals), barValueType),
-            })
-          }
-          return bars
-        } else {
-          return []
+        const decimals = 18 + (outputToken?.decimals || 18) - (inputToken?.decimals || 18)
+        for (let i = 0; i < response.t.length; i++) {
+          bars.push({
+            low: formatResult(weiToNumber(numberToWei(response.l[i]), decimals), barValueType),
+            open: formatResult(weiToNumber(numberToWei(response.o[i]), decimals), barValueType),
+            time: response.t[i] * 1000,
+            volume: formatResult(weiToNumber(response.v[i].split('.')[0], outputToken?.decimals), barValueType),
+            close: formatResult(weiToNumber(numberToWei(response.c[i]), decimals), barValueType),
+            high: formatResult(weiToNumber(numberToWei(response.h[i]), decimals), barValueType),
+          })
         }
-      })
-      .catch((e: any) => {
-        console.error(e)
-        return []
-      })
+        return bars
+      }
+    } catch (e) {
+      console.error(e)
+    }
+    return []
   },
 }
 
