@@ -1042,17 +1042,19 @@ export class Resource {
   }
 
   parseDdlLogs(ddlLogs: any): Array<LogType> {
-    try {
-      const eventInterface = new ethers.utils.Interface(this.profile.getAbi('Events'))
-      return ddlLogs.map((log: any) => {
+    const eventInterface = new ethers.utils.Interface(this.profile.getAbi('Events'))
+    return ddlLogs.map((log: any) => {
+      try {
+        const parsedLog = eventInterface.parseLog(log)
         return {
           ...log,
-          ...eventInterface.parseLog(log),
+          ...parsedLog,
         }
-      })
-    } catch (error) {
-      throw error
-    }
+      } catch (err) {
+        console.error('Failed to parse log', err, log)
+      }
+      return undefined
+    }).filter((log: any) => log != null)
   }
 
   _tokenInRoutes(): Array<string> {
