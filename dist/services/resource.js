@@ -878,18 +878,20 @@ class Resource {
         }
     }
     parseDdlLogs(ddlLogs) {
-        try {
-            const eventInterface = new ethers_1.ethers.utils.Interface(this.profile.getAbi('Events'));
-            return ddlLogs.map((log) => {
+        const eventInterface = new ethers_1.ethers.utils.Interface(this.profile.getAbi('Events'));
+        return ddlLogs.map((log) => {
+            try {
+                const parsedLog = eventInterface.parseLog(log);
                 return {
                     ...log,
-                    ...eventInterface.parseLog(log),
+                    ...parsedLog,
                 };
-            });
-        }
-        catch (error) {
-            throw error;
-        }
+            }
+            catch (err) {
+                console.error('Failed to parse log', err, log);
+            }
+            return undefined;
+        }).filter((log) => log != null);
     }
     _tokenInRoutes() {
         try {
