@@ -8,10 +8,9 @@ export type BnAReturnType = {
     account: string;
     balances: BalancesType;
     allowances: AllowancesType;
-    maturity: MaturitiesType;
+    maturities: MaturitiesType;
 };
 export declare class BnA {
-    account?: string;
     provider: JsonRpcProvider;
     rpcUrl: string;
     bnAAddress: string;
@@ -20,5 +19,5 @@ export declare class BnA {
     constructor(config: IEngineConfig & {
         RESOURCE: Resource;
     }, profile: Profile);
-    getBalanceAndAllowance(tokens: Array<string>): Promise<BnAReturnType>;
+    getBalanceAndAllowance(account: string, withNative?: boolean): Promise<BnAReturnType>;
 }

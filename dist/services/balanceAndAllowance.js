@@ -18,26 +18,25 @@ function keyFromTokenId(id) {
 }
 class BnA {
     constructor(config, profile) {
-        this.account = config.account ?? config.signer?._address;
         this.provider = new providers_1.JsonRpcProvider(profile.configs.rpc);
         this.bnAAddress = `0x${BnA_json_1.default.deployedBytecode.slice(-40)}`;
         this.profile = profile;
         this.RESOURCE = config.RESOURCE;
     }
     // TODO: change tokens to a bool flag for native balance
-    async getBalanceAndAllowance(tokens) {
-        if (!this.account) {
+    async getBalanceAndAllowance(account, withNative = false) {
+        if (!account) {
             throw new Error('missing account');
         }
         try {
             // get native balance
             let nativeBalancePromise;
-            if (tokens.includes(constant_1.NATIVE_ADDRESS)) {
-                nativeBalancePromise = this.provider.getBalance(this.account);
+            if (withNative) {
+                nativeBalancePromise = this.provider.getBalance((account) || '');
             }
             const balances = {};
             const allowances = {};
-            const maturity = {};
+            const maturities = {};
             const logs = this.RESOURCE.bnaLogs;
             for (const log of logs) {
                 if (!log.args) {
@@ -47,10 +46,10 @@ class BnA {
                 const token = log.address;
                 if (TOPICS.Transfer.includes(log.topics[0])) {
                     const { from, to, value } = log.args;
-                    if (to == this.account) {
+                    if (to == account) {
                         balances[token] = (balances[token] ?? (0, helper_1.bn)(0)).add(value);
                     }
-                    if (from == this.account) {
+                    if (from == account) {
                         balances[token] = (balances[token] ?? (0, helper_1.bn)(0)).sub(value);
                     }
                     if (!balances[token] || balances[token].isZero()) {
@@ -59,7 +58,7 @@ class BnA {
                 }
                 if (TOPICS.Approval.includes(log.topics[0])) {
                     const { owner, spender, value } = log.args;
-                    if (owner == this.account && spender == this.profile.configs.helperContract.utr) {
+                    if (owner == account && spender == this.profile.configs.helperContract.utr) {
                         if (value.isZero()) {
                             delete allowances[token];
                         }
@@ -76,11 +75,11 @@ class BnA {
                     const { from, to, id, value } = log.args;
                     const key = keyFromTokenId(id);
                     allowances[key] = (0, helper_1.bn)(constant_1.LARGE_VALUE);
-                    if (to == this.account) {
+                    if (to == account) {
                         balances[key] = (balances[key] ?? (0, helper_1.bn)(0)).add(value);
-                        maturity[key] = (0, helper_1.bn)(log.timeStamp);
+                        maturities[key] = (0, helper_1.bn)(log.timeStamp);
                     }
-                    if (from == this.account) {
+                    if (from == account) {
                         balances[key] = (balances[key] ?? (0, helper_1.bn)(0)).sub(value);
                         if (balances[key].isZero()) {
                             delete balances[key];
@@ -95,11 +94,11 @@ class BnA {
                         const value = values[i];
                         const key = keyFromTokenId(ids[i]);
                         allowances[key] = (0, helper_1.bn)(constant_1.LARGE_VALUE);
-                        if (to == this.account) {
+                        if (to == account) {
                             balances[key] = (balances[key] ?? (0, helper_1.bn)(0)).add(value);
-                            maturity[key] = (0, helper_1.bn)(log.timeStamp);
+                            maturities[key] = (0, helper_1.bn)(log.timeStamp);
                         }
-                        if (from == this.account) {
+                        if (from == account) {
                             balances[key] = (balances[key] ?? (0, helper_1.bn)(0)).sub(value);
                             if (balances[key].isZero()) {
                                 delete balances[key];
@@ -119,7 +118,7 @@ class BnA {
                 const [poolAddress] = key.split('-');
                 const MATURIY = this.RESOURCE.pools[poolAddress]?.MATURITY;
                 if (MATURIY) {
-                    maturity[key] = MATURIY.add(maturity[key] ?? 0);
+                    maturities[key] = MATURIY.add(maturities[key] ?? 0);
                 }
             }
             // await the native balance response
@@ -128,10 +127,10 @@ class BnA {
             }
             return {
                 chainId: this.profile.chainId,
-                account: this.account,
+                account,
                 balances,
                 allowances,
-                maturity,
+                maturities,
             };
         }
         catch (error) {
