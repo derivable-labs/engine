@@ -24,11 +24,10 @@ export type BnAReturnType = {
   account: string
   balances: BalancesType
   allowances: AllowancesType
-  maturity: MaturitiesType
+  maturities: MaturitiesType
 }
 
 export class BnA {
-  account?: string
   provider: JsonRpcProvider
   rpcUrl: string
   bnAAddress: string
@@ -36,7 +35,6 @@ export class BnA {
   RESOURCE: Resource
 
   constructor(config: IEngineConfig  & { RESOURCE: Resource }, profile: Profile) {
-    this.account = config.account ?? config.signer?._address
     this.provider = new JsonRpcProvider(profile.configs.rpc)
     this.bnAAddress = `0x${BnAAbi.deployedBytecode.slice(-40)}`
     this.profile = profile
@@ -44,20 +42,20 @@ export class BnA {
   }
 
   // TODO: change tokens to a bool flag for native balance
-  async getBalanceAndAllowance(tokens: Array<string>): Promise<BnAReturnType> {
-    if (!this.account) {
+  async getBalanceAndAllowance(account: string, withNative: boolean = false): Promise<BnAReturnType> {
+    if (!account) {
       throw new Error('missing account')
     }
     try {
       // get native balance
       let nativeBalancePromise: Promise<BigNumber> | undefined
-      if (tokens.includes(NATIVE_ADDRESS)) {
-        nativeBalancePromise = this.provider.getBalance(this.account)
+      if (withNative) {
+        nativeBalancePromise = this.provider.getBalance((account) || '')
       }
 
       const balances: { [token: string]: BigNumber } = {}
       const allowances: AllowancesType = {}
-      const maturity: MaturitiesType = {}
+      const maturities: MaturitiesType = {}
 
       const logs = this.RESOURCE.bnaLogs
       for (const log of logs) {
@@ -68,10 +66,10 @@ export class BnA {
         const token = log.address
         if (TOPICS.Transfer.includes(log.topics[0])) {
           const { from, to, value } = log.args
-          if (to == this.account) {
+          if (to == account) {
             balances[token] = (balances[token] ?? bn(0)).add(value)
           }
-          if (from == this.account) {
+          if (from == account) {
             balances[token] = (balances[token] ?? bn(0)).sub(value)
           }
           if (!balances[token] || balances[token].isZero()) {
@@ -80,7 +78,7 @@ export class BnA {
         }
         if (TOPICS.Approval.includes(log.topics[0])) {
           const { owner, spender, value } = log.args
-          if (owner == this.account && spender == this.profile.configs.helperContract.utr) {
+          if (owner == account && spender == this.profile.configs.helperContract.utr) {
             if (value.isZero()) {
               delete allowances[token]
             } else {
@@ -96,11 +94,11 @@ export class BnA {
           const { from, to, id, value } = log.args
           const key = keyFromTokenId(id)
           allowances[key] = bn(LARGE_VALUE)
-          if (to == this.account) {
+          if (to == account) {
             balances[key] = (balances[key] ?? bn(0)).add(value)
-            maturity[key] = bn(log.timeStamp)
+            maturities[key] = bn(log.timeStamp)
           }
-          if (from == this.account) {
+          if (from == account) {
             balances[key] = (balances[key] ?? bn(0)).sub(value)
             if (balances[key].isZero()) {
               delete balances[key]
@@ -115,11 +113,11 @@ export class BnA {
             const value = values[i]
             const key = keyFromTokenId(ids[i])
             allowances[key] = bn(LARGE_VALUE)
-            if (to == this.account) {
+            if (to == account) {
               balances[key] = (balances[key] ?? bn(0)).add(value)
-              maturity[key] = bn(log.timeStamp)
+              maturities[key] = bn(log.timeStamp)
             }
-            if (from == this.account) {
+            if (from == account) {
               balances[key] = (balances[key] ?? bn(0)).sub(value)
               if (balances[key].isZero()) {
                 delete balances[key]
@@ -139,7 +137,7 @@ export class BnA {
         const [poolAddress] = key.split('-')
         const MATURIY = this.RESOURCE.pools[poolAddress]?.MATURITY
         if (MATURIY) {
-          maturity[key] = MATURIY.add(maturity[key] ?? 0)
+          maturities[key] = MATURIY.add(maturities[key] ?? 0)
         }
       }
       // await the native balance response
@@ -148,10 +146,10 @@ export class BnA {
       }
       return {
         chainId: this.profile.chainId,
-        account: this.account,
+        account,
         balances,
         allowances,
-        maturity,
+        maturities,
       }
     } catch (error) {
       throw error
