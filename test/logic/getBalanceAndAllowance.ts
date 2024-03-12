@@ -8,7 +8,7 @@ export const getBalanceAndAllowance = async (configs: IEngineConfig, poolAddress
   const tokens = engine.RESOURCE.tokens
   const tokenArr = tokens.map((t) => t.address)
 
-  const res = await engine.BNA.getBalanceAndAllowance(tokenArr)
+  const res = await engine.BNA.getBalanceAndAllowance(configs.account!)
 
   return res
 }
