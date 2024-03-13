@@ -20,6 +20,7 @@ export interface INetworkConfig {
   scanName?: string
   timePerBlock: number
   candleChartApi?: string
+  useDexToolsChart?: boolean
   storage?: Storage
   gasLimitDefault: number
   gasForProof: number
